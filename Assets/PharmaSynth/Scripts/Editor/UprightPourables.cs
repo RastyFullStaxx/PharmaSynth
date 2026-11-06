@@ -5,23 +5,22 @@ using UnityEngine;
 
 /// Fits lab items to reality: stands tipped glassware up, puts an item's PIVOT and grab
 /// collider back on its own mesh, seats it on the surface below, and re-bakes its respawn
-/// home (W5.55 upright · W5.56 seat · W5.57 pivot).
+/// home (upright · seat · pivot).
 ///
 /// ⛔ A vessel whose RESTING pose reads as tipped pours itself forever: `LiquidPourer.Update`
 /// fires on `Vector3.Angle(Vector3.up, transform.up) > pourThreshold`, so it empties every
-/// drop put into it and runs its looping pour audio under everything else. W5.45 found both
-/// distilling flasks at 90 degrees; the suite has pinned it since, and it came back the
-/// moment a `Re-Home Scene Items (Adopt Current)` pass ran while a flask happened to be
-/// lying down — adoption bakes whatever pose it finds, tipped or not.
+/// drop put into it and runs its looping pour audio under everything else. A
+/// `Re-Home Scene Items (Adopt Current)` pass run while a flask lies down brings this back,
+/// because adoption bakes whatever pose it finds, tipped or not.
 ///
 /// ⛔ An item whose visible mesh is not on its own PIVOT cannot be placed by anyone and is
-/// held nowhere near the player's hand (W5.57). Four Tripo/USD imports carried their geometry
-/// 0.7–1.9 m from their origin: both distilling flasks, the ice bucket and the matchstick.
+/// held nowhere near the player's hand. Tripo/USD imports can carry their geometry
+/// 0.7–1.9 m from their origin (both distilling flasks, the ice bucket and the matchstick).
 /// Dragging the object in the Scene view moves the pivot; the mesh keeps its offset and hangs
-/// in the air wherever it is put. Worse, the runtime reads `transform.position` —
-/// `Matchstick` measures its strike distance from it, `VaporCollectController` its receiver
-/// radius, `DropRespawn` its home — so a grabbed match was "held" 1.9 m from the hand and no
-/// burner could be lit in VR. The simulators never noticed: they drive the APIs directly.
+/// in the air wherever it is put. The runtime also reads `transform.position`
+/// (`Matchstick` measures its strike distance from it, `VaporCollectController` its receiver
+/// radius, `DropRespawn` its home), so a grabbed match would be "held" 1.9 m from the hand
+/// and light no burner. The simulators cannot see this: they drive the APIs directly.
 ///
 /// Straightening or re-pivoting the transform alone never sticks: `DropRespawn.ResetAllHome`
 /// puts the baked pose back at the start of every run, so the HOME is rewritten too. Pinned
@@ -30,7 +29,7 @@ using UnityEngine;
 public static class UprightPourables
 {
     /// Ignore this much daylight when seating. The 14 cabinet bottles all sit a uniform 2 cm
-    /// proud of their shelf collider, which is how they were authored — not damage, and not
+    /// proud of their shelf collider, which is how they are authored: not damage, and not
     /// something to "fix" by dragging every bottle down 2 cm.
     public const float Tolerance = 0.03f;
 
@@ -71,9 +70,9 @@ public static class UprightPourables
         EditorUtility.SetDirty(dr);
     }
 
-    /// ⛔ RE-PIVOT: the mesh must NOT move. The first cut of this dragged the visual assembly
-    /// onto the pivot, which "aligned" it and teleported both flasks half a metre off the
-    /// worktop the user had just placed them over — the very complaint, again. The pivot moves
+    /// ⛔ RE-PIVOT: the mesh must NOT move. Dragging the visual assembly onto the pivot
+    /// "aligns" it but teleports the object (both flasks: half a metre) off the surface it
+    /// was placed over. Instead the pivot moves
     /// TO the mesh and every direct child is shifted by the same amount the other way, so the
     /// mesh, liquid, spout, flame anchor, chill zone and label all stay exactly where they are
     /// in world space. The grab collider is then wrapped around the mesh and the home re-baked.
@@ -99,9 +98,9 @@ public static class UprightPourables
         }
         EditorUtility.SetDirty(go.transform);
 
-        // The grab box follows the mesh. A MeshCollider already does; a BoxCollider was
-        // authored at the old pivot (the matchstick's was 1 mm wide, from a fixed-size
-        // fallback in the Tripo loader) and must be re-fitted. Only when the object is
+        // The grab box follows the mesh. A MeshCollider already does; a BoxCollider is
+        // authored at the original pivot (a fixed-size fallback in the Tripo loader gives the
+        // matchstick a 1 mm one) and must be re-fitted. Only when the object is
         // upright: an AABB divided by scale is meaningless for a rotated body.
         var box = go.GetComponent<BoxCollider>();
         if (box != null && Vector3.Angle(Vector3.up, go.transform.up) < 1f)
@@ -120,8 +119,8 @@ public static class UprightPourables
         return true;
     }
 
-    /// Drop an item until its BASE rests on the surface below, keeping the x and z the user
-    /// chose, and re-bake its respawn home so a reset keeps it there.
+    /// Drop an item until its BASE rests on the surface below, keeping the hand-placed x and z
+    /// and re-bake its respawn home so a reset keeps it there.
     static bool SeatOnSurface(GameObject go, out string note)
     {
         note = "";
@@ -142,7 +141,7 @@ public static class UprightPourables
         return true;
     }
 
-    /// The old menu path still works — the docs and muscle memory both use it.
+    /// Legacy menu path, kept because the docs still use it.
     [MenuItem("Tools/PharmaSynth/Stand Tipped Glassware Up")]
     public static void RunLegacy() => Run();
 
@@ -159,7 +158,7 @@ public static class UprightPourables
         {
             if (pr == null) continue;
 
-            // Keep the yaw the user placed it at; only the tip is wrong.
+            // Keep the yaw it was placed at; only the tip is wrong.
             if (Vector3.Angle(Vector3.up, pr.transform.up) > pr.pourThreshold)
             {
                 Undo.RecordObject(pr.transform, "Stand glassware up");
@@ -204,7 +203,7 @@ public static class UprightPourables
         // ---- 3. seat: pourables, plus whatever was just re-pivoted ----------------------
         // Seating measures the MESH, so it is only meaningful once the pivot is on it — a mesh
         // half a metre from its pivot cannot be seated, because seating moves the pivot and the
-        // mesh keeps the offset (W5.56).
+        // mesh keeps the offset.
         foreach (var pr in Object.FindObjectsByType<LiquidPourer>(
                      FindObjectsInactive.Include, FindObjectsSortMode.None))
             if (pr != null && pr.gameObject.activeInHierarchy) toSeat.Add(pr.gameObject);

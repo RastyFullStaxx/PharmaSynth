@@ -3,8 +3,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// W5.12: the DistillingFlask model (glTFast .glb) imported with a bare grey
-/// metallic material, so it read as a chrome flask instead of glass. This swaps
+/// The DistillingFlask model (glTFast .glb) imports with a bare grey
+/// metallic material, so it reads as a chrome flask instead of glass. This swaps
 /// every mesh on the scene flask (and its prefab) to the SAME borosilicate glass
 /// materials the ChemLab beakers use, so it matches the rest of the glassware.
 /// Idempotent; run from SampleScene edit mode.

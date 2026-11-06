@@ -6,8 +6,8 @@ using UnityEngine;
 
 /// Asks the one question the run simulator structurally cannot: a step can be
 /// mechanically perfect while the bottle it needs sits inside a closed cabinet or above
-/// head height. `SimulatedRun` reaches every object by reference, so it will never
-/// notice — only a headset would, which is exactly the cost this is here to avoid.
+/// head height. `SimulatedRun` reaches every object by reference, so it never
+/// notices; otherwise only a headset session would.
 ///
 /// Its input is already built and already verified: `TutorialTargets.Build()` resolves
 /// taskId → the objects each step is about, for all 9 modules. So the audit asks, of
@@ -15,8 +15,7 @@ using UnityEngine;
 ///
 /// Deliberately GEOMETRIC rather than a navmesh walk. The player has continuous
 /// locomotion over the whole lab floor, so "can I stand near it" is nearly always true;
-/// what actually goes wrong is height and enclosure. A navmesh would be a week of work
-/// to answer a question two raycasts answer.
+/// what goes wrong is height and enclosure, which two raycasts answer.
 public static class ReachabilityAudit
 {
     // A standing adult in VR, arms working. Above the hard ceiling nothing is grabbable;

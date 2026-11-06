@@ -1,15 +1,22 @@
 using UnityEngine;
 
-/// Pure pour rules (W5.59).
+/// Pure pour rules.
 public static class PourMath
 {
     /// ⛔ A SOLID never pours. The verb contract is "solids are scooped, liquids poured",
-    /// and the tutorial sweep already registers a Scoop verb for every solid reagent — yet the
-    /// pourer had no idea what state its contents were in, so a tilted jar of brown sugar
-    /// streamed a brown liquid column into the beaker (user, in the headset). Nothing to
+    /// and the tutorial sweep registers a Scoop verb for every solid reagent; without
+    /// this check a tilted jar of brown sugar streams a brown liquid column. Nothing to
     /// pour is also not pourable.
     public static bool CanPour(ChemicalData chem)
         => chem != null && chem.state != PhysicalState.Solid && chem.state != PhysicalState.Powder;
+
+    /// A bottle in the player's HAND with no vessel under its spout only trickles, so
+    /// walking with a tipped bottle does not empty it onto the floor at the full rate
+    /// (~12 ml/s) and quietly starve the experiment's supply. A bottle knocked over on
+    /// the bench still spills fully; that is a real spill.
+    public const float HeldSpillTrickle = 0.15f;
+    public static float SpillAmount(float amount, bool held, bool hasTarget)
+        => held && !hasTarget ? amount * HeldSpillTrickle : amount;
 }
 
 [RequireComponent(typeof(LiquidPhysics))]
@@ -40,18 +47,18 @@ public class LiquidPourer : MonoBehaviour
     private float lastSpillTime = 0f;
     private float smoothedFlow01;
 
-    // Procedural falling-liquid stream + landing puddles (user 2026-07-10: pouring/
-    // spilling showed no visible liquid). Independent of the optional LineRenderer.
+    // Procedural falling-liquid stream + landing puddles, so pours and spills are
+    // visible. Independent of the optional LineRenderer.
     private ParticleSystem _pourStream;
     private float _lastPuddle;
     private Transform Mouth => spout != null ? spout : transform;
 
-    // Continuous positional pour sound (realism 2026-07-10: pouring was silent).
+    // Continuous positional pour sound (realism: pouring was silent).
     private AudioSource pourAudio;
     private float pourBaseVol = 0.5f;
 
-    // Pour assist (W5.12, user: "I still can't pour into vials/tubes/beakers —
-    // the beaker won't catch the spills"): VR aim is imprecise, so when the
+    // Pour assist (pours into vials/tubes/beakers kept missing —
+    // the beaker would not catch the spills): VR aim is imprecise, so when the
     // precise ray misses, a forgiving sphere sweep catches a receiver whose
     // mouth is within this radius of the stream line.
     [Header("Pour Assist (W5.12)")]
@@ -100,6 +107,25 @@ public class LiquidPourer : MonoBehaviour
             UpdatePourAudio(false, 0f);
             UpdatePourStream(false, 0f);
         }
+    }
+
+    private static float s_lastPourTime = float.NegativeInfinity;
+    /// Seconds since any bottle in the lab last poured (NPC chatter waits on it).
+    public static float SecondsSinceAnyPour => Time.time - s_lastPourTime;
+
+    private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable _grab;
+    private bool IsHeld()
+    {
+        if (_grab == null) _grab = GetComponentInParent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+        return _grab != null && _grab.isSelected;
+    }
+
+    private float _nextSpillWarn;
+    private void WarnSpilling()
+    {
+        if (!Application.isPlaying || Time.time < _nextSpillWarn) return;
+        _nextSpillWarn = Time.time + 4f;
+        FloatingText.Show("Careful — you're spilling!", Mouth.position + Vector3.up * 0.12f, new Color(1f, 0.8f, 0.45f), 1.1f);
     }
 
     /// Drive the looping 3D pour source: swell with flow while pouring, fade to
@@ -178,11 +204,9 @@ public class LiquidPourer : MonoBehaviour
         }
     }
 
-    /// The connected pour ARC (DrawCurvedStream) previously rendered only on
-    /// bottles whose optional LineRenderer someone had authored — which was none
-    /// of them (user 2026-07-10: pours to the ground still hard to see). Build it
-    /// on first pour so every pourer shows a continuous mouth-to-surface stream
-    /// on top of the droplet particles.
+    /// The connected pour ARC (DrawCurvedStream) otherwise renders only on bottles with
+    /// an authored LineRenderer, which is none of them. Build it on first pour so every
+    /// pourer shows a continuous mouth-to-surface stream on top of the droplet particles.
     void EnsureStreamLine()
     {
         if (streamLine != null || !Application.isPlaying) return;
@@ -199,10 +223,10 @@ public class LiquidPourer : MonoBehaviour
         streamLine.enabled = false;
     }
 
-    /// Pick the receiving vessel from a downward raycast set (W5.8 pour fix).
-    /// Skips the source's own colliders (a tilted bottle's ray often exits
-    /// through its own body — the old single-raycast could hit itself, fire
-    /// LiquidAdded on itself, and even complete pour tasks by self-tilting).
+    /// Pick the receiving vessel from a downward raycast set.
+    /// Skips the source's own colliders: a tilted bottle's ray often exits through its
+    /// own body, and a single raycast can hit itself, fire LiquidAdded on itself, and
+    /// even complete pour tasks by self-tilting.
     /// The nearest remaining hit decides: a LiquidPhysics there = the transfer
     /// target; anything else = the waste/puddle surface. Static + real-collider
     /// friendly so the self-test suite can exercise it in edit mode.
@@ -210,7 +234,7 @@ public class LiquidPourer : MonoBehaviour
         => ResolveTarget(hits, source, out firstHit, out _);
 
     /// Overload that also reports the funnel the stream passed THROUGH, so the
-    /// pour can show liquid leaving its stem (user 2026-07-27).
+    /// pour can show liquid leaving its stem.
     public static LiquidPhysics ResolveTarget(RaycastHit[] hits, LiquidPhysics source,
                                               out RaycastHit firstHit, out LiquidPassthrough through)
     {
@@ -229,7 +253,7 @@ public class LiquidPourer : MonoBehaviour
             if (source != null && col.transform.IsChildOf(source.transform)) continue;
             // Funnels pass the stream through to whatever sits underneath —
             // treating their collider as the landing surface wasted the
-            // hydrolysate as a puddle ON the funnel (2026-07-17).
+            // hydrolysate as a puddle ON the funnel.
             var pass = col.GetComponentInParent<LiquidPassthrough>();
             if (pass != null)
             {
@@ -246,7 +270,9 @@ public class LiquidPourer : MonoBehaviour
         }
         if (bestCol == null) return null;
         var lp = bestCol.GetComponentInParent<LiquidPhysics>();
-        return (lp != null && lp != source) ? lp : null;
+        if (lp == null || lp == source) return null;
+        // A stream crossing the reagent shelf never contaminates stock (it spills instead).
+        return LabReset.RefusesTransfer(lp, source != null ? source.currentChemical : null) ? null : lp;
     }
 
     /// One pour step (extracted from Update so edit-mode tests can drive a real
@@ -317,7 +343,7 @@ public class LiquidPourer : MonoBehaviour
         }
         // The stream vanished into a funnel: show it leaving the STEM, and end the
         // visible arc at the cone's mouth so it reads as flowing through the hole
-        // below rather than straight past the glass (user 2026-07-27).
+        // below rather than straight past the glass.
         if (funnel != null)
         {
             funnel.Flow(sourceContainer.currentChemical != null
@@ -329,6 +355,11 @@ public class LiquidPourer : MonoBehaviour
                 streamLine.enabled = true;
             }
         }
+
+        s_lastPourTime = Time.time;
+        bool held = IsHeld();
+        if (target == null) amountToPour = PourMath.SpillAmount(amountToPour, held, false);
+        if (target == null && held) WarnSpilling();
 
         if (hit.collider != null)
         {

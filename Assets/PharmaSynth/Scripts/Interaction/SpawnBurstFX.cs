@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// Cyan "materialize" spawn burst (user 2026-07-10): a one-shot column of cyan
+/// Cyan "materialize" spawn burst: a one-shot column of cyan
 /// particles that rises from the player's feet like smoke on every teleport /
 /// reset / spawn — the classic game spawn animation. Scene singleton (mirrors
 /// ScreenFader); triggers fire it null-safely via SpawnBurstFX.Instance?.PlayAtPlayer().

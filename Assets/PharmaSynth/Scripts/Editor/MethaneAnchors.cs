@@ -3,12 +3,11 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Creates the draggable placement anchors the verbs read (user 2026-07-14: "can
-/// I drag these to the specific parts?"). After running this, each match/burner
+/// Creates the draggable placement anchors the verbs read. Each match/burner
 /// gets a "FlameAnchor" child and each scoopula/spatula a "ScoopAnchor" child,
 /// dropped at a best-guess spot. SELECT it in the Hierarchy (orange gizmo in the
-/// Scene view), drag it onto the exact part — match head, burner mouth, scoop
-/// bowl — then run Lock My Layout to bake it. Idempotent: never moves an anchor
+/// Scene view), drag it onto the exact part (match head, burner mouth, scoop
+/// bowl), then run Lock My Layout to bake it. Idempotent: never moves an anchor
 /// you've already positioned.
 public static class MethaneAnchors
 {
@@ -28,15 +27,15 @@ public static class MethaneAnchors
         foreach (var s in Object.FindObjectsByType<ScoopController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             if (EnsureAnchor(s.gameObject, "ScoopAnchor", TipGuess(s.gameObject, positiveEnd: false))) scoops++;
 
-        // Mortars get a BowlAnchor = where the ground powder + dust appear (user
-        // 2026-07-15: drag it into the bowl so the heap sits right).
+        // Mortars get a BowlAnchor = where the ground powder + dust appear (you
+        // drag it into the bowl so the heap sits right).
         int bowls = 0;
         foreach (var g in Object.FindObjectsByType<GrindController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             if (EnsureAnchor(g.gameObject, "BowlAnchor", BowlGuess(g.gameObject))) bowls++;
 
         // Solid RECEIVERS (the hard-glass tube) get a PowderAnchor: drag it where
         // the powder should sit AND SCALE it to set the powder's size by hand
-        // (user 2026-07-15). Its scale = the size at a full charge.
+        // Its scale = the size at a full charge.
         int powders = 0;
         foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
@@ -45,7 +44,7 @@ public static class MethaneAnchors
                 powders++;
         }
 
-        // Droppers (2026-07-17): the dropper is a SKINNED mesh, and
+        // Droppers: the dropper is a SKINNED mesh, and
         // SkinnedMeshRenderer.bounds come from the bind pose — every bounds-derived
         // "tip" landed in mid-air, so the charge bead floated OUTSIDE the tool.
         // Hand-fitted children end that for good:
@@ -93,7 +92,7 @@ public static class MethaneAnchors
     }
 
     /// Add a named anchor child at a guess position/scale — but leave any existing
-    /// one exactly where (and at whatever size) the user set it.
+    /// one exactly where (and at whatever size) it was hand-set.
     static bool EnsureAnchor(GameObject host, string name, Vector3 worldPos, Vector3? localScale = null)
     {
         var existing = host.transform.Find(name);
@@ -101,10 +100,10 @@ public static class MethaneAnchors
         {
             var pa0 = existing.GetComponent<PlacementAnchor>() ?? existing.gameObject.AddComponent<PlacementAnchor>();
             // Only a size-setting anchor previews its scale — a position-only anchor
-            // has scale 1 and would draw a 1 m sphere over the bench (user 2026-07-15).
+            // has scale 1 and would draw a 1 m sphere over the bench.
             pa0.previewsScale = localScale.HasValue;
             EditorUtility.SetDirty(existing.gameObject);
-            return false;   // respect the user's placement + hand-set size
+            return false;   // respect the hand placement + hand-set size
         }
         var go = new GameObject(name);
         go.transform.SetParent(host.transform, true);
@@ -118,7 +117,7 @@ public static class MethaneAnchors
     }
 
     /// A sensible starting size for a powder charge inside this vessel: a squat
-    /// mound about half the bore. The user then scales the anchor to taste.
+    /// mound about half the bore, to be scaled by hand afterwards.
     static Vector3 PowderScale(GameObject go)
     {
         var lb = ExperimentSceneBuilder.LocalMeshBounds(go.transform, "Powder", "Liquid", "CollectedGas");

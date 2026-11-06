@@ -78,8 +78,10 @@ public class ExperimentTask
     [Tooltip("WRAP-UP step: auto-completes (via Graph.Tick) once every other task is done. For closing beats like 'record your observations' that have no physical verb of their own — without this the checklist can never finish (SimulatedRun caught Exp 2 deadlocked here, 2026-07-17).")]
     public bool autoCompleteWhenOthersDone = false;
 
-    [Tooltip("LONG PROCESS (user 2026-07-17): a step whose real duration is impractical in VR (a week's fermentation, an overnight dry). On completion the screen fades to black ~2 s and returns with a 'time has passed' success message — TimeSkipController. Set the message; empty falls back to a generic one. Reusable across every experiment with a lengthy wait.")]
+    [Tooltip("LONG PROCESS (user 2026-07-17): a step whose real duration is impractical in VR (a week's fermentation, an overnight dry). On completion TimeSkipController plays a corner-camera timelapse (black hold without the cinema rig) and returns with a 'time has passed' success message. Set the message; empty falls back to a generic one. Reusable across every experiment with a lengthy wait.")]
     public bool longProcess = false;
     [TextArea(1, 2)]
     public string longProcessMessage = "";
+    [Tooltip("How long the process really takes, in hours, for the timelapse counter (168 = 7 days, 0.25 = 15 min). 0 = not stated in the procedure: the timelapse runs with no number rather than an invented one.")]
+    [Min(0f)] public float timelapseHours = 0f;
 }

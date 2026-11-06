@@ -4,9 +4,9 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-/// Fills every module's MATERIALS guide (the watch-panel header, user 2026-07-17:
-/// "display all materials needed first, from reagents and apparatus… just there as
-/// a guide so the players can assemble them before they even proceed").
+/// Fills every module's MATERIALS guide (the watch-panel header):
+/// every reagent and apparatus the module needs, listed first as a guide so the
+/// player can assemble them before starting.
 ///
 /// REAGENTS are DERIVED from the module's layout bindings — the ground truth of
 /// what the experiment actually consumes — with totals summed per chemical, so the

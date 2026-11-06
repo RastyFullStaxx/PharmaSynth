@@ -1,8 +1,8 @@
 using UnityEngine;
 
-/// Methane (Experiment 1) completion — LOCATION-FREE (user 2026-07-13: "we can
-/// perform anywhere in the lab as long as we complete the steps"). The old rig
-/// gated heat/collect on FIXED trigger zones; this instead detects the ACTIONS
+/// Methane (Experiment 1) completion — LOCATION-FREE (the
+/// steps can be done anywhere in the lab). Instead of
+/// gating heat/collect on FIXED trigger zones, it detects the ACTIONS
 /// by item proximity, so the tutorial works wherever the player does it:
 ///   prepare-mixture : grinding a mortar (the rig aims the workspace mortar at it)
 ///   setup-apparatus : the collection tube brought up to the hard-glass tube
@@ -42,7 +42,7 @@ public class MethaneApparatusRig : MonoBehaviour
     private Transform _glowTube;        // tube whose renderers are cached below
     private Renderer[] _tubeRends;      // cached for the red-hot emissive glow
 
-    /// Pure (W5.8): the splint test fires when a LIT match reaches the filled
+    /// Pure: the splint test fires when a LIT match reaches the filled
     /// tube — or automatically after a grace period so nothing ever stalls.
     public static bool SplintShouldFire(bool collected, bool alreadyFired, float matchDistance, bool matchLit, float sinceCollected)
         => collected && !alreadyFired
@@ -109,8 +109,7 @@ public class MethaneApparatusRig : MonoBehaviour
         AcquireMortar();
 
         // setup-apparatus: the ground mixture must be LOADED into the hard-glass
-        // tube (user 2026-07-15: heating an empty tube while the mix sits in the
-        // mortar made no sense — you scoop the mixture into the tube first, then
+        // tube (scoop the mixture into the tube first, then
         // heat it). Completes when the tube has received the solid.
         runner.Graph.RegisterCondition("setup-apparatus", TubeLoaded);
         runner.Graph.RegisterCondition("heat-mixture", () => temperature != null && temperature.AtLeast(heatDoneC));
@@ -165,9 +164,9 @@ public class MethaneApparatusRig : MonoBehaviour
         Add("test-gas", collect, TargetRole.Destination, true);
         // ⚠ NOT simply match[0]. The consumable boxes keep a hidden, DISABLED
         // "Template_*" matchstick that ConsumableDispenser clones from, and an
-        // inactive-inclusive search finds it first — so Tutorial Mode pointed its
-        // test-gas glow and waypoint at an object that can never be seen or picked up
-        // (found by the play-mode autopilot, 2026-09-02). Prefer a real, live match.
+        // inactive-inclusive search finds it first, which would point Tutorial Mode's
+        // test-gas glow and waypoint at an object that can never be seen or picked up.
+        // Prefer a real, live match.
         Transform pick = null;
         foreach (var m in match)
         {
@@ -236,14 +235,14 @@ public class MethaneApparatusRig : MonoBehaviour
     /// One frame of the rig, with the timestep injected.
     ///
     /// ⭐ Public so the editor simulator can play the methane tutorial through the REAL
-    /// logic instead of a copy of it (W5.40). It was the only module no simulator covered,
-    /// precisely because everything here is driven by Update and Time — neither of which
+    /// logic instead of a copy of it. Without this no simulator could cover it,
+    /// because everything here is driven by Update and Time — neither of which
     /// exists in edit mode. Extracting the step rather than duplicating it means the sim
     /// cannot pass against a stale reimplementation of what the game actually does.
     ///
-    /// Time.time is deliberately gone: the only thing it was ever used for is the DURATION
-    /// the gas has been collected, so an internal clock advanced by dt is both more honest
-    /// and drivable. In play mode Update feeds it Time.deltaTime, so nothing changes.
+    /// No Time.time: the only thing it would measure is the DURATION
+    /// the gas has been collected, so an internal clock advanced by dt is
+    /// and drivable. In play mode Update feeds it Time.deltaTime.
     public void Step(float dt)
     {
         if (!_active || runner == null || !runner.IsRunning) return;
@@ -298,8 +297,8 @@ public class MethaneApparatusRig : MonoBehaviour
     // ---- glow + readouts + collecting animation -----------------------------
 
     /// Pure (suite): how red-hot the tube looks — ramps in over the last stretch of
-    /// the climb and saturates at the reaction temperature (user 2026-07-15:
-    /// "a reddish glow to signify it is now at the correct boiling temperature").
+    /// the climb and saturates at the reaction temperature:
+    /// a reddish glow signals it is at the correct boiling temperature.
     public static float GlowFor(float currentC, float targetC)
         => Mathf.Clamp01(Mathf.InverseLerp(targetC * 0.6f, targetC, currentC));
 
@@ -336,7 +335,7 @@ public class MethaneApparatusRig : MonoBehaviour
     // ---- readouts + collecting animation ------------------------------------
 
     /// Attach the live readouts once the tubes are found: rising temperature over
-    /// the hard-glass tube, collection % over the collection tube (user 2026-07-15).
+    /// the hard-glass tube, collection % over the collection tube.
     private void EnsureReadouts()
     {
         if (_tube != null && _tube.GetComponent<ProcessReadout>() == null)
@@ -386,7 +385,7 @@ public class MethaneApparatusRig : MonoBehaviour
             { name = "CollectedGas_Runtime" };
         }
         // Fit the column INSIDE the tube in its LOCAL frame, so a tilted/held tube
-        // keeps its gas aligned and contained (user 2026-07-15: it wasn't aligning).
+        // keeps its gas aligned and contained.
         var lb = ExperimentSceneBuilder.LocalMeshBounds(_collect, "CollectedGas", "Powder", "Liquid");
         int ax = ExperimentSceneBuilder.LongestAxis(lb.size);
         float bore = ExperimentSceneBuilder.BoreOf(lb.size, ax);

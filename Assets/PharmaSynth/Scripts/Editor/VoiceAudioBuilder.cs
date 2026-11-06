@@ -4,22 +4,22 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Makes the generated voice-over actually AUDIBLE and well-behaved (2026-07-27).
-/// Three separate faults, one pass:
+/// Makes the generated voice-over AUDIBLE and well-behaved.
+/// Three separate concerns, one pass:
 ///
-///  1. Dr. Jimenez was silent. His narration channel had NO narratorAudioSource,
-///     and SayRoutine only plays a clip when one exists — so every one of his 37
-///     lines fell straight through to the placeholder blips.
-///  2. Voices were fully 3D, so they faded to nothing a couple of metres away.
-///     The client wants them heard across the room but LOUDER up close, which is
+///  1. Dr. Jimenez's narration channel needs a narratorAudioSource. SayRoutine
+///     only plays a clip when one exists, so without it every one of his 37
+///     lines falls through to the placeholder blips.
+///  2. Fully 3D voices fade to nothing a couple of metres away. The client wants
+///     them heard across the room but LOUDER up close, which is
 ///     a partial spatial blend: the 2D share guarantees a floor everywhere, the
 ///     3D share still swells as you approach.
-///  3. The music sat at full level under dialogue.
+///  3. The music ducks under dialogue.
 public static class VoiceAudioBuilder
 {
     /// Blend of 2D (always audible) and 3D (positional). 1 = fully positional,
     /// which is what made them inaudible across the lab; 0 would kill the sense of
-    /// where the speaker is. Lowered 0.65 -> 0.55 (2026-07-27) to lift the overall
+    /// where the speaker is. Lowered 0.65 -> 0.55 to lift the overall
     /// level a step while keeping a clear walk-closer swell.
     public const float VoiceSpatialBlend = 0.55f;
     /// Full volume out to here, then rolls off. Raised 4 -> 8 m so the NPCs are at
@@ -29,15 +29,14 @@ public static class VoiceAudioBuilder
     public const float VoiceMinDistance = 8f;
     /// Still audible at the far wall; the lab is ~12 m.
     public const float VoiceMaxDistance = 30f;
-    /// The music all but disappears under dialogue and eases back once it is clear
-    /// (user 2026-07-27: "fades out... and fades in once clear").
+    /// The music all but disappears under dialogue and eases back once it is clear.
     public const float MusicDuckTo = 0.06f;
 
     /// Give a narration channel a working, room-audible AudioSource, and return it.
     ///
     /// Public so the builder that CREATES a channel can leave it complete. `Wire NPC Polish`
-    /// destroys and recreates Jimenez's whole subtitle object, which used to hand the repair
-    /// job to this menu — and a channel stays mute until someone remembers to run it.
+    /// destroys and recreates Jimenez's whole subtitle object, and a channel without a
+    /// source stays mute until this menu runs.
     public static AudioSource EnsureVoiceChannel(NPCNarrationController n, out bool added)
     {
         added = false;

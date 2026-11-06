@@ -2,15 +2,13 @@
 using UnityEditor;
 using UnityEngine;
 
-/// Gives every solid reagent jar on the shelf its powder mound (W5.59, user: "brown sugar
-/// is liquid in its beaker, but it can be scooped when I try the scoopula on it").
+/// Gives every solid reagent jar on the shelf its powder mound.
 ///
-/// Both halves of that report are true and explain each other. `Build Reagent Cabinets`
-/// stocks a PowderJar row from the `Beaker_100mL_WithLiquid` prefab, which carries a
-/// `Liquid` surface and nothing else, so 150 units of a SOLID were drawn as a column of
-/// brown liquid — `LiquidPhysics.DrawsLiquidColumn` had no mound to show instead. The
-/// scoopula never looked: `ScoopMath.CanPickUp` keys on the chemical's `state`, so it dipped
-/// into "liquid" sugar and came up with 2 g of solid. Six jars were in this state.
+/// `Build Reagent Cabinets` stocks a PowderJar row from the `Beaker_100mL_WithLiquid`
+/// prefab, which carries a `Liquid` surface and nothing else, so without a mound a SOLID
+/// is drawn as a column of liquid (`LiquidPhysics.DrawsLiquidColumn` has no mound to show
+/// instead). The scoopula is unaffected either way: `ScoopMath.CanPickUp` keys on the
+/// chemical's `state`.
 ///
 /// The mound itself is `ExperimentSceneBuilder.EnsurePowderVisual`, the same helper the
 /// stage builder and the scoop already use; this only points it at the shelf. Idempotent:

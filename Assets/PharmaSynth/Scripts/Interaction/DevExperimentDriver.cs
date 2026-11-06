@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 ///   B = begin/restart · 1-5 = complete step N · F = finish · R = retry
 ///   P = pour-debug overlay (floating "hit/target" text at every pouring mouth)
 ///   V = replay Pharmee's test voice line (tune RobotVoiceFx by ear without
-///       walking back to the door for every slider tweak — 2026-07-27)
+///       walking back to the door for every slider tweak)
 /// Disabled in builds unless enableInBuild is set.
 public class DevExperimentDriver : MonoBehaviour
 {
@@ -34,7 +34,7 @@ public class DevExperimentDriver : MonoBehaviour
         if (kb.digit5Key.wasPressedThisFrame) CompleteIndex(4);
         if (kb.fKey.wasPressedThisFrame)
         {
-            // W5.9: Finish before Begin used to NRE; guard on a live run.
+            // Finish before Begin would NRE; guard on a live run.
             if (!runner.IsRunning) { Debug.Log("[Dev] Finish ignored — no run in progress (press B first)."); }
             else { var res = runner.Finish(1f); Debug.Log("[Dev] Finish → grade " + res.grade.Total.ToString("0") + "% passed=" + res.passed); }
         }

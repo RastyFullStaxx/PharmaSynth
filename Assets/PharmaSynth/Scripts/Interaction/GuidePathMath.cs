@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-/// Pure geometry for Tutorial Mode's ground path (W5.44): given the corners of a walkable
+/// Pure geometry for Tutorial Mode's ground path: given the corners of a walkable
 /// route, where does each flowing chevron sit and which way does it face?
 ///
 /// Pure so the suite can pin the SHAPE of the path without a headset — that chevrons are
@@ -114,18 +114,18 @@ public static class GuidePathMath
 
     // ---- the mark itself -----------------------------------------------------------
     //
-    // ⛔ Everything here has been CALLED a chevron since W5.44, but the mark drawn on the
-    // floor was a `PrimitiveType.Quad` — a plain square. A row of sliding squares cannot
-    // read as direction, however correct the flow maths is, which is why the path looked
-    // static to the player ("make it arrow shape", 2026-09-05).
+    // ⛔ The mark must be an actual chevron mesh, not a `PrimitiveType.Quad`.
+    // A row of sliding squares cannot
+    // read as direction, however correct the flow maths is, and the path would look
+    // static to the player.
 
     /// Span across the route, in metres. Wider than it is deep: a chevron reads as an
     /// arrowhead because of the angle of its arms, and a narrow one just looks like a tick.
     public const float ChevronWidth = 0.30f;
     /// Front-to-back extent of the V, in metres.
     public const float ChevronDepth = 0.18f;
-    /// Arm thickness, measured PERPENDICULAR to the arm (user 2026-09-05: "thicken the arrow
-    /// for it to be more noticeable" — in the headset they read as thin outlines).
+    /// Arm thickness, measured PERPENDICULAR to the arm (thick enough to
+    /// be noticeable — in the headset thin arms read as outlines).
     public const float ChevronThickness = 0.075f;
 
     /// The open "V", flat in the XZ plane with its apex forward (+Z) and its face up (+Y).
@@ -189,9 +189,8 @@ public static class GuidePathMath
     ///
     /// This is what makes the trail read as FLOW rather than as a marching row: a chevron is
     /// born at the player's feet and dies at the destination, and without a ramp each one
-    /// POPS in and out at full strength every time the phase wraps. `along01` was computed
-    /// and documented for exactly this in W5.44 and then never read by the driver, so the
-    /// pops shipped.
+    /// POPS in and out at full strength every time the phase wraps. `along01` exists
+    /// for exactly this; the driver must read it.
     public static float FadeAt(float along01, float edge = FadeEdge)
     {
         float p = Mathf.Clamp01(along01);
@@ -203,7 +202,7 @@ public static class GuidePathMath
 
     /// Which navigation cue answers "where is it" right now.
     ///
-    /// The two must never draw together (design rule, W5.44): the floor path routes AROUND
+    /// The two must never draw together (design rule): the floor path routes AROUND
     /// the benches and is what you want at a distance; the beacon reads THROUGH a cabinet
     /// door and is what you want once the object itself is the question. Showing both
     /// makes each one weaker.

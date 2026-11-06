@@ -1,11 +1,11 @@
 using UnityEngine;
 
-/// Pure geometry for the center-table overhead shelf. W5.10 built one row of
-/// flush platform tiles on the gantry rails (front z=-3.15, back z=-3.50, tops
-/// y≈1.55). W5.12: the user hand-added a SECOND, lower row (plank centres
-/// y≈1.200) for the apparatus kits — this math now describes BOTH rows so the
+/// Pure geometry for the center-table overhead shelf. One row of
+/// flush platform tiles sits on the gantry rails (front z=-3.15, back z=-3.50, tops
+/// y≈1.55). A SECOND, lower row (plank centres
+/// y≈1.200) for the apparatus kits — this math describes BOTH rows so the
 /// builder can rebuild them cleanly and the kit layout can target either.
-/// Values match the user's planks (row pitch, z centre, depth). Kept plain so
+/// Values match the hand-placed planks (row pitch, z centre, depth). Kept plain so
 /// the suite pins coverage + heights.
 public static class WorkspaceShelfMath
 {
@@ -16,7 +16,7 @@ public static class WorkspaceShelfMath
     public const float XMin = -1.40f, XMax = 1.40f;
     public const float Gap = 0.02f;             // hairline seam between tiles
 
-    /// Row 0 = the original top gantry row; row 1 = the user's lower row.
+    /// Row 0 = the original top gantry row; row 1 = the hand-added lower row.
     public static float RowCenterY(int row) => row == 0 ? 1.548f : 1.200f;
 
     /// Legacy single-row aliases (row 0) — existing callers/tests keep working.

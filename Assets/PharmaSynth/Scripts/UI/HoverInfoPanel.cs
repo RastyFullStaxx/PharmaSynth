@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// The floating info card the hover-inspector shows when you point at a piece of
-/// equipment, a reagent bottle or an NPC (user 2026-07-10). It smoothly fades and
+/// equipment, a reagent bottle or an NPC. It smoothly fades and
 /// scales in/out and rides a comfortable distance in front of you along the line to
 /// the pointed object, always billboarded and readable. Pure easing helpers so the
 /// animation curve is unit-testable; HoverInspector feeds it entries.

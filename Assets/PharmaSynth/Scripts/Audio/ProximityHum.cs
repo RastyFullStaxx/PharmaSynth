@@ -1,7 +1,7 @@
 using UnityEngine;
 
-/// Positional machine hum (user 2026-07-10: "subtle ac machine like music for the
-/// ac assets where it goes a bit loud as we get near"). Builds its own looping 3D
+/// Positional machine hum (a subtle AC-unit hum from the
+/// AC assets that grows a little louder up close). Builds its own looping 3D
 /// AudioSource from a SoundBank key — quiet across the room, louder up close via a
 /// logarithmic rolloff. Attach to each AC unit (LabAudioBuilder wires them);
 /// no-ops silently when the clip isn't supplied yet.

@@ -5,8 +5,8 @@ using UnityEngine;
 /// context-aware way: adding a reagent completes the task that expects it (the
 /// TaskGraph's prerequisite check enforces order), while a reagent no step expects
 /// is a genuine wrong-reagent mistake. Steps may require a MINIMUM poured amount
-/// (requiredMl) — deliveries accumulate until the threshold is met, so a one-frame
-/// splash no longer completes a step (client depletion mechanic, 2026-07-09).
+/// (requiredMl); deliveries accumulate until the threshold is met, so a one-frame
+/// splash does not complete a step (the client's depletion mechanic).
 public class LiquidTaskBinding : MonoBehaviour
 {
     [System.Serializable]
@@ -30,13 +30,13 @@ public class LiquidTaskBinding : MonoBehaviour
     // sample *and* its water), and a task-keyed total pooled them — so whichever
     // reagent landed first met the threshold alone and completed the step with
     // half the chemistry missing. Steps are satisfied individually and the task
-    // waits for all of them (2026-07-16).
+    // waits for all of them.
     private readonly Dictionary<ReagentStep, float> _accumulated = new Dictionary<ReagentStep, float>();
     private readonly HashSet<ReagentStep> _satisfied = new HashSet<ReagentStep>();
 
     public IReadOnlyList<ReagentStep> ExpectedSteps => expectedReagents;
 
-    // ---- Dynamic rack roles (W5.52) -------------------------------------------------
+    // ---- Dynamic rack roles -------------------------------------------------
     //
     // A rack group's tubes are interchangeable glassware, so which ROLE a tube plays is
     // decided by what the player pours into it rather than by which bench tube it is.
@@ -56,7 +56,7 @@ public class LiquidTaskBinding : MonoBehaviour
     private int _claimedRole = -1;
     private int _authoredRole = -1;
 
-    /// Fired ONCE, the first time this tube narrows to a single role (W5.53). The builder
+    /// Fired ONCE, the first time this tube narrows to a single role. The builder
     /// listens so the role's non-pour anchors (heat, chill, litmus, weigh, vapor, flame)
     /// can be attached to THIS tube — the one the player actually used — rather than to
     /// the bench tube the role was authored on. Without this, pooling the pour bindings
@@ -72,7 +72,7 @@ public class LiquidTaskBinding : MonoBehaviour
     /// Every task any SURVIVING candidate role could still serve — empty once claimed or for
     /// a fixed vessel. The tutorial sweep registers these so a free tube can be pointed at
     /// and highlighted as a valid destination before it has committed to anything.
-    /// A role a DELIVERY controller has decided this tube plays (W5.54). -1 = none.
+    /// A role a DELIVERY controller has decided this tube plays. -1 = none.
     private int _forcedRole = -1;
 
     /// Claim the candidate role that serves `taskId`, for a controller that IS the
@@ -110,7 +110,7 @@ public class LiquidTaskBinding : MonoBehaviour
         return null;
     }
 
-    /// One NAME per role of this pool that serves `taskId` (W5.55), so the wrist checklist
+    /// One NAME per role of this pool that serves `taskId`, so the wrist checklist
     /// can tick the alcohols off one at a time instead of saying "5 tubes" and leaving the
     /// player to work out which one they missed.
     ///
@@ -205,7 +205,7 @@ public class LiquidTaskBinding : MonoBehaviour
         => _rackRoles != null ? _rackRoles.TakenByOthers(this) : null;
 
     /// Roles this vessel may not take RIGHT NOW: claimed by another member, or belonging to
-    /// a step the run has not reached (W5.55).
+    /// a step the run has not reached.
     ///
     /// ⛔ Pooling every tube in the module put every tube role on every tube, and acceptance
     /// asked only "does some role want this reagent" — so methanol, which a much later ester
@@ -236,19 +236,29 @@ public class LiquidTaskBinding : MonoBehaviour
         return blocked;
     }
 
-    /// Ledger seam (W5.54): another member just claimed a role, so what this one may still
+    /// Ledger seam: another member just claimed a role, so what this one may still
     /// become — and advertise — has changed. Idempotent; may claim by elimination.
     public void RefreshRoles() => RebuildActiveSteps();
 
-    /// A vessel taken back to empty is a FREE vessel again (W5.55, user in the headset:
-    /// errors "blocking me to some experiment procedures").
+    /// Every reagent ANY role of this pooled vessel could legitimately take (or just its
+    /// own steps when it has no roles). Pouring one of these into a free tube makes it that
+    /// role's tube — correct play, not a mistake.
+    public IEnumerable<ChemicalData> AllRoleReagents()
+    {
+        foreach (var s in expectedReagents) if (s != null && s.reagent != null) yield return s.reagent;
+        if (_roles == null) yield break;
+        foreach (var role in _roles)
+            if (role != null) foreach (var s in role) if (s != null && s.reagent != null) yield return s.reagent;
+    }
+
+    /// A vessel taken back to empty is a FREE vessel again.
     ///
-    /// Nothing used to clear a pool member's history, so one wrong drop pinned the tube to a
-    /// dead candidate set for the rest of the run: pouring it out changed nothing and there
-    /// were no spare roles to move to. Emptying it now releases the claimed role back to the
-    /// shared ledger, forgets what was poured and un-scolds it, so the player can rinse and
-    /// start that tube again. Tasks it ALREADY completed are the runner's, not the vessel's,
-    /// so they stand — this frees the glass, it does not undo the experiment.
+    /// Without this, one wrong drop pins a pool tube to a dead candidate set for the rest of
+    /// the run: pouring it out changes nothing and there are no spare roles to move to.
+    /// Emptying it releases the claimed role back to the shared ledger, forgets what was
+    /// poured and un-scolds it, so the player can rinse and start that tube again. Tasks it
+    /// ALREADY completed are the runner's, not the vessel's, so they stand: this frees the
+    /// glass, it does not undo the experiment.
     public void ResetRole()
     {
         _scolded.Clear();
@@ -261,6 +271,7 @@ public class LiquidTaskBinding : MonoBehaviour
         _accumulated.Clear();
         _satisfied.Clear();
         _ready.Clear();
+        _blockedEarly.Clear();
         RebuildActiveSteps();
         _rackRoles?.RefreshOthers(this);
     }
@@ -275,13 +286,11 @@ public class LiquidTaskBinding : MonoBehaviour
         if (_roles == null) return;
         var candidates = VesselRoleMatch.Candidates(_roleKeys, _poured, TakenByOthers());
         // ⛔ A role is claimed by a POUR, or by a delivery controller that is the disambiguator
-        // by definition (ClaimForTask) — never by construction. In a family with ONE role
+        // by definition (ClaimForTask), never by construction. In a family with ONE role
         // (Exp 9's limewater tube, Acetanilide's hydrolysis tube, Exp 6's hard-glass acetate
-        // tube) every member used to "claim" that role the moment SetRoles ran: the authored
-        // member won the ledger and every extra started life with an EMPTY candidate set, so
-        // any pour into it was scolded before the player had done anything (W5.54, found by
-        // tracing the vapor path — the W5.53 "acetone into hard glass" test passed for the
-        // wrong reason).
+        // tube), claiming at SetRoles lets the authored member win the ledger and leaves every
+        // extra with an EMPTY candidate set, so any pour into it is scolded before the player
+        // has done anything.
         int claimed = _forcedRole >= 0 && candidates.Contains(_forcedRole)
             ? _forcedRole
             : (_poured.Count > 0 ? VesselRoleMatch.ClaimedRole(candidates) : -1);
@@ -302,7 +311,7 @@ public class LiquidTaskBinding : MonoBehaviour
         // deterministic answer.
         //
         // ⛔ ...and a twin whose authored role ANOTHER member has claimed advertises NOTHING
-        // (W5.54). Its candidate set is empty, so it can accept nothing, and an advertised step
+        // Its candidate set is empty, so it can accept nothing, and an advertised step
         // there is a lie the sim, the label and the vapor stream all believed: Exp 7's crude
         // distillate ran into the authored beaker after a spare had claimed the role, every
         // drop was scolded, the flask drained and the step never completed (visual sweep).
@@ -350,12 +359,11 @@ public class LiquidTaskBinding : MonoBehaviour
         if (firstClaim) RoleClaimed?.Invoke(claimed);
     }
 
-    // ⛔ THE 2026-07-17 STUCK BUG: in play mode AddComponent fires OnEnable
-    // IMMEDIATELY — before the builder can assign the vessel — so this ran with
-    // vessel==null, subscribed to nothing, and SetVesselAndRunner never fixed it.
-    // Result: every pour fired LiquidAdded into the void, no step ever counted,
-    // and the player was stuck at "add distilled water" forever (while the
-    // HazardousMixReactor — which binds correctly — kept scolding them).
+    // ⛔ In play mode AddComponent fires OnEnable IMMEDIATELY, before the builder can
+    // assign the vessel, so subscribing here alone runs with vessel==null, subscribes to
+    // nothing, and SetVesselAndRunner never fixes it: every pour fires LiquidAdded into
+    // the void, no step counts, and the player is stuck at "add distilled water" (while
+    // the HazardousMixReactor, which binds correctly, keeps scolding them).
     // Subscription now lives in one idempotent seam that BOTH paths call.
     private bool _subscribed;
 
@@ -365,6 +373,7 @@ public class LiquidTaskBinding : MonoBehaviour
         vessel.LiquidAdded += OnLiquidAdded;
         vessel.WrongReagentMixed += OnWrongReagentMixed;
         vessel.Emptied += OnEmptied;
+        if (runner != null) { runner.TaskCompleted += OnAnyTaskCompleted; _taskListener = runner; }
         _subscribed = true;
     }
 
@@ -377,6 +386,7 @@ public class LiquidTaskBinding : MonoBehaviour
             vessel.WrongReagentMixed -= OnWrongReagentMixed;
             vessel.Emptied -= OnEmptied;
         }
+        if (_taskListener != null) { _taskListener.TaskCompleted -= OnAnyTaskCompleted; _taskListener = null; }
         _subscribed = false;
     }
 
@@ -419,26 +429,24 @@ public class LiquidTaskBinding : MonoBehaviour
 
     private void Handle(ChemicalData chem, float amountMl, bool fullDelivery)
     {
-        // A DESTROYED binding can still be subscribed (edit-mode components whose
-        // OnEnable never ran get no OnDisable/OnDestroy on DestroyImmediate), and
-        // its stale accumulators completed tasks on the first squeeze while its
-        // stale step list scolded sanctioned pours (ghost-binding bug, found by
-        // the player-path sim 2026-07-17). Unity's fake-null catches the corpse.
+        // A DESTROYED binding can still be subscribed (edit-mode components whose OnEnable
+        // never ran get no OnDisable/OnDestroy on DestroyImmediate); its stale accumulators
+        // would complete tasks on the first squeeze while its stale step list scolds
+        // sanctioned pours. Unity's fake-null catches the corpse.
         if (this == null) return;
         if (runner == null || chem == null) return;
 
-        // Fume-hood safety: a toxic/volatile reagent handled outside the hood is
-        // a violation. "In the hood" = THIS VESSEL sits inside the hood volume
-        // (position test — the work happens where the vessel is; 2026-07-18, the
-        // old hand-occupancy trigger was never wired and always violated) — or
-        // the physics occupancy when the trigger setup exists.
+        // Fume-hood safety: a toxic/volatile reagent handled outside the hood is a
+        // violation. "In the hood" = THIS VESSEL sits inside the hood volume (position
+        // test; the work happens where the vessel is), or the physics occupancy when the
+        // trigger setup exists.
         if (chem.requiresFumeHood && !InFumeHood() && _hoodScolded.Add(chem.chemicalName))
             runner.RecordMistake(LabErrorType.FumeHoodViolation, chem.chemicalName + " must be handled in the fume hood");
 
         // A RACK TUBE grades the pour against its surviving roles, not against a fixed
         // list: pouring the right reagent into the "wrong" numbered tube is correct play
         // in VR, where the player grabs whichever tube is nearest. Only a reagent that no
-        // surviving role wants is a real mistake (user 2026-09-05, in the headset).
+        // surviving role wants is a real mistake.
         if (_roles != null)
         {
             if (!VesselRoleMatch.WouldAccept(_roleKeys, _poured, chem.chemicalName, Blocked()))
@@ -453,9 +461,8 @@ public class LiquidTaskBinding : MonoBehaviour
         var step = StepForReagent(chem);
         // ⛔ An AMBIGUOUS pool extra advertises no steps at all (so the simulator never
         // targets it), yet the candidate set just ACCEPTED this pour. Without this branch the
-        // legacy lookup below found nothing and recorded "unexpected reagent" on a pour the
-        // tube had said yes to — the first pour into any free tube was scolded and only the
-        // second landed (found on the real Exp 6 / Exp 8 stages, 2026-09-06). Count it against
+        // lookup below finds nothing and records "unexpected reagent" on a pour the tube said
+        // yes to, so the first pour into any free tube would be scolded. Count it against
         // the first surviving candidate's step for this reagent; the narrowing carries the
         // volume to whichever role the tube finally claims.
         if (step == null && _roles != null && _claimedRole < 0) step = CandidateStepFor(chem);
@@ -479,8 +486,8 @@ public class LiquidTaskBinding : MonoBehaviour
             _accumulated[step] = have;
             if (!MetThreshold(have, step.requiredMl))
             {
-                // Live pour guide (user 2026-07-17: "I can't even see how much
-                // water I've poured") — a throttled running count over the vessel.
+                // Live pour guide: a throttled running count over the vessel, so the player can
+                // see how much has been poured.
                 ShowProgress(step, have);
                 return;                            // keep pouring — not enough yet
             }
@@ -496,20 +503,35 @@ public class LiquidTaskBinding : MonoBehaviour
         // it can be called done — half a recipe is not the step.
         if (!AllStepsSatisfied(step.taskId)) return;
 
-        // Every step satisfied. Tasks owned by another verb (W5.8: the weigh
-        // station; 2026-07-16: a RackTaskGroup that waits for every tube) only
+        // Every step satisfied. Tasks owned by another verb (the weigh
+        // station; a RackTaskGroup that waits for every tube) only
         // flag readiness — no wrong-reagent mistake was recorded (the pour IS
         // expected), but completion is theirs.
         if (!CompletesHere(step.taskId)) { _ready.Add(step.taskId); return; }
 
         // Enough reagent delivered. CompleteTask enforces order and will
         // auto-record a WrongStep mistake if prerequisites aren't met yet.
-        runner.CompleteTask(step.taskId);
+        if (runner.CompleteTask(step.taskId) == TaskCompletionResult.BlockedByPrerequisite)
+            _blockedEarly.Add(step.taskId);
+    }
+
+    // Poured before its prerequisite: the reagent is in the vessel and the counter
+    // reads "enough", so once the prerequisite completes the step completes too,
+    // without making the player pour again.
+    private readonly HashSet<string> _blockedEarly = new HashSet<string>();
+    private ExperimentRunner _taskListener;
+
+    private void OnAnyTaskCompleted(ExperimentTask _)
+    {
+        if (this == null || _blockedEarly.Count == 0 || runner == null) return;
+        foreach (var id in new List<string>(_blockedEarly))
+            if (AllStepsSatisfied(id) && runner.CompleteTask(id) != TaskCompletionResult.BlockedByPrerequisite)
+                _blockedEarly.Remove(id);
     }
 
     private readonly HashSet<string> _ready = new HashSet<string>();
 
-    // ⛔ ONE mistake per bad pour, not one per DELIVERY TICK (W5.55). Handle runs on every
+    // ⛔ ONE mistake per bad pour, not one per DELIVERY TICK. Handle runs on every
     // LiquidAdded event, and a tilt-pour raises one per frame, so a handful of misaimed
     // pours logged 1025 mistakes in a headset session and put the grade beyond recovery
     // before the player understood what was wrong. The scold still fires every time (the
@@ -558,16 +580,15 @@ public class LiquidTaskBinding : MonoBehaviour
         return true;
     }
 
-    /// Threshold check with a leniency epsilon (suite-pinned): fifty 0.1 g
-    /// spatula dips sum to 4.9999995 in floats — strictly-less-than left the
-    /// player one phantom dip short of a 5 g step, forever (SimulatedRun,
-    /// 2026-07-17). Thresholds are minimums, not calipers.
+    /// Threshold check with a leniency epsilon (suite-pinned): fifty 0.1 g spatula dips
+    /// sum to 4.9999995 in floats, so strictly-less-than leaves the player one phantom
+    /// dip short of a 5 g step forever. Thresholds are minimums, not calipers.
     public static bool MetThreshold(float have, float required) => have >= required - 0.01f;
 
     /// This vessel has everything the task asked of it (the rack group's poll).
     public bool ReadyFor(string taskId) => _ready.Contains(taskId);
 
-    /// The reagent this vessel most recently refused, for the live label (W5.55). Cleared
+    /// The reagent this vessel most recently refused, for the live label. Cleared
     /// when the vessel is emptied.
     public string RefusedReagent { get; private set; }
 
@@ -624,15 +645,14 @@ public class LiquidTaskBinding : MonoBehaviour
         return s != null ? s.taskId : null;
     }
 
-    /// The incoming chemical is one this vessel's OWN procedure names — the
-    /// wrong-mix layer (HazardousMixReactor + MixFeedback) checks this before
-    /// punishing, so a sanctioned dilution ("add 10 ml of distilled water" onto
-    /// the sample) never reads as "not in the procedure" again. Deliberately
-    /// ignores task completion: inside one AddLiquid call LiquidAdded (which
-    /// completes the task) fires BEFORE WrongReagentMixed, so a pending-only
-    /// check made the COMPLETING pour punish itself (SimulatedRun caught the
-    /// last sulfuric squeeze of each ester test being graded a mistake). Extra
-    /// pours of a named reagent are over-pours of the right thing, not crimes.
+    /// The incoming chemical is one this vessel's OWN procedure names. The wrong-mix
+    /// layer (HazardousMixReactor + MixFeedback) checks this before punishing, so a
+    /// sanctioned dilution ("add 10 ml of distilled water" onto the sample) never reads
+    /// as "not in the procedure". Deliberately ignores task completion: inside one
+    /// AddLiquid call LiquidAdded (which completes the task) fires BEFORE WrongReagentMixed,
+    /// so a pending-only check would make the COMPLETING pour punish itself (e.g. the last
+    /// sulfuric squeeze of each ester test). Extra pours of a named reagent are over-pours
+    /// of the right thing, not crimes.
     public bool IsExpectedNow(ChemicalData chem) => StepForReagent(chem) != null;
 
     // Runtime helpers for authoring/binding.

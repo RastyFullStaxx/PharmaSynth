@@ -1,7 +1,7 @@
 using UnityEngine;
 
-/// A liquid puddle left on the ground by a spilled/broken vessel (user 2026-07-10:
-/// "liquid spilled on ground … a 3 seconds delay then smoothly fades away").
+/// A liquid puddle left on the ground by a spilled/broken vessel:
+/// it lingers ~3 s, then smoothly fades away.
 /// Spawn() drops a flat translucent disc at the impact point (raycast to the floor),
 /// tinted with the spilled chemical's colour; it lingers, then fades out and
 /// destroys itself. Purely visual — the graded penalty + supply loss already

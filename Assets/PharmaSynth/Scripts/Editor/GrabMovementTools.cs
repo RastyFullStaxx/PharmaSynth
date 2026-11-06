@@ -5,7 +5,7 @@ using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
 /// Applies the GrabTuning velocity-tracked profile to every grabbable so held
-/// items collide with the world (user 2026-07-10: props could be pushed through
+/// items collide with the world (without it, props can be pushed through
 /// walls/floor). Covers the SceneAssetLibrary prefabs (persisted) AND every
 /// XRGrabInteractable in the open scene(s) (catches instance overrides, stools,
 /// shelf bottles). Idempotent — re-running reports 0 changes.

@@ -1,16 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// Pure rules for mishandling penalties (§2: spill & breakage, user request
-/// 2026-07-09): which apparatus is fragile, when an impact shatters it, and
+/// Pure rules for mishandling penalties (§2: spill & breakage):
+/// which apparatus is fragile, when an impact shatters it, and
 /// when an un-held bottle counts as spilling. Kept plain-C# so the self-tests
 /// pin the policy.
 public static class Mishandling
 {
-    /// THIN GLASS that shatters when dropped — and nothing else (user 2026-07-12:
-    /// "some equipment breaks even when it's not glassware to begin with").
+    /// THIN GLASS that shatters when dropped — and nothing else.
+    /// Non-glass equipment must never break.
     /// Sturdy solid glass (rods, funnels), droppers and porcelain (dish/crucible)
-    /// were delisted in W5.8: the rod is now the STIR tool, and shattering a tool
+    /// are not fragile: the rod is the STIR tool, and shattering a tool
     /// mid-verb is punitive; porcelain survives a bench drop in reality. Metal,
     /// wood and plastic tools never break.
     private static readonly HashSet<string> Breakables = new HashSet<string>
@@ -25,13 +25,13 @@ public static class Mishandling
         "WatchGlass",
     };
 
-    /// Delisted glass/ceramic (W5.8): robust in the hand, but still CLINKS like
+    /// Sturdy glass/ceramic: robust in the hand, but still CLINKS like
     /// glass on impact instead of falling through to the wooden knock.
     private static readonly HashSet<string> CeramicOrSolidGlass = new HashSet<string>
     {
         "GlassRod", "Funnel", "Dropper", "EvaporatingDish", "Crucible",
         "Motar", "Pestle", "Spatula",   // porcelain (pack spells mortar "Motar"; spatula = porcelain per manuscript)
-        // W5.12 sturdy glass tools/tubes — clink, never shatter mid-verb.
+        // Sturdy glass tools/tubes — clink, never shatter mid-verb.
         "Condenser", "DeliveryTube", "Thermometer",
     };
 
@@ -40,7 +40,7 @@ public static class Mishandling
 
     /// An impact at or above this speed shatters glass. 7.0 m/s ≈ a free fall
     /// of ~2.5 m onto a hard surface — only extreme heights or a genuine hard
-    /// throw breaks (user 2026-07-12: 4.5 was still hair-trigger in-headset; a
+    /// throw breaks (4.5 is hair-trigger in the headset; a
     /// normal bench-height drop must survive). Held items are additionally
     /// immune in BreakableGlassware regardless of speed.
     public const float DefaultBreakSpeed = 7.0f;
@@ -54,7 +54,7 @@ public static class Mishandling
         "CrucibleTongs", "Forceps", "Scoopula", "IronRing",   // (Spatula moved to porcelain/ceramic)
         "Tripod", "RetortStand", "WireGauze", "BunsenBurner", "AlcoholBurner",
         "TestTubeHolder_Metal", "Balance", "ClayTriangle",   // clay triangle = wire frame
-        "WaterBath", "UtilityClamp", "Aspirator",            // W5.12 metal apparatus
+        "WaterBath", "UtilityClamp", "Aspirator",            // metal apparatus
     };
 
     /// SoundBank key for a drop/impact clatter, by material.
@@ -86,15 +86,15 @@ public static class Mishandling
     public static bool IsSpilling(float tiltDegrees, bool held, float liquidMl, float tiltThreshold = 60f)
         => !held && liquidMl > 0.5f && tiltDegrees > tiltThreshold;
 
-    /// Impact-loudness curve (user 2026-07-12: clinks/shatters fired at full
+    /// Impact-loudness curve (clinks/shatters must not fire at full
     /// volume on the softest contacts): a gentle set-down is barely audible, a
     /// solid drop reads at full volume. Below ImpactSound's minSpeed nothing
     /// plays at all; this shapes what remains.
     public static float ImpactVolume01(float impactSpeed, float quietSpeed = 0.7f, float fullSpeed = 4.0f)
         => Mathf.Lerp(0.2f, 1f, Mathf.InverseLerp(quietSpeed, fullSpeed, impactSpeed));
 
-    /// Human-readable item name for mistake/shatter messages (user 2026-07-12:
-    /// "show the proper name of the asset shattered, not its code name").
+    /// Human-readable item name for mistake/shatter messages:
+    /// the proper name of what shattered, never its code name.
     /// Prefers the authored LabItem.displayName, then the contained chemical,
     /// then a prettified version of the GO/prefab code name.
     public static string DisplayNameFor(GameObject go)

@@ -18,6 +18,22 @@ MonoBehaviour:
   - subtitle: "Not quite this time \u2014 but every chemist learns by doing."
     seconds: 3.5
     face: 0
+    shot:
+      camera: Cam_PharmeeClose
+      moveTo: 
+      blend: 1
+      look: 1
+      lookMarker: 
+      fov: 45
+      pharmeePopIn: 1
   - subtitle: Review the steps and give it another go. You've got this!
     seconds: 3.5
     face: 0
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 1
+      look: 2
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0

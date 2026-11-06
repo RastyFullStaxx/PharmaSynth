@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// Overheat consequence at a Heat station (user 2026-07-10 error-effects pass):
+/// Overheat consequence at a Heat station (error-effects pass):
 /// when the station's TemperatureSim crosses its overheat threshold, the vessel
 /// on the pad starts SMOKING, its contents turn into a ruined dark mixture, the
 /// alarm fires, and an Overheat mistake is recorded. Attached per Heat station
@@ -38,7 +38,7 @@ public class OverheatEffects : MonoBehaviour
     /// turns into the ruined mixture — visible, irreversible feedback.
     ///
     /// Tutorial Mode keeps the smoke, the hiss, the alarm and the recorded mistake but
-    /// NOT the conversion (W5.39): it is the one genuinely irreversible state in the
+    /// NOT the conversion: it is the one genuinely irreversible state in the
     /// lab, and a practice run that cannot be finished teaches nothing. The player is
     /// still told, loudly, that they overheated it.
     private void RuinNearestVessel()

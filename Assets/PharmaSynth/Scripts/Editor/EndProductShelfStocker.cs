@@ -5,20 +5,20 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// ⛔ STOCKS NOTHING as of 2026-07-16 — kept only to mint Chem_Wine and to hold
-/// this reasoning where the next session will look for it.
+/// ⛔ STOCKS NOTHING — kept only to mint Chem_Wine and to hold
+/// this reasoning where the next maintainer will look for it.
 ///
-/// User 2026-07-16: "those that are the END products which is the goal of the
-/// experiments must not exist as we'll lose the very meaning of the experiment —
-/// the player will manually craft them." A ready-made bottle of the thing you are
-/// there to synthesise destroys the experiment, so products are no longer stocked
+/// The END products are the goal of the experiments and must not exist on the
+/// bench, or the experiment loses its meaning — the player crafts them by hand.
+/// A ready-made bottle of the thing you are
+/// there to synthesise destroys the experiment, so products are not stocked
 /// at all.
 ///
 /// Acetanilide · Benzamide · Chloroform · Wine are named as a reagent by NO
 /// manuscript procedure — their own chemical tests consume the product the player
 /// just made (Exp 5's "place 1 gram of acetanilide in a test tube" is testing YOUR
 /// synthesis). They are never inputs to anything, so they are simply absent rather
-/// than gated. Caffeine went with its dropped module.
+/// than gated.
 ///
 /// Ethanol · Acetone · Benzoic Acid are the exception: each is some module's goal
 /// AND a manuscript-listed reagent for others (Ethanol → Exp 2, 6; Acetone →
@@ -163,7 +163,7 @@ public static class EndProductShelfStocker
                    ?? AssetDatabase.LoadAssetAtPath<ChemicalData>(ChemDir + "Chem_Wine.asset");
         if (wine == null)
         {
-            var juice = lib.GetChemical("Mixed Fruit Juice");   // W5.9: renamed (manuscript excludes grapes)
+            var juice = lib.GetChemical("Mixed Fruit Juice");   // renamed (manuscript excludes grapes)
             wine = ScriptableObject.CreateInstance<ChemicalData>();
             wine.chemicalName = "Wine";
             wine.state = PhysicalState.Liquid;

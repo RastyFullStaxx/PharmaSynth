@@ -5,9 +5,9 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// Wires the 2026-07-10 NPC/audio polish batch into SampleScene:
-///   1. Pharmee expressions — PharmeeFace re-pointed at the robot's EYES + MOUTH
-///      meshes (was Ears_Black_Matt_0), default-happy; PharmeeMood resets the face
+/// Wires the NPC/audio polish into SampleScene:
+///   1. Pharmee expressions: PharmeeFace pointed at the robot's EYES + MOUTH
+///      meshes, default-happy; PharmeeMood resets the face
 ///      after every line; the gatekeeper's faceBehaviour drives gate moods.
 ///   2. Dr. Jimenez proctor roaming — ProctorRoamer + observation points at the
 ///      reagent shelf, equipment shelf, dynamic stage and fume hood.
@@ -17,12 +17,15 @@ using UnityEngine.UI;
 /// Tools ▸ PharmaSynth ▸ Wire NPC Polish (SampleScene, edit mode, idempotent).
 public static class LabNpcPolishBuilder
 {
-    /// Anything still reading GREEN on Pharmee goes blue (W5.55): the antenna the user
-    /// pointed out, and any other tinted part, without having to guess mesh names. Only
+    /// How far his idle clip lifts his soles above the bind pose (measured in Play).
+    public const float JimenezIdleLift = 0.036f;
+
+    /// Anything still reading GREEN on Pharmee goes blue: the antenna
+    /// itself, and any other tinted part, without having to guess mesh names. Only
     /// materials on the robot's own hierarchy are touched, and only when they are actually
     /// green — a run over an already-blue robot changes nothing, so the menu stays
     /// re-runnable. sharedMaterial deliberately: renderer.material would leak an instance
-    /// in edit mode (house rule).
+    /// in edit mode.
     static bool Greenish(Color c)
         => c.g > 0.35f && c.g > c.r * 1.35f && c.g > c.b * 1.2f;
 
@@ -82,14 +85,11 @@ public static class LabNpcPolishBuilder
         if (faceParts.Count > 0) face.BindRenderers(faceParts.ToArray());
         // The face is the only thing that CHANGES when she speaks, so it is the only thing
         // that can flash. Cap every expression under the bloom threshold.
-        // BLUE, not green (W5.55, user: "can you make his eye and moth in his face blue
-        // instead of green? as well as his green antenna for consistency"). The happy
-        // expression was the only green thing on a robot whose every emissive material is
-        // called Blue_Light, so it read as a different character mid-sentence. Warning stays
-        // amber: that one has to contrast, and amber against blue is the clearest pair.
-        // ⛔ Neutral and Happy are ONE colour (W5.58). The gate sets Neutral as each line
+        // BLUE, not green, matching the antenna and every other emissive material on the robot
+        // (all called Blue_Light); a green face reads as a different character mid-sentence.
+        // ⛔ Neutral and Happy are ONE colour. The gate sets Neutral as each line
         // starts and PharmeeMood resets to Happy as it ends, so any difference between the two
-        // becomes a step change on every sentence — which is what the user saw as flashing.
+        // becomes a step change on every sentence, which reads as flashing.
         // Warning stays amber: it fires only on a real mistake and is meant to be noticed.
         var faceBlue = PharmeeGlowMath.CapBrightness(new Color(0.3f, 0.72f, 1f), PharmeeGlowMath.FaceCeiling);
         face.SetPalette(faceBlue, faceBlue,
@@ -99,7 +99,7 @@ public static class LabNpcPolishBuilder
         EditorUtility.SetDirty(face);
         Debug.Log("[NpcPolish] face renderers: " + faceParts.Count + " (" + string.Join(", ", faceParts.ConvertAll(r => r.name)) + ")");
 
-        // ---- 1b. Body glow (2026-09-05): the FBX's Blue_Light material blazes at 8x on the
+        // ---- 1b. Body glow: the FBX's Blue_Light material blazes at 8x on the
         // body panels and hover rings; PharmeeFace only covers the eyes and mouth.
         var glow = robot.GetComponentInChildren<PharmeeGlow>(true);
         if (glow == null) glow = robot.AddComponent<PharmeeGlow>();
@@ -145,7 +145,7 @@ public static class LabNpcPolishBuilder
             { p.objectReferenceValue = face; soBr.ApplyModifiedProperties(); }
         }
 
-        // ---- 1b. Give way (user 2026-07-10) ---------------------------------
+        // ---- 1b. Give way ---------------------------------
         // Pharmee steps aside when the player walks into him.
         var floatBob = robot.GetComponentInChildren<FloatBob>(true);
         if (floatBob != null)
@@ -162,15 +162,15 @@ public static class LabNpcPolishBuilder
         }
         else Debug.LogWarning("[NpcPolish] no FloatBob on RobotNPC — give-way skipped");
 
-        // ---- 1c. Gestures (W5.38) -------------------------------------------
+        // ---- 1c. Gestures -------------------------------------------
         // The animation set: PharmeeState -> body. He has NO skeleton (no skins, no joints,
         // no LimbNodes in either model file), so this is procedural and rides on the two
         // components that already own his transforms.
         var attitude = robot.GetComponentInChildren<PharmeeAttitude>(true);
         if (attitude != null)
         {
-            // The model ships two hand pivots ("Hand origin", "Hand origin.002") that nothing
-            // had ever moved. Matched by prefix because the FBX importer sorts and may rename.
+            // The model ships two hand pivots ("Hand origin", "Hand origin.002").
+            // Matched by prefix because the FBX importer sorts and may rename.
             Transform hL = null, hR = null;
             foreach (var t in robot.GetComponentsInChildren<Transform>(true))
             {
@@ -180,8 +180,7 @@ public static class LabNpcPolishBuilder
             attitude.BindHands(hL, hR);
 
             // ENFORCE the tuned values. PharmeeAttitude is authored directly in the scene, so
-            // a changed C# default NEVER reaches the saved instance - the exact failure that
-            // cost the W5.35 waypoint-sizing batch. Set them explicitly, every run.
+            // a changed C# default NEVER reaches the saved instance. Set them explicitly, every run.
             var soAtt = new SerializedObject(attitude);
             SetFloat(soAtt, "talkPitchDegrees", 6.5f);
             SetFloat(soAtt, "talkRollDegrees", 3.5f);
@@ -245,7 +244,7 @@ public static class LabNpcPolishBuilder
             if (roamer == null) roamer = jim.AddComponent<ProctorRoamer>();
             roamer.Bind(animator, runner, points);
 
-            // Examiner VOICE (2026-07-10): stern greeting + periodic proctor remarks,
+            // Examiner VOICE: stern greeting + periodic proctor remarks,
             // each driving the animator's "Talking" bool. Uses his narration channel
             // if he has one (else talks via animation only).
             var exam = jim.GetComponent<ExaminerNPC>();
@@ -269,7 +268,13 @@ public static class LabNpcPolishBuilder
                 Bounds jb = jrs[0].bounds;
                 foreach (var r in jrs) jb.Encapsulate(r.bounds);
                 cc.height = Mathf.Max(1f, jb.size.y * 0.95f);
-                cc.center = jim.transform.InverseTransformPoint(new Vector3(jb.center.x, jb.min.y + cc.height * 0.5f + 0.02f, jb.center.z));
+                // A CharacterController rests with its capsule bottom one skinWidth ABOVE
+                // the ground. His bind-pose soles sit JimenezIdleLift below where the idle
+                // clip holds them (the model is sunk by that much so the ANIMATED feet meet
+                // the floor), so the bottom goes skinWidth above the idle soles. Offsetting
+                // from the bind feet instead ("bind feet + 0.02") floats him ~10 cm.
+                cc.center = jim.transform.InverseTransformPoint(new Vector3(jb.center.x,
+                    jb.min.y + JimenezIdleLift + cc.height * 0.5f + cc.skinWidth, jb.center.z));
             }
             else { cc.height = 1.7f; cc.center = new Vector3(0f, 0.88f, 0f); }
             cc.radius = 0.28f;
@@ -305,7 +310,7 @@ public static class LabNpcPolishBuilder
         {
             var hum = host.GetComponent<ProximityHum>();
             if (hum == null) hum = host.AddComponent<ProximityHum>();
-            hum.Bind("ac-hum", 0.5f);      // dedicated AC compressor loop (was ambient-lab)
+            hum.Bind("ac-hum", 0.5f);      // dedicated AC compressor loop
             EditorUtility.SetDirty(host);
             hums++;
         }
@@ -317,8 +322,8 @@ public static class LabNpcPolishBuilder
     }
 
     /// Build (idempotently) a world-space overhead subtitle bubble on Dr. Jimenez so
-    /// his examiner remarks are VISIBLE (he had no narration channel — talked only via
-    /// animation). Mirrors Pharmee's only-while-speaking bubble; returns its controller.
+    /// his examiner remarks are VISIBLE. Mirrors Pharmee's only-while-speaking bubble;
+    /// returns its controller.
     static NPCNarrationController BuildJimenezBubble(GameObject jim)
     {
         var existing = jim.transform.Find("JimenezSubtitles");
@@ -375,13 +380,11 @@ public static class LabNpcPolishBuilder
         so.FindProperty("playOnStart").boolValue = false;
 
         // ⛔ This method DESTROYS the previous JimenezSubtitles object, so it destroys his
-        // voice wiring with it — and a fresh NPCNarrationController defaults to
-        // `speaker = Pharmee` with a NULL `voiceBank`. That is why Dr. Jimenez went silent
-        // after W5.46/W5.47 ran this builder to bind Pharmee's glow (found 2026-09-05): his
-        // subtitle bubble still appeared, but every line resolved to no clip. The documented
-        // repair, `Fix Voice Audibility + Music Ducking`, restores the SPEAKER and never the
-        // CLIPS, so following it exactly still left him mute. Wire it here instead, so one
-        // builder run leaves a complete channel and no menu has to be remembered.
+        // voice wiring with it, and a fresh NPCNarrationController defaults to
+        // `speaker = Pharmee` with a NULL `voiceBank`: the subtitle bubble still appears but
+        // every line resolves to no clip. `Fix Voice Audibility + Music Ducking` restores the
+        // SPEAKER and never the CLIPS, so the channel is wired completely here and one
+        // builder run leaves it working with no follow-up menu.
         so.FindProperty("voiceBank").objectReferenceValue =
             AssetDatabase.LoadAssetAtPath<VoiceBank>(VoiceImportTool.BankPath);
         so.FindProperty("speaker").enumValueIndex = (int)VoiceSpeaker.Jimenez;

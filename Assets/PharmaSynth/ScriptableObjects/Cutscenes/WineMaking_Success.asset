@@ -18,10 +18,34 @@ MonoBehaviour:
   - subtitle: Outstanding work!
     seconds: 2.5
     face: 1
+    shot:
+      camera: Cam_PharmeeClose
+      moveTo: 
+      blend: 1
+      look: 1
+      lookMarker: 
+      fov: 45
+      pharmeePopIn: 1
   - subtitle: "Clear, aromatic, well-balanced \u2014 a wine to be proud of. Cheers
       to good technique!"
     seconds: 4.5
     face: 1
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 1
+      look: 3
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: Your results are recorded. Dr. Jimenez will be impressed.
     seconds: 4
     face: 1
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0

@@ -6,15 +6,15 @@ using UnityEditor;
 using UnityEngine;
 
 /// Softens how far Dr. Jimenez throws his arms, so his lab coat stops visibly dragging
-/// (user 2026-09-05, with a screenshot of the coat torn open at the hip).
+/// (it reads as the coat torn open at the hip).
 ///
-/// ⛔ WHY THIS EXISTS AND THE RE-WEIGHT DOES NOT. The obvious fix — move the coat's vertex
-/// weights off the arm bones — was built, measured and REVERTED. On this asset the coat and
-/// the sleeve are one continuous surface with no seam to cut along, so any weight change big
-/// enough to free the coat is big enough to rip it: against the untouched mesh, worst edge
-/// stretch went 4.2x → 14.9x and torn edges 32 → 174. Smoothing the transfer across a band
-/// removed the tearing but then barely moved the coat either (1625 → 1557 dragged vertices).
-/// The geometry, not the weighting, is the limit. See JimenezRigMath.TransferFraction.
+/// ⛔ WHY THIS EXISTS INSTEAD OF A RE-WEIGHT. Moving the coat's vertex weights off the arm
+/// bones does not work on this asset: the coat and the sleeve are one continuous surface with
+/// no seam to cut along, so any weight change big enough to free the coat is big enough to rip
+/// it (measured against the untouched mesh, worst edge stretch 4.2x → 14.9x and torn edges
+/// 32 → 174). Smoothing the transfer across a band removes the tearing but then barely moves
+/// the coat (1625 → 1557 dragged vertices). The geometry, not the weighting, is the limit.
+/// See JimenezRigMath.TransferFraction.
 ///
 /// So this attacks the OTHER side of the equation: the coat only drags as far as the arm
 /// swings. His clips are HUMANOID, so the knobs are muscle curves (-1..1 across each joint's
@@ -78,10 +78,9 @@ public static class JimenezArmDamper
 
                 var keys = curve.keys;
                 // ⛔ The MEAN of the curve, not keys[0]. Damping toward the opening pose
-                // leaves the opening pose untouched by construction — and this clip OPENS at
-                // its widest reach, so a first-key reference changed the numbers in the log
-                // and not one pixel on screen (verified by render, 2026-09-05). The mean is
-                // the centre the gesture swings about, so pulling toward it genuinely
+                // leaves the opening pose untouched by construction, and this clip OPENS at
+                // its widest reach, so a first-key reference changes nothing on screen.
+                // The mean is the centre the gesture swings about, so pulling toward it
                 // narrows the swing at both extremes.
                 float rest = 0f;
                 foreach (var k in keys) rest += k.value;

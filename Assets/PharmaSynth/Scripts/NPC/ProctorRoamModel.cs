@@ -1,8 +1,8 @@
 using System;
 
-/// Pure state machine for Dr. Jimenez's proctor roaming (user 2026-07-10: "roam
-/// around the room time to time, observing us or looking at assets like the shelf…
-/// walk back to his original position to facilitate the quiz"). No Unity types.
+/// Pure state machine for Dr. Jimenez's proctor roaming (he
+/// roams the room from time to time, observing the player or looking at the shelves,
+/// then walks back to his original position to run the quiz). No Unity types.
 ///
 /// Loop: AtHome (idle a while) → WalkingOut (to the next observation point) →
 /// Observing (look at it) → WalkingHome → AtHome … . Round-robin over the points

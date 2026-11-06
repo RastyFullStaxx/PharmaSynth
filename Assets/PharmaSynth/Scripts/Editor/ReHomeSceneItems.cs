@@ -2,20 +2,19 @@
 using UnityEditor;
 using UnityEngine;
 
-/// Adopts every scene item's CURRENT transform as its DropRespawn home (user
-/// 2026-07-10: "I have manually relocated some equipment, please make those their
-/// default spawn point"). Without this, manually moved props teleport back to
-/// their old serialized homes after ~25 s idle / a kill-Z fall / a reset.
+/// Adopts every scene item's CURRENT transform as its DropRespawn home, so
+/// equipment relocated by hand keeps its new spot as its
+/// default spawn point. Without this, manually moved props teleport back to
+/// their previous serialized homes after ~25 s idle / a kill-Z fall / a reset.
 ///
 /// Tools ▸ PharmaSynth ▸ Re-Home Scene Items (Adopt Current) — run in SampleScene
 /// edit mode after ANY manual re-arrangement, then save the scene.
 ///
-/// ⛔ NEVER run the ALL-items version straight after a simulator (W5.56). Every simulator
+/// ⛔ NEVER run the ALL-items version straight after a simulator. Every simulator
 /// calls `DropRespawn.ResetAllHome()`, which teleports all 120 items back to their BAKED
-/// homes — so "adopt current" then re-bakes the pose the reset just restored and writes it
-/// to disk, silently destroying whatever the user had placed by hand. That is exactly how
-/// two distilling flasks lost their placement twice, with nothing logged to say so: the
-/// result is self-consistent, just wrong. Safe order is REOPEN the scene (discarding), then
+/// homes, so "adopt current" then re-bakes the pose the reset just restored and writes it
+/// to disk, silently destroying whatever had been placed by hand. Nothing is logged and
+/// the result is self-consistent, just wrong. Safe order is REOPEN the scene (discarding), then
 /// re-home, then save. `Re-Home MOVED Items Only` below is the version that cannot do this.
 public static class ReHomeSceneItems
 {

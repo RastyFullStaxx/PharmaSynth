@@ -81,14 +81,23 @@ public class VesselFlameTask : MonoBehaviour
         if (!_runner.Graph.IsAvailable(_taskId) || _runner.Graph.IsComplete(_taskId)) return false;
         bool served = _binding == null || _binding.ReadyFor(_taskId);
         foreach (var m in FindObjectsByType<Matchstick>(FindObjectsSortMode.None))
-            if (m != null && FlameTestMath.Confirms(served, m.IsLit,
-                    Vector3.Distance(m.transform.position, _lp.transform.position)))
+            if (m != null && FlameTestMath.Confirms(served, m.IsLit, MatchDistance(m)))
                 return Confirm();
         foreach (var bu in FindObjectsByType<BurnerController>(FindObjectsSortMode.None))
             if (bu != null && FlameTestMath.Confirms(served, bu.IsLit,
                     Vector3.Distance(FlameTestMath.FlamePos(bu), _lp.transform.position)))
                 return Confirm();
         return false;
+    }
+
+    /// Match HEAD to the nearest point of the vessel — the flame goes to the sample's
+    /// mouth, not its pivot (pivot-to-match-origin missed matches held right at the rim).
+    private float MatchDistance(Matchstick m)
+    {
+        var col = _lp.GetComponentInParent<Collider>();
+        Vector3 head = m.HeadPosition;
+        float toPivot = Vector3.Distance(head, _lp.transform.position);
+        return col != null ? Mathf.Min(toPivot, Vector3.Distance(head, col.bounds.ClosestPoint(head))) : toPivot;
     }
 
     private bool Confirm()

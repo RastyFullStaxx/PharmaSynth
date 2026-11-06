@@ -19,8 +19,8 @@ public static class PharmeeGlowMath
     /// and mouth, and the authored colours peaked at EXACTLY 1.0 \u2014 the bloom threshold \u2014
     /// on every expression (happy g=1, warning r=1, neutral b=1). `PharmeeMood` swaps the
     /// expression PER LINE, so the one thing that changed when she spoke was also the one
-    /// thing still clearing the threshold. W5.47 dimmed her body and hull and left this
-    /// alone, which is why she still flashed while talking (user, 2026-09-05).
+    /// thing clearing the threshold, so dimming the body and hull alone does not stop the
+    /// flash.
     ///
     /// Below the body glow, so the face reads as part of her rather than as a headlight.
     public const float FaceCeiling = 0.55f;
@@ -59,8 +59,7 @@ public static class PharmeeGlowMath
         => rendererName != null && rendererName.EndsWith("_White_Glossy_0");
 }
 
-/// Keeps Pharmee from blowing out (user 2026-09-05: "too flashy", then a screenshot of a
-/// white ball while she speaks).
+/// Keeps Pharmee from blowing out into a white ball while she speaks.
 ///
 /// TWO separate causes, measured rather than guessed:
 ///   1. The robot FBX ships one emissive material, `Blue_Light`, at HDR (0.46, 2.75, 8.0) —

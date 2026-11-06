@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-/// Knowledge base behind the hover-inspector pane (user 2026-07-10): pointing at a
+/// Knowledge base behind the hover-inspector pane: pointing at a
 /// piece of equipment, a reagent bottle or an NPC pops a card with its name and a
 /// short, learn-as-you-play blurb — "what it's for + how to use it" for apparatus,
 /// trivia + hazard for reagents. Pure + tested; the resolver (HoverInspector) feeds
@@ -148,7 +148,7 @@ public static class LabInfoDatabase
         AddEquip("separatory", "Separatory Funnel", "Pear-shaped funnel with a tap for separating two liquid layers that don't mix. Let them settle, then drain the lower layer off through the tap.");
         AddEquip("florence", "Florence Flask", "Round-bottomed boiling flask. Its even curve heats uniformly, so it's used for distillation and reactions that must reach a steady boil.");
         AddEquip("thermometer", "Thermometer", "Reads the temperature of a bath or mixture. Watch it so you heat to the range a step specifies and never overshoot — overheating ruins the product.");
-        // W5.12 distillation set + methane splint.
+        // Distillation set + methane splint.
         AddEquip("condenser", "Condenser", "Liebig condenser: hot vapour passes through the inner tube while cold water flows around the outer jacket, cooling the vapour back to liquid. Clamp it sloping down from the flask so the distillate runs into the receiver.");
         AddEquip("deliverytube", "Delivery Tube", "Bent glass tube (with rubber) that carries an evolved gas or vapour from a stoppered flask to where it's collected — e.g. leading methane over water, or CO2 into limewater.");
         AddEquip("waterbath", "Water Bath", "A bath of hot water that heats a flask GENTLY and evenly, below water's boiling point — used for warming volatile or flammable mixtures where a direct flame would be dangerous.");

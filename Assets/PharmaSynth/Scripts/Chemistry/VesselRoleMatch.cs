@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 
 /// Which ROLE a rack tube is playing, worked out from what the player poured into it
-/// (user 2026-09-05, in the headset: "the player can pick any tube and that guide on the
-/// set tube will be useless — is it possible for the tube to dynamically detect and set
-/// the guide text?").
+/// (the player can pick any tube, so a guide fixed to one tube is useless; the tube
+/// detects its role and sets the guide text dynamically).
 ///
 /// Exp 2 authors five enol tubes, four alkaline-oxidation tubes and four acidic ones, and
 /// each was pinned to a SPECIFIC bench tube. In VR the player grabs whichever tube is
@@ -77,7 +76,7 @@ public static class VesselRoleMatch
     public static bool IsImpossible(IReadOnlyList<int> candidates)
         => candidates == null || candidates.Count == 0;
 
-    /// Which POOL a bench tube belongs to, from its scene name (W5.53).
+    /// Which POOL a bench tube belongs to, from its scene name.
     ///
     /// ⛔ All 23 bench tubes share ONE LabItem itemId (`kit-testtube`), hard-glass included, so
     /// the name prefix is the only family signal there is. A hard-glass tube must NEVER pool
@@ -95,7 +94,7 @@ public static class VesselRoleMatch
         return "";
     }
 
-    /// Which POOL any bench glassware belongs to (W5.54): tubes by name family (hard glass
+    /// Which POOL any bench glassware belongs to: tubes by name family (hard glass
     /// shares their itemId), everything else by its LabItem itemId — the spares are named
     /// `Eq_WatchGlass`, `Kit_WatchGlass_1_11`, `WatchGlass_2`, so no name rule survives them.
     /// "" when the object is not poolable at all.

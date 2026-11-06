@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// Drives the mirror-only first-person avatar (user 2026-07-10): stands the body at
+/// Drives the mirror-only first-person avatar: stands the body at
 /// the player's feet, turns it to the head's yaw, and feeds the Animation-Rigging IK
 /// targets (head + both hands) from the HMD and controllers so the reflection moves
 /// with you. Attach to the avatar root; `PlayerAvatarBuilder` wires the transforms.
@@ -58,8 +58,8 @@ public class PlayerAvatarRig : MonoBehaviour
 
         // Feed the IK targets from the live HMD + controllers.
         // The head bone's axis convention is NOT the HMD's (Tripo bones aim +Y along
-        // the bone) — driving it with the raw HMD rotation twisted the head 180°
-        // (user 2026-07-10: "in the mirror I am facing at the back"). Instead: keep
+        // the bone) — driving it with the raw HMD rotation twists the head 180°
+        // (the reflection faces backwards). Instead: keep
         // the bone's authored pose and apply only the HMD's DELTA from body-forward.
         var bodyRot = Quaternion.Euler(0f, _yaw, 0f);
         if (headTarget != null)

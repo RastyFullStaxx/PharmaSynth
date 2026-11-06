@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-/// The three personal-protective-equipment pieces (user 2026-07-10: goggles + gloves
+/// The three personal-protective-equipment pieces (goggles + gloves
 /// are required alongside the coat before experimenting).
 public enum PPEPiece { Coat, Goggles, Gloves }
 

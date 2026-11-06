@@ -18,11 +18,35 @@ MonoBehaviour:
   - subtitle: "Hmm \u2014 that didn't go to plan."
     seconds: 3
     face: 2
+    shot:
+      camera: Cam_PharmeeClose
+      moveTo: 
+      blend: 1
+      look: 1
+      lookMarker: 
+      fov: 45
+      pharmeePopIn: 1
   - subtitle: A test result was misread or a reagent was off. Re-check each observation
       carefully.
     seconds: 4.5
     face: 2
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 1
+      look: 2
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: "No harm done \u2014 that's what practice is for. Let's reset and try
       again."
     seconds: 4
     face: 0
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0

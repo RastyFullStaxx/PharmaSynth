@@ -1,7 +1,7 @@
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// The GRIND verb (W5.8): work the pestle in circles inside this mortar's bowl
+/// The GRIND verb: work the pestle in circles inside this mortar's bowl
 /// and the grind task completes (dual-path on Methane: the legacy zone-touch
 /// still works). When done, a powder heap appears in the bowl. A null/empty
 /// taskId makes it purely educational — staged mortars still grind visually.
@@ -15,11 +15,11 @@ public class GrindController : MonoBehaviour
     private bool _doneAnnounced;
     private int _lastShownPct = -1;
     private float _nextPopupAt;
-    private float _nextDustAt;   // throttles the grinding dust puff (W5.12)
+    private float _nextDustAt;   // throttles the grinding dust puff
 
-    // Forgiving completion (user 2026-07-15: grinding did nothing). VR grinding is
-    // rarely a clean circle, and tracking the pestle's ORIGIN missed the bowl when
-    // the origin was the handle. Now the pestle TIP (closest point to the bowl) is
+    // Forgiving completion. VR grinding is
+    // rarely a clean circle, and tracking the pestle's ORIGIN misses the bowl when
+    // the origin is the handle. The pestle TIP (closest point to the bowl) is
     // tracked, and the grind completes on EITHER 3 revs OR ~1.1 m of any motion
     // inside a generous bowl radius.
     private float _travel;
@@ -38,7 +38,7 @@ public class GrindController : MonoBehaviour
 
     /// Pure (suite): may this mortar be ground? Only when it actually holds the
     /// reagent — grinding an EMPTY mortar must not complete the step while the
-    /// powder is still on the scoop (user 2026-07-15). A mortar with no
+    /// powder is still on the scoop. A mortar with no
     /// LiquidPhysics at all (cosmetic/educational) always grinds.
     public static bool CanGrind(bool hasVessel, float contentsMl) => !hasVessel || contentsMl > 0.5f;
 
@@ -64,9 +64,9 @@ public class GrindController : MonoBehaviour
     public void SetPestle(Transform pestle) => _pestle = pestle;
 
     /// Hand the grind its runner at runtime — _runner isn't serialized, so after a
-    /// domain reload it's null and Register() would no-op (the task never completed).
+    /// domain reload it's null and Register() would no-op (the task never completes).
     /// The Methane rig calls this when it aims the mortar at "prepare-mixture"
-    /// (user 2026-07-15: grinding produced no completion).
+    /// so the runner is set.
     public void BindRunner(ExperimentRunner runner)
     {
         _runner = runner;
@@ -74,13 +74,13 @@ public class GrindController : MonoBehaviour
         Register();
     }
 
-    /// Re-point which task this grind completes (W5.12: the Methane rig aims the
+    /// Re-point which task this grind completes (the Methane rig aims the
     /// shared workspace mortar at "prepare-mixture" while its tutorial runs, then
     /// clears it back to cosmetic afterwards). Re-registers the condition.
     public void SetTaskId(string taskId) { _taskId = taskId; Register(); }
     public string TaskId => _taskId;
 
-    // W5.9: also re-Register on enable (see StirController note).
+    // Also re-Register on enable (see StirController note).
     private void OnEnable() { Resubscribe(); Register(); }
     private void OnDisable() { if (_runner != null) _runner.ExperimentStarted -= OnStarted; _subscribed = false; }
 
@@ -104,8 +104,8 @@ public class GrindController : MonoBehaviour
     }
 
     /// Bowl centre in world space. A hand-placed "BowlAnchor" child wins (drag it
-    /// into the bowl so the ground powder + dust land exactly right — user
-    /// 2026-07-15); otherwise the middle of the mortar, a touch above centre.
+    /// into the bowl so the ground powder + dust land exactly right);
+    /// otherwise the middle of the mortar, a touch above centre.
     private Vector3 BowlCenter()
     {
         var a = transform.Find("BowlAnchor");
@@ -160,8 +160,8 @@ public class GrindController : MonoBehaviour
         if (_pestle == null) return;
         if (_runner != null && !string.IsNullOrEmpty(_taskId) && !_runner.IsRunning) return;
 
-        // Grind ONLY while the pestle is actually held (user 2026-07-15: the mortar
-        // smoked at play-start because a pestle resting in the bowl kept "grinding").
+        // Grind ONLY while the pestle is actually held (a pestle resting in the bowl
+        // must not keep "grinding" and smoke the mortar at play-start).
         var pg = _pestle.GetComponent<XRGrab>();
         bool held = pg != null && pg.isSelected;
 
@@ -169,9 +169,9 @@ public class GrindController : MonoBehaviour
         Vector3 tip = PestleTip(bowl);
         bool reaching = held && Vector3.Distance(tip, bowl) <= GrindReach;
 
-        // …and only while the mortar actually CONTAINS the reagent (user 2026-07-15:
-        // you could grind an empty mortar and still finish the step while the powder
-        // was still sitting on the scoop). A mortar with no LiquidPhysics is a
+        // …and only while the mortar actually CONTAINS the reagent, so an
+        // empty mortar cannot finish the step while the powder
+        // is still on the scoop. A mortar with no LiquidPhysics is a
         // cosmetic/educational mortar and still grinds freely.
         bool inside = reaching && HasMixture();
         if (reaching && !HasMixture() && Application.isPlaying && Time.time >= _nextHintAt)
@@ -202,7 +202,7 @@ public class GrindController : MonoBehaviour
         float progress = Mathf.Max(_math.Progress01, _travel / TravelNeeded);
 
         // Grinding feedback while it works: a rising tan dust puff + a soft
-        // repeating grind sound, so the action clearly reads (user 2026-07-15).
+        // repeating grind sound, so the action clearly reads.
         if (!done && Application.isPlaying && Time.time >= _nextDustAt)
         {
             _nextDustAt = Time.time + 0.25f;
@@ -227,8 +227,7 @@ public class GrindController : MonoBehaviour
     }
 
     /// On completion, UPDATE the existing scooped mound rather than spawn a second
-    /// blob (user 2026-07-15: "the gray sludge should just be updated, not produce
-    /// a new one on top"). Reuses the mortar's "Powder" child; only makes one if
+    /// blob. Reuses the mortar's "Powder" child; only makes one if
     /// nothing was scooped in. Recolours it to a fine, mixed look.
     private void MarkGround()
     {

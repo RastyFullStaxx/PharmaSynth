@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// Pure weighing rules (W5.8): the balance pan auto-tares the vessel, so the
+/// Pure weighing rules: the balance pan auto-tares the vessel, so the
 /// display reads the CONTENTS in grams (1 g/ml proxy — real densities are out
 /// of scope per the client's record-only-yield ruling). The suite pins these.
 public static class WeighMath
@@ -11,8 +11,8 @@ public static class WeighMath
 
     /// What the pan actually READS: the load's own mass PLUS its contents. A real
     /// bench balance is not auto-taring, and reading 0.00 g for an empty beaker or
-    /// a bare mortar is exactly why the scale looked broken (user 2026-07-27:
-    /// "I am putting things like the beaker... the text dont update"). The graded
+    /// a bare mortar makes the scale look broken.
+    /// The graded
     /// weigh condition still looks only at the CONTENTS (Satisfied, below).
     /// rbMassKg &lt;= 0 (no rigidbody) falls back to a token 5 g so the head still moves.
     public static float PanMass(float contentsMlOrG, float rbMassKg)
@@ -23,6 +23,10 @@ public static class WeighMath
         => Mathf.Abs(massG - targetG) <= Mathf.Max(1f, targetG * Mathf.Max(0f, tolFrac));
 
     /// The load must REST on the pan for a beat (no drive-by completions).
+    /// Off the pan for no longer than this = a bump, not a removal (suite-pinned).
+    public const float BumpGraceSeconds = 0.3f;
+    public static bool WithinBumpGrace(float secondsOff) => secondsOff >= 0f && secondsOff <= BumpGraceSeconds;
+
     public static bool PanSettled(float secondsOnPan, float minSeconds = 0.75f)
         => secondsOnPan >= minSeconds;
 

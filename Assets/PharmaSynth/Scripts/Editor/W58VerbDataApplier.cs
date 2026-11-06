@@ -3,15 +3,14 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// One-shot, idempotent data pass for the W5.8 verb overhaul: re-points the
-/// layouts whose tasks are now TOOL verbs (weigh/stir/grind) and wires the
+/// One-shot, idempotent data pass for the tool verbs: re-points the
+/// layouts whose tasks are TOOL verbs (weigh/stir/grind) and wires the
 /// scene-side pieces (Methane's hand-built mortar, the matches-box striker).
 ///   • Acetone: `weigh-acetates` zone-touch → Weigh (scoopula on the pan).
 ///   • Benzamide: `stand` ("Stir & stand") zone-touch → Stir (glass rod).
 ///   • Scene: Methane's Eq_Motar/Eq_Pestle get a GrindController completing
 ///     `prepare-mixture` (dual-path with the legacy zone-touch), and the
 ///     matches dispenser box becomes a MatchStrikerSurface.
-/// (The Aspirin + Caffeine passes were dropped 2026-07-16 with their modules.)
 public static class W58VerbDataApplier
 {
     const string Dir = "Assets/PharmaSynth/ScriptableObjects/Layouts/";
@@ -74,9 +73,8 @@ public static class W58VerbDataApplier
             sceneChanges++;
         }
 
-        // Dropper verb (2026-07-16): DropperController was authored for Exp 2 but
-        // never ATTACHED to anything — the user grabbed Eq_Dropper in the headset and
-        // nothing responded, because no component was listening (0 in the scene).
+        // Dropper verb: DropperController does nothing unless ATTACHED, and no
+        // scene object carries one by default, so grabbing Eq_Dropper would do nothing.
         // Every Eq_Dropper* gets the verb: grip to hold, touch a bottle to draw,
         // TRIGGER to release exactly one counted drop.
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -90,7 +88,7 @@ public static class W58VerbDataApplier
             }
         }
 
-        // Funnels are liquid PASS-THROUGH (2026-07-17): without the marker the
+        // Funnels are liquid PASS-THROUGH: without the marker the
         // pour ray landed ON the funnel's collider and wasted the stream as a
         // puddle there — a filter pour never reached the beaker underneath.
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -103,7 +101,7 @@ public static class W58VerbDataApplier
             }
         }
 
-        // TIME-SKIP is a scene singleton (2026-07-17): one controller listens for
+        // TIME-SKIP is a scene singleton: one controller listens for
         // any longProcess task (a week's fermentation…) and fades black → "time
         // passed". Lives on the runner's object; self-subscribes in Awake.
         if (runner != null && runner.GetComponent<TimeSkipController>() == null)
@@ -112,7 +110,7 @@ public static class W58VerbDataApplier
             sceneChanges++;
         }
 
-        // The WATER BATH is a zone-free tool (2026-07-17): fill it with distilled
+        // The WATER BATH is a zone-free tool: fill it with distilled
         // water, put a lit burner beside it, and it warms any vessel brought
         // close — anywhere in the lab. Needs a liquid receiver (the water the
         // player pours), a heat model, its live label, and the controller.
@@ -149,13 +147,13 @@ public static class W58VerbDataApplier
             if (wbc == null) { wbc = t.gameObject.AddComponent<WaterBathController>(); sceneChanges++; }
             wbc.Bind(blp, bts, blabel);
             blabel.SetLabel(WaterBathMath.StatusLine(false, false, 25f), 1.6f);
-            // User-scalable effect zones (2026-07-18): scale the wire sphere in
-            // the editor and that IS the reach — the controller reads it.
+            // Scalable effect zones: scale the wire sphere in
+            // the editor and that IS the reach; the controller reads it.
             sceneChanges += EnsureZoneAnchor(t, "HeatZone", WaterBathMath.VesselRadius, new Color(1f, 0.55f, 0.15f, 0.9f));
             sceneChanges += EnsureZoneAnchor(t, "BurnerZone", WaterBathMath.BurnerRadius, new Color(1f, 0.3f, 0.15f, 0.9f));
         }
 
-        // The ICE BATH is the water bath's cold twin (2026-07-18, Exp 4's
+        // The ICE BATH is the water bath's cold twin (Exp 4's
         // crystallisation): the hand-placed Raw_IceBucket chills any vessel
         // brought to it — zone-free, needs nothing lit or poured.
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -169,9 +167,8 @@ public static class W58VerbDataApplier
             sceneChanges += EnsureZoneAnchor(t, "ChillZone", IceBathMath.VesselRadius, new Color(0.45f, 0.75f, 1f, 0.9f));
         }
 
-        // The FUME HOOD narrates itself (2026-07-18, user: "how do we use the
-        // fumehood?"): a label on the WorkVolume says what belongs inside and
-        // flips to "<vessel> protected ✓" while one actually is.
+        // The FUME HOOD narrates itself: a label on the WorkVolume says what
+        // belongs inside and flips to "<vessel> protected ✓" while one actually is.
         {
             var hood = Object.FindAnyObjectByType<FumeHoodZone>(FindObjectsInactive.Include);
             if (hood != null)
@@ -181,13 +178,11 @@ public static class W58VerbDataApplier
                 { hood.gameObject.AddComponent<FumeHoodStatusLabel>().Bind(hood, hlabel); sceneChanges++; }
                 hlabel.SetLabel(FumeHoodStatusLabel.StatusLine(null), 2.2f);
 
-                // PHYSICAL SHELL (2026-07-18, user: "suppose we grab something
-                // and it passes through to the fume hood — we won't get it
-                // back"): the Tripo hood model has ZERO colliders, so every
-                // wall was passable and a released item could vanish behind the
-                // panels. Five thin STATIC boxes hug the WorkVolume — back,
-                // left, right, top, and a COUNTER to set the vessel on — with
-                // the FRONT left open: that IS the door (reach in, work, take
+                // PHYSICAL SHELL: the Tripo hood model has ZERO colliders, so without
+                // this every wall is passable and a released item can vanish behind
+                // the panels and never come back. Five thin STATIC boxes hug the
+                // WorkVolume (back, left, right, top, and a COUNTER to set the vessel
+                // on) with the FRONT left open: that IS the door (reach in, work, take
                 // it back; nothing can ever be trapped). The open side faces
                 // the bench (where the Raw_ bottles live); hand-adjust the
                 // HoodShell_* children if the model's walls sit differently.
@@ -222,7 +217,7 @@ public static class W58VerbDataApplier
             }
         }
 
-        // Exp 3's CO₂ delivery reach gets the same user-scalable zone anchor
+        // Exp 3's CO₂ delivery reach gets the same scalable zone anchor
         // (flask → limewater tube; FermentationController reads it).
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
@@ -230,7 +225,7 @@ public static class W58VerbDataApplier
             sceneChanges += EnsureZoneAnchor(t, "FermentZone", FermentationMath.DeliveryRadius, new Color(0.7f, 1f, 0.5f, 0.9f));
         }
 
-        // NAKED FLAME (2026-07-18, Exp 6 dry distillation): every burner heats
+        // NAKED FLAME (Exp 6 dry distillation): every burner heats
         // vessels held over its flame — the ONE heat source beyond the water
         // bath's 100 °C cap. That is what the hard-glass tubes exist for.
         foreach (var bc in Object.FindObjectsByType<BurnerController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -239,7 +234,7 @@ public static class W58VerbDataApplier
             { bc.gameObject.AddComponent<NakedFlameHeat>().Bind(bc); sceneChanges++; }
         }
 
-        // THE BENCH BALANCE becomes the live weigh tool (2026-07-18, Exp 6):
+        // THE BENCH BALANCE becomes the live weigh tool (Exp 6):
         // grams display + a pan trigger whose occupancy VesselWeighTask reads.
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
@@ -295,8 +290,7 @@ public static class W58VerbDataApplier
         {
             spatScoop.SetGramsPerDip(ScoopMath.GramsPerSpatula);
             // The porcelain spatula is a thin flat blade → its 0.1 g smear is a
-            // flat, slightly-elongated wafer, NOT the scoopula's rounded bowl-pile
-            // (user 2026-07-18: "not supposed to be the same shape as the porcelain's").
+            // flat, slightly-elongated wafer, NOT the scoopula's rounded bowl-pile.
             spatScoop.SetHeapScale(new Vector3(0.012f, 0.004f, 0.022f));
             EditorUtility.SetDirty(spatScoop);
             sceneChanges++;
@@ -311,8 +305,7 @@ public static class W58VerbDataApplier
         Debug.Log($"[W58VerbData] {changes} layout changes, {sceneChanges} scene changes applied (idempotent).");
     }
 
-    /// A user-scalable EFFECT-ZONE anchor child (user 2026-07-18: "add anchors
-    /// I can manually scale perfectly"): a PlacementAnchor whose wire-sphere
+    /// A hand-scalable EFFECT-ZONE anchor child: a PlacementAnchor whose wire-sphere
     /// gizmo diameter == its world scale; the tool controller reads half that
     /// scale as its reach. Centred on the object's rendered body, not its pivot.
     static int EnsureZoneAnchor(Transform parent, string name, float radius, Color colour)

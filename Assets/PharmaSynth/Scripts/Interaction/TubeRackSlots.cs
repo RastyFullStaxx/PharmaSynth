@@ -3,12 +3,11 @@ using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
 /// Pure rules for snapping a released test tube into a workspace holder slot
-/// (user 2026-07-16: "the racking of the tubes wont work for the
-/// Experiment_Tube_Table_Kit_Holder_1 to 4. It doesn't automatically get and rack
-/// the tubes, even empty ones that I place near it").
+/// of Experiment_Tube_Table_Kit_Holder_1 to 4: any tube, empty or filled,
+/// released near a free slot.
 ///
-/// The green Slot_* anchors were only EDITOR ghosts until now — position markers
-/// the user dragged into the holder's holes. This gives them their runtime half:
+/// The green Slot_* anchors are hand-placed editor markers in the holder's holes;
+/// this is their runtime half:
 /// release any tube (regular or hard-glass — both carry itemId kit-testtube) near
 /// a free slot and it seats upright in the hole.
 public static class TubeSlotMath
@@ -24,8 +23,7 @@ public static class TubeSlotMath
 
     /// Vertical shift that puts a tube's BOTTOM on the slot. Seat by the mesh
     /// bounds, never the pivot: these tube meshes carry their pivot at the TOP,
-    /// so pivot-to-slot sank the whole 13 cm body under the tabletop — the seat
-    /// sound played and the tube "disappeared" (2026-07-17 playtest).
+    /// so pivot-to-slot sinks the whole 13 cm body under the tabletop.
     public static float BottomAlignDelta(float slotY, float boundsMinY) => slotY - boundsMinY;
 
     /// Nearest FREE slot within radius; -1 when none. Distance is measured to the
@@ -153,9 +151,8 @@ public class TubeRackSlots : MonoBehaviour
         tube.SetPositionAndRotation(_slots[slot].position, _slots[slot].rotation);
         // SOLID meshes only. A tube that has been poured from keeps a world-space
         // StreamLine / PourStream child pointing at wherever the arc last landed,
-        // so encapsulating every renderer put b.min.y on the FLOOR and the
-        // bottom-align shoved the tube a metre into the air — the "racked tubes
-        // with reagents float above the rack" report (user 2026-07-27).
+        // so encapsulating every renderer puts b.min.y on the FLOOR and the
+        // bottom-align shoves the tube a metre into the air.
         var b = ExperimentSceneBuilder.SolidWorldBounds(tube.gameObject);
         tube.position += Vector3.up * TubeSlotMath.BottomAlignDelta(_slots[slot].position.y, b.min.y);
         if (rb != null)

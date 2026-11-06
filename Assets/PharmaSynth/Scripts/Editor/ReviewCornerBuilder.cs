@@ -3,10 +3,10 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Wires the post-experiment review corner (user 2026-07-11): a ReviewCornerSpawn
+/// Wires the post-experiment review corner: a ReviewCornerSpawn
 /// marker in front of the PostLabTablet (biased toward Dr. Jimenez's spot) that
 /// the gatekeeper fade-teleports the player to for the quiz-review flow, plus the
-/// gatekeeper's postLab/examiner refs and the quiz's autoOpen=false (the gate now
+/// gatekeeper's postLab/examiner refs and the quiz's autoOpen=false (the gate
 /// opens the quiz after Jimenez's briefing). Idempotent.
 public static class ReviewCornerBuilder
 {

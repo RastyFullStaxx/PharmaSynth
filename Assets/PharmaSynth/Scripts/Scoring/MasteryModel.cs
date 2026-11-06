@@ -9,7 +9,7 @@ public class BktParameters
 {
     [Range(0f, 1f), Tooltip("Prior probability the skill is already learned.")]
     public float pL0 = 0.25f;
-    // 0.20 → 0.30 (2026-07-19): at 0.20 a skill needed THREE clean observations to
+    // 0.20 → 0.30: at 0.20 a skill needed THREE clean observations to
     // clear the 0.90 gate (1 obs .68 / 2 .92 / 3 .99) and ONE mistake knocked it
     // back to ~.68 with little room to recover inside an attempt — so a player who
     // earned ≥90 on the visible rubric could still be failed by the invisible

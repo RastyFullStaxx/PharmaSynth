@@ -1,9 +1,9 @@
 using UnityEngine;
 
-/// Pure fixed-eye-height math (edit-mode testable). Design (user 2026-07-11):
+/// Pure fixed-eye-height math (edit-mode testable). Design:
 /// per-scene FIXED eye height, NOT relative to the player's real height — the
 /// Quest/Link runtime flip-flops between Floor and Device origin spaces across
-/// sessions, so any "relative" scheme produced floor-spawns or roof-spawns.
+/// sessions, so any "relative" scheme produces floor-spawns or roof-spawns.
 /// Measure where the headset says the head is ONCE at load (only from a VALID,
 /// SETTLED pose), then offset the rig so the eye line lands exactly on the
 /// scene's authored height. Offset may be NEGATIVE (pulls a too-high pose back
@@ -19,8 +19,8 @@ public static class HeightCalibration
 
     public const float ShortTolerance = 0.45f;   // deep bench-leans stay uncorrected
 
-    /// Signed drift beyond the tolerated band (telemetry 2026-07-11: one-sided
-    /// correction left a player STUCK at eye 0.96 after calibrating with the
+    /// Signed drift beyond the tolerated band (one-sided
+    /// correction can leave a player STUCK at eye 0.96 after calibrating with the
     /// headset held high — desk testing moves the headset constantly, so both
     /// directions must correct). Positive = too tall (small 0.15 allowance);
     /// negative = stuck short (generous 0.45 allowance so crouching/leaning over
@@ -41,11 +41,10 @@ public static class HeightCalibration
 
 /// Thin driver on the XR Origin (class name kept so existing scene wiring stays
 /// valid — behaviour is FIXED height, no seated boost / auto-levitate).
-/// v3 fixes (user 2026-07-11: "1.6x too tall in menu / roof in lab"): the old
-/// settle counter counted frames of UNTRACKED (0,0,0) poses during the load
-/// fade, measured y≈0, applied the max +1.5 offset, and the real head height
-/// then stacked on top (eye ≈ 2.5 m → too tall; capsule ballooned into the lab
-/// ceiling → depenetration shoved the rig onto the roof). Now:
+/// Counting UNTRACKED (0,0,0) poses during the load
+/// fade as settled measures y≈0, applies the max +1.5 offset, and the real head height
+/// then stacks on top (eye ≈ 2.5 m; the capsule balloons into the lab
+/// ceiling and depenetration shoves the rig onto the roof). So:
 ///  - calibration only accepts a valid, settled pose (see PoseValid);
 ///  - the offset is held at 0 until calibrated (a stale Device-mode 1.36 can
 ///    never balloon the capsule during load);
@@ -103,7 +102,7 @@ public class SeatedHeightBoost : MonoBehaviour
         // rig up; anything that writes the rig root's Y directly can sink it under
         // the floor, where the CharacterController is fully inside the floor
         // collider and Move() can no longer resolve it (= stuck, no way back).
-        // This guard was up-only, which is why a sink was unrecoverable.
+        // The guard must work both ways; up-only leaves a sink unrecoverable.
         if (transform.position.y > RoofY || transform.position.y < CellarY)
         {
             var p = transform.position;
@@ -114,12 +113,12 @@ public class SeatedHeightBoost : MonoBehaviour
 
         Vector3 head = cameraTransform.localPosition;
 
-        // TRULY FIXED eye height (user 2026-07-11: "regardless of the user's
-        // height, everyone has the same view"). The offset cancels the player's
+        // TRULY FIXED eye height (regardless of the player's
+        // height, everyone has the same view). The offset cancels the player's
         // measured head height and re-plants the eye on targetEyeHeight EVERY
         // frame — so a tall and a short player, standing or not, share the exact
-        // same viewpoint. (The old lock-once-then-drift scheme let real standing
-        // height leak back in above the tolerance band, which is what made the
+        // same viewpoint. (Locking once and then drifting would let real standing
+        // height leak back in above the tolerance band and make the
         // headset feel too tall.) A non-zero pose is required; while the HMD
         // reports the untracked (0,0,0) origin we hold the last offset instead of
         // snapping to 0. NOTE: this also cancels physical crouching (bending down
@@ -133,13 +132,12 @@ public class SeatedHeightBoost : MonoBehaviour
         {
             // NO DEVICE AT ALL (PC Dev Mode / XR Device Simulator): an untracked HMD
             // reports exactly (0,0,0) forever, so the guard above never fires, the offset
-            // stays 0, and the eye sits on the rig root — i.e. you spawn INSIDE THE FLOOR
-            // (user 2026-09-02, caught by the play-mode autopilot's first screenshot).
+            // stays 0, and the eye sits on the rig root — i.e. you spawn INSIDE THE FLOOR.
             //
             // Distinguished from LOSING tracking mid-session, which must still hold the
             // last offset rather than snap: that is what _everTracked separates. On a
             // headset head.y is non-zero from the first tracked frame, so this branch is
-            // unreachable there and the (scarred) headset path is untouched by construction.
+            // unreachable there and the headset path is untouched by construction.
             _applied = HeightCalibration.FixedOffset(targetEyeHeight, 0f);
         }
 

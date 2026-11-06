@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-/// Pure rules for a rack of tubes that share one step (2026-07-16).
+/// Pure rules for a rack of tubes that share one step.
 ///
 /// Manuscript Exp 2 runs the same test across a SET of tubes — five alcohols for
 /// the enol test, three butyl alcohols beside a negative control, acetone beside
@@ -17,14 +17,13 @@ using UnityEngine;
 /// accumulate, but completion is not theirs) and the group calls it in.
 public static class RackMath
 {
-    /// The step is done once as many tubes are ready as the step has ROLES (W5.55).
+    /// The step is done once as many tubes are ready as the step has ROLES.
     ///
-    /// It used to compare against the MEMBER count, which was the same number while a
-    /// rack group was a closed set of five authored tubes. Now that every bench tube of
-    /// the family is a member of one pool (so the player may use any tube), the member
-    /// count is 19 and the required count is the number of roles the step names — five
-    /// alcohols, four permanganate tubes, two Tollens tubes. Zero required is never ready:
-    /// an empty group must not auto-complete a step.
+    /// Compared against ROLES, not MEMBERS: every bench tube of the family is a member of
+    /// one pool (so the player may use any tube), so the member count is 19 while the
+    /// required count is the number of roles the step names (five alcohols, four
+    /// permanganate tubes, two Tollens tubes). Zero required is never ready: an empty
+    /// group must not auto-complete a step.
     public static bool AllReady(int readyTubes, int requiredTubes)
         => requiredTubes > 0 && readyTubes >= requiredTubes;
 
@@ -36,13 +35,10 @@ public static class RackMath
     /// member of that step's group: it declares no binding for the task, so it is
     /// never counted, and pouring into it is a genuine wrong-reagent mistake —
     /// which is exactly how the control teaches experimental design.
-    /// The wrist checklist's per-tube breakdown (W5.55, user: "it is hard to track which one
-    /// I haven't done yet or done already, like now I am stuck").
-    ///
-    /// A collective step used to print one line, so five alcohols looked like one thing to do
-    /// and the player could not see which tube was outstanding. Named roles tick off one at a
-    /// time; roles that cannot be told apart (four identical permanganate tubes) honestly get
-    /// the count alone. Pure so the suite pins the text without a scene.
+    /// The wrist checklist's per-tube breakdown, so the player can see which tube is
+    /// still outstanding. Named roles tick off one at a time; roles that cannot be told
+    /// apart (four identical permanganate tubes) honestly get the count alone. Pure so
+    /// the suite pins the text without a scene.
     public static string RolesLine(IReadOnlyList<string> tags, ICollection<string> served,
                                    int ready, int required)
     {
@@ -90,7 +86,7 @@ public class RackTaskGroup : MonoBehaviour
     public int Required => required > 0 ? required : members.Count;
     public string TaskId => taskId;
 
-    /// Every role of this step, ready or not — what the wrist checklist lists (W5.55).
+    /// Every role of this step, ready or not — what the wrist checklist lists.
     public IReadOnlyList<LiquidTaskBinding> Members => members;
 
     /// Edit-mode / builder seam (AddComponent fires no Awake in edit mode).

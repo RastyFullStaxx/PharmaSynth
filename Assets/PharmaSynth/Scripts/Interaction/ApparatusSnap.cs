@@ -10,11 +10,11 @@ public enum SnapAnchor
     PoleMid,     // part's centre clamps to the host's pole mid-height (iron ring on retort stand)
 }
 
-/// Pure rules for apparatus assemblies (W5.12, user: "apparatus that should be
-/// together stick when brought close; grab moves the WHOLE group preserving
-/// formation; the ACTIVATE click detaches — never grab"). The part→host table
+/// Pure rules for apparatus assemblies. Apparatus that belongs
+/// together sticks when brought close, grab moves the WHOLE group preserving
+/// formation, and the ACTIVATE click detaches (never grab). The part→host table
 /// mirrors the real heating rigs the manuscript implies plus the watch-glass
-/// cover the user called out. Kept plain so the suite pins the pairs + seats.
+/// cover. Kept plain so the suite pins the pairs + seats.
 public static class AssemblyMath
 {
     /// part prefab → (host prefab, seat). Directed: gauze snaps ONTO a tripod,

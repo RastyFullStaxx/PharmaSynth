@@ -3,15 +3,14 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-/// Edit-mode helper (user 2026-07-11: "let me manually reposition the sinks,
-/// speaker, tables and shelves in the editor"). Two blockers were stopping
+/// Edit-mode helper so the sinks, speaker, tables and shelves can be
+/// repositioned by hand in the editor. Two things block
 /// Scene-view clicks:
-///   1. The Environment furniture (tables, wall cabinets, wash-table sinks) had
-///      PICKING DISABLED (the pointer toggle in the Hierarchy) — same reason the
-///      stools couldn't be clicked.
+///   1. The Environment furniture (tables, wall cabinets, wash-table sinks) has
+///      PICKING DISABLED (the pointer toggle in the Hierarchy), as do the stools.
 ///   2. Some fixtures (the LabSpeaker, and the shelf ROOTS that sit at the origin
-///      with their meshes parented elsewhere) had no click target, so a click
-///      selected a child prop instead of the movable unit.
+///      with their meshes parented elsewhere) have no click target, so a click
+///      selects a child prop instead of the movable unit.
 /// This re-enables picking on every fixture, ensures a click collider where one
 /// is missing, and selects them all so they show in the Hierarchy — click the
 /// one you want in the Scene view and move it with the gizmo (W), then Ctrl-S.
@@ -62,7 +61,7 @@ public static class FixtureTools
         string n = t.name.ToLower();
 
         // Furniture directly under the Environment root: tables, wall cabinets,
-        // sinks, the printer and the AC unit (user 2026-07-11).
+        // sinks, the printer and the AC unit.
         if (t.parent != null && t.parent.name == "Environment")
         {
             bool table = (n.Contains("table") && !n.Contains("tablet")) || n.Contains("bench")

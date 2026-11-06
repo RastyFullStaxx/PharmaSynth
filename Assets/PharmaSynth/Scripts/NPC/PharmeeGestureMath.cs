@@ -38,7 +38,7 @@ public struct PharmeeGestureTuning
     public float celebrateSpinDegrees;
     public float celebrateFlare;
 
-    /// "Clearly readable" (user 2026-08-28): noticeable without staring. For scale, the
+    /// "Clearly readable": noticeable without staring. For scale, the
     /// talk nod this replaces was 2.5 degrees against a 14-degree lean cap - invisible.
     public static PharmeeGestureTuning Default => new PharmeeGestureTuning
     {

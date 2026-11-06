@@ -225,6 +225,42 @@ re-homing.
 
 ## Shaders
 
+> [!danger] One MonoBehaviour per file, file named after the class
+> Unity links a saved component to its script by the FILE's GUID, and a file resolves to
+> the class matching its name (or its first class). A second component in another's file
+> (`HazardZones.cs` holding `FumeHoodStatusLabel`, `DryDistill.cs` holding `NakedFlameHeat`)
+> saves with a local-only `m_Script` and reloads as an empty slot — or the editor rebuilds
+> it from the class NAME while a player build drops it. That silently disabled the fume
+> hood label, the brush scrub, and both burners' open-flame heat. Fixed 2026-11-07 by
+> splitting the files (renames keep the .meta, so existing links follow the class);
+> `bench: every component in the scene has a real script file` pins it, and
+> `bench: every game component lives in a file named after it` stops the cause returning
+> (all 13 misfiled classes were split the same day).
+
+> [!warning] World TMP labels sort at 20000 — anything meant to cover them must sort higher
+> The balance's digital readout (a world label) drew through the grade card (4500) from
+> 5 m behind it. Review panels (grade card, quiz tablet) now sort at **21000**: above world
+> labels, below speech bubbles (29000) and the HUD (30000). Suite-pinned.
+
+> [!danger] A verb that calls `CompleteTask` every tick floods the mistake log
+> `LiquidTaskBinding` calls `runner.CompleteTask` on every delivery tick once a step's
+> reagent is in; an out-of-order step returned BlockedByPrerequisite and logged a
+> WrongStep (-4 grade) **per tick** — a one-second early pour failed the run.
+> `ExperimentRunner.CompleteTask` now latches one WrongStep per task per attempt, and the
+> binding retries the early step when any task completes. Any new verb that polls
+> `CompleteTask` inherits the latch; never latch at the call site instead.
+
+> [!warning] A CharacterController floats by its own skinWidth
+> It rests with the capsule bottom **one `skinWidth` above the ground**. Fit the capsule
+> bottom at the feet and the character hovers by skinWidth (0.08 m by default) — Dr.
+> Jimenez floated ~10 cm in every cutscene. Put the bottom skinWidth **above** the soles
+> (and remember an idle clip can lift the soles off the bind pose).
+
+> [!warning] `Camera.stereoTargetEye` does nothing under URP
+> It only applies to the built-in renderer and logs a warning per call. To keep a
+> camera flat (not an XR eye) set `UniversalAdditionalCameraData.allowXRRendering = false`
+> — what `CinemaView`'s shot camera does.
+
 > [!danger] URP's stock Unlit declares no `_ZTest`
 > `SetInt("_ZTest", …)` on it is a **silent no-op**. Both tutorial overlay materials
 > inspected as correctly configured and would have shown through nothing. Hence
@@ -1307,3 +1343,42 @@ re-homing.
 > colours identical removes it with no logic change at all — `SetExpression`, `PharmeeMood`
 > and `ExpressionForGate` are untouched, and `Warning` keeps its amber because it fires only
 > on a real mistake and is meant to be noticed.
+
+## A save after a suite run bakes what the suite drained — and the suite drains scene data
+
+> [!danger] The methane tutorial starved for an afternoon, and five wash bottles went dry, from two saves
+> The suite's `simrun:` pins and every simulator run the modules in EDIT mode on the live
+> scene. The methane tutorial's charge jar (`Prop_reagent-jar`, an added `LiquidPhysics` on a
+> hand-staged prop) is scene DATA — nothing in code charges it — and the simulated
+> `setup-apparatus` pours it dry; the wash bottles pour dry the same way. Two W5.58/W5.59 scene
+> saves made straight after a suite run wrote 0 ml into all six, the user committed it, and
+> `Simulate Everything` failed methane on a bench that looked untouched. The scene-file diff of
+> prefab OVERRIDES showed nothing, because an added component is its own block, not an
+> override — which is why the search took hours.
+>
+> Rules: **reload the scene from disk after ANY suite or simulator run, before ANY save**;
+> never diff scene contents through `m_Modifications` alone; and pin scene data the sims
+> consume (`bench: the methane charge jar holds its mixture`, `bench: the wash bottles hold
+> distilled water`), because no simulator can see it — they all drive the APIs.
+
+## "Apparatus" is what the builders marked, never what a name suggests
+
+> [!warning] The first lab reset emptied the wash bottles and the tutorial's charge jar
+> `LabReset` began with "apparatus = anything not named `Raw_`/`Reagent_`". Nine vessels the
+> builders never treated as used matched it — the wash bottles, the mortar, the methane charge
+> jar and glass tube — and the reset drained sources the player needs full. The codebase
+> already has the definition: every builder adds `CleanableVessel` to a vessel the player
+> fills and to nothing else. `LabReset.IsUsedVessel` reads that, in both directions (reset
+> empties used vessels; refill restocks the rest). A fixture pin could not catch this — a
+> fixture vessel is whatever the pin says it is — so the rule is pinned against the real
+> scene objects.
+
+## Launch Play-mode sweeps from the menu tool, never from inside a RunCommand
+
+> [!warning] Two VISUAL sweeps ended "play mode ended early" with no fault anywhere
+> Both were started by `EditorApplication.ExecuteMenuItem(...)` inside a `Unity_RunCommand`
+> script; Play then ended by itself after 130 s and 220 s, mid-module, with no exception of
+> ours, no autopilot stop and nothing in the log. The same sweep launched through
+> `Unity_ManageMenuItem` ran all nine modules. Whatever the command runner does when its
+> execution record is finalised, it does not survive a Play session that began inside it.
+> Reload the scene in a RunCommand if you must, return, then launch Play from the menu tool.

@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-/// Compact VR HUD layout (user 2026-07-11): the timer + title move OUT of the
+/// Compact VR HUD layout: the timer + title move OUT of the
 /// centre and merge into the Progress pill on the LEFT (small, stacked); the top
 /// cluster tucks to the top edge; the three Settings/Restart/Quit buttons collapse
 /// behind ONE hamburger icon that opens a vertical dropdown; and Pharmee's bottom
@@ -37,11 +37,11 @@ public static class CompactHudBuilder
     const float MenuItemGap = 6f;
     const float MenuListPad = 16f;                                     // top+bottom padding inside the list
     // The list is SIZED FROM its item count (3 normally, 6 in a demo session) so
-    // the demo verbs can live inside the same dropdown (user 2026-07-15).
+    // the demo verbs can live inside the same dropdown.
     static Vector2 MenuListSizeFor(int items)
         => new Vector2(240f, MenuListPad + items * MenuItemSize.y + (items - 1) * MenuItemGap);
 
-    const float DialogueY = 361f;          // raised to keep the (now-good) dialogue put as HalfAngleV lowers the bottom edge
+    const float DialogueY = 361f;          // raised to keep the dialogue in place as HalfAngleV lowers the bottom edge
 
     static readonly Color PanelBg = new Color(0.045f, 0.065f, 0.11f, 0.95f);
     static readonly Color Cyan    = new Color(0.2f, 0.85f, 1f, 1f);
@@ -101,9 +101,8 @@ public static class CompactHudBuilder
         var timerPill = FindDeep(hud, "TimerPill");
         if (timerPill != null) timerPill.gameObject.SetActive(false);
 
-        // 2. Collapse Settings/Restart/Quit behind a single hamburger icon + dropdown —
-        //    plus the DEMO verbs, which now live in the same dropdown instead of a
-        //    separate floating cluster (user 2026-07-15). DemoHudController keeps
+        // 2. Collapse Settings/Restart/Quit behind a single hamburger icon + dropdown,
+        //    plus the DEMO verbs, which share the same dropdown. DemoHudController keeps
         //    showing/hiding each demo item, so they only appear in a demo session.
         var list = FindDeep(hud, "HudMenuList");
         if (list == null) list = MakePanel(hud, "HudMenuList", PanelBg);
@@ -162,8 +161,8 @@ public static class CompactHudBuilder
 
     /// Pull the demo verbs (Skip Step / Finish Experiment / Auto-Answer Quiz) out of
     /// their floating row and hand their names back so they get laid out INSIDE the
-    /// hamburger dropdown (user 2026-07-15). Returns the names found, in order.
-    /// The old empty row root is retired and DemoHudController's `cluster` reference
+    /// hamburger dropdown. Returns the names found, in order.
+    /// The emptied row root is retired and DemoHudController's `cluster` reference
     /// cleared, or it would keep toggling an empty pill back on every frame.
     static System.Collections.Generic.List<string> FoldDemoButtonsIn(RectTransform hud)
     {

@@ -1,8 +1,8 @@
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// Pure rules for a capped tube rack (user 2026-07-12: "unmovable racks that when
-/// grabbed pull out single items, with a cap so the maximum is controlled").
+/// Pure rules for a capped tube rack (an unmovable rack that, when
+/// grabbed, pulls out single items, with a cap so the maximum is controlled).
 /// Unlike the ConsumableDispenser (endless single-piece box for matches/litmus),
 /// a rack holds a FINITE set of REUSABLE tubes — one persistent instance per
 /// hole. Pulling one leaves its hole empty; the tube stays a normal grabbable

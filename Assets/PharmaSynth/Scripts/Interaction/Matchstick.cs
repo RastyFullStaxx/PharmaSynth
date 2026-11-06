@@ -2,7 +2,7 @@ using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
 /// A grabbable matchstick (manuscript: combustion/flammability tests, Exp 3/4/7
-/// + the methane splint). Two ways to light it (W5.8): STRIKE it — swipe the
+/// + the methane splint). Two ways to light it: STRIKE it — swipe the
 /// held match across a striker surface (the matches box, a burner base) — or
 /// hold its head near anything already hot. A lit match then ignites burners
 /// (BurnerController) and fires the methane splint test. Pure predicates for
@@ -29,7 +29,7 @@ public class Matchstick : MonoBehaviour
     public static bool ShouldIgnite(float distance, float tempC, bool alreadyLit, bool spent)
         => !alreadyLit && !spent && distance <= IgniteDistance && tempC >= IgniteTempC;
 
-    /// Pure (W5.8): does a swipe against a striker surface light the match?
+    /// Pure: does a swipe against a striker surface light the match?
     /// Must be HELD (a match knocked off the shelf doesn't self-ignite), fresh,
     /// and moving fast enough to count as a strike.
     public static bool ShouldStrike(bool held, bool lit, bool spent, float relSpeed, bool strikerSurface, float minSpeed = StrikeMinSpeed)
@@ -39,16 +39,37 @@ public class Matchstick : MonoBehaviour
     {
         if (_grab == null) _grab = GetComponent<XRGrab>();
         bool striker = collision.collider != null && collision.collider.GetComponentInParent<MatchStrikerSurface>() != null;
-        if (ShouldStrike(_grab != null && _grab.isSelected, _lit, _spent, collision.relativeVelocity.magnitude, striker))
-            Ignite();
+        bool held = _grab != null && _grab.isSelected;
+        float speed = collision.relativeVelocity.magnitude;
+        if (ShouldStrike(held, _lit, _spent, speed, striker)) { Ignite(); _weakStrikes = 0; return; }
+        // A too-gentle swipe still sparks a little so the player sees
+        // the box responds, and after two weak tries say what to do differently.
+        if (IsWeakStrike(held, _lit, _spent, speed, striker) && Application.isPlaying)
+        {
+            Vector3 at = collision.contactCount > 0 ? collision.GetContact(0).point : transform.position;
+            EffectVfx.ColorFlash(at, new Color(1f, 0.7f, 0.3f, 0.8f));
+            if (++_weakStrikes >= 2 && Time.time >= _nextStrikeHint)
+            {
+                _nextStrikeHint = Time.time + 5f;
+                FloatingText.Show("Strike it faster along the box", at + Vector3.up * 0.08f, new Color(1f, 0.85f, 0.55f), 1.1f);
+            }
+        }
     }
+
+    private int _weakStrikes;
+    private float _nextStrikeHint;
+
+    /// Pure: a real swipe at the striker that was just too slow (a resting touch is not one).
+    public const float WeakStrikeMinSpeed = 0.08f;
+    public static bool IsWeakStrike(bool held, bool lit, bool spent, float relSpeed, bool strikerSurface)
+        => held && !lit && !spent && strikerSurface && relSpeed >= WeakStrikeMinSpeed && relSpeed < StrikeMinSpeed;
 
     private void Update()
     {
         if (_lit && Time.time - _litAt > burnSeconds) Extinguish(true);
         if (_lit || _spent || !Application.isPlaying) return;
         // Secondary path: light off an already-hot station. Throttled — the
-        // scene scan used to run every frame per match.
+        // scene scan is too costly to run every frame per match.
         if (Time.time < _nextScan) return;
         _nextScan = Time.time + 0.5f;
 
@@ -73,15 +94,14 @@ public class Matchstick : MonoBehaviour
         if (Application.isPlaying)
         {
             _flame = new GameObject("MatchFlame");
-            // Sit the flame on the phosphorus HEAD (user 2026-07-13: it was pinned
-            // to a fixed offset near the match's origin, so it burned mid-stick).
+            // Sit the flame on the phosphorus HEAD, not a fixed offset
+            // near the match's origin, or it burns mid-stick.
             // The head is one end of the longest axis; parent to the match so it
             // tracks as the stick is waved around.
             _flame.transform.SetParent(transform, true);
             _flame.transform.position = HeadWorldPos();
 
-            // A small looping flame at the tip (user 2026-07-13: it was only a
-            // light + colour change — now it has an actual little flame).
+            // A small looping flame at the tip.
             var ps = _flame.AddComponent<ParticleSystem>();
             ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var main = ps.main;
@@ -117,8 +137,11 @@ public class Matchstick : MonoBehaviour
     }
 
     /// World position of the match HEAD. Prefers a hand-placed "FlameAnchor" child
-    /// (drag it onto the phosphorus tip; user 2026-07-14) — otherwise falls back to
+    /// (drag it onto the phosphorus tip) — otherwise falls back to
     /// the far end of the longest local axis of the combined mesh bounds.
+    /// Where the flame is — what a burner or a flame test should measure to.
+    public Vector3 HeadPosition => HeadWorldPos();
+
     private Vector3 HeadWorldPos()
     {
         var anchor = transform.Find("FlameAnchor");

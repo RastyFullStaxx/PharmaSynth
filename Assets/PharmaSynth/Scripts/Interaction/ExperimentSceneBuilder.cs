@@ -40,12 +40,11 @@ public class ExperimentSceneBuilder : MonoBehaviour
     private ExperimentModuleDefinition _module;
 
     /// The stage root. ADOPTS an existing "DynamicStage" child before making one:
-    /// `_stage` is a plain field, so it is null after every domain reload — and this
-    /// used to answer that by creating a SECOND DynamicStage, leaving the first
-    /// orphaned with the previous build's objects still in it. Build() then cleared
-    /// only the new one, so nothing ever tidied the old stage and its contents stayed
-    /// on the bench forever. (Found 2026-07-16: two DynamicStage siblings, one with 46
-    /// leftover objects.) Duplicates are collapsed here rather than left to rot.
+    /// `_stage` is a plain field, so it is null after every domain reload, and
+    /// creating a fresh one would orphan the first
+    /// with the previous build's objects still in it, since Build() clears
+    /// only the new one and the old contents would stay
+    /// on the bench. Duplicates are collapsed here.
     private Transform Stage()
     {
         if (_stage != null) return _stage;
@@ -102,11 +101,11 @@ public class ExperimentSceneBuilder : MonoBehaviour
         }
 
         bool methane = moduleId == methaneModuleId;
-        // Methane stage visibility is owned by MethaneStageVisibility now (shows
-        // during Lab Tour + the Methane attempt only) — the builder no longer
-        // toggles it, so the two never fight. (W5.12, user 2026-07-13.)
-        // Demo sessions no longer spawn a floating ready-made vial here (user
-        // 2026-07-12): the finished products live on the ReagentShelf and are
+        // Methane stage visibility is owned by MethaneStageVisibility (shows
+        // during Lab Tour + the Methane attempt only) — the builder does not
+        // toggles it, so the two never fight.
+        // Demo sessions spawn no ready-made vial here;
+        // the finished products live on the ReagentShelf and are
         // revealed there by EndProductVisibility while a demo session is active.
         if (methane) return 0;                      // Methane uses its hand-built stage
 
@@ -119,16 +118,12 @@ public class ExperimentSceneBuilder : MonoBehaviour
         foreach (var p in layout.props)    { BuildProp(stage, p); n++; }
         _rackBindings.Clear();
         foreach (var v in layout.vessels)  { BuildVessel(stage, v); n++; }
-        WireRackGroups(stage, layout);        // "all five tubes" steps (2026-07-16) — needs vessels spawned
-        WireVerbControllers(stage, layout);   // stir/grind/burner-gate (W5.8) — needs props+vessels spawned
-        // ⛔ SpawnRackKit / SpawnSpares / StageConsumables REMOVED 2026-07-16.
-        // They date from before the permanent bench and duplicated it on EVERY module:
-        // another test-tube rack + 6 tubes, 2 spare beakers + a flask, and a "MatchStriker"
-        // cube that is redundant because the matchbox itself has been the striker since
-        // W5.8. The bench already carries all of it (Kit_TestTube_0-18, Eq_Beaker_100mL/
-        // 500mL, ErlenmeyerFlask, racks, Raw_Matchsticks). The user deleted the clones by
-        // hand — re-spawning them here would silently undo that on the next module load.
-        // (user 2026-07-16: "we'll be using the existing tools already laid out")
+        WireRackGroups(stage, layout);        // "all five tubes" steps — needs vessels spawned
+        WireVerbControllers(stage, layout);   // stir/grind/burner-gate — needs props+vessels spawned
+        // ⛔ Never stage bench items here (extra racks, tubes, spare glass, a striker cube).
+        // The permanent bench already carries all of it (Kit_TestTube_0-18, Eq_Beaker_100mL/
+        // 500mL, ErlenmeyerFlask, racks, Raw_Matchsticks; the matchbox is the striker), and
+        // re-spawning duplicates would undo hand edits to the bench on every module load.
         return n;
     }
 
@@ -160,8 +155,8 @@ public class ExperimentSceneBuilder : MonoBehaviour
         }
     }
 
-    /// Spare vital glassware on the free front strip (user: "enough duplicates
-    /// of things that are vital like beakers").
+    /// Spare vital glassware on the free front strip (enough duplicates
+    /// of vital items like beakers).
     private void SpawnSpares(Transform stage)
     {
         if (assets == null) return;
@@ -180,7 +175,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
         }
     }
 
-    /// A grabbable empty receiver vessel with the full W5.8 treatment.
+    /// A grabbable empty receiver vessel with the full vessel treatment.
     private void SpawnReceiver(Transform stage, GameObject prefab, string prefabName, string name,
                                string label, Vector3 pos, float targetHeight)
     {
@@ -209,7 +204,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
         lp.SetContents(null, 0f);
         EnsureLiquidVisual(inst, lp);
         inst.AddComponent<HazardousMixReactor>().Bind(lp, runner);
-        inst.AddComponent<CleanableVessel>().Bind(lp);   // used vessels get dirty (W5.12)
+        inst.AddComponent<CleanableVessel>().Bind(lp);   // used vessels get dirty
         var pl = inst.AddComponent<ProximityLabel>(); pl.SetLabel(label, 1.6f);
         inst.AddComponent<VesselStatus>().Bind(lp, pl, label, 1.6f);
         inst.AddComponent<MixFeedback>().Bind(lp);
@@ -251,7 +246,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
 
     private ExperimentLayout _currentLayout;
 
-    /// Post-pass (W5.8): wire the tool verbs that span a station + a prop + a
+    /// Post-pass: wire the tool verbs that span a station + a prop + a
     /// vessel — the rod stirs the bindings vessel, the pestle grinds the mortar,
     /// and a Heat station whose required prop is a burner only heats while LIT.
     private void WireVerbControllers(Transform stage, ExperimentLayout layout)
@@ -346,14 +341,14 @@ public class ExperimentSceneBuilder : MonoBehaviour
         pad.transform.localScale = new Vector3(0.3f, 0.012f, 0.3f);
         var box = pad.GetComponent<BoxCollider>();
         box.isTrigger = true; box.size = new Vector3(1.2f, 40f, 1.2f); box.center = new Vector3(0f, 20f, 0f);
-        // W5.8 (user): the visible pads cluttered the table — hide the cosmetic
-        // cube but keep its collider column + every sensor/sim living on it.
+        // Hide the cosmetic pad cube, which only clutters the table, but keep
+        // its collider column + every sensor/sim living on it.
         // The socket ghost + billboard label remain the "place here" cues.
         var padMr = pad.GetComponent<MeshRenderer>();
         if (padMr != null) padMr.enabled = false;
 
         // Zone sims run a sustained chemistry sim; verb stations (Stir/Grind/
-        // Weigh, W5.8) complete through their own tool controllers. Only plain
+        // Weigh) complete through their own tool controllers. Only plain
         // stations still complete on zone-touch.
         bool zoneSim = s.sim == StationSim.Heat || s.sim == StationSim.Crystallise
                     || s.sim == StationSim.Filter || s.sim == StationSim.Collect;
@@ -449,13 +444,13 @@ public class ExperimentSceneBuilder : MonoBehaviour
         sockGo.AddComponent<SelectSfx>().Bind(sock, "socket-snap");
 
         var labelTmp = MakeLabel(s.label, new Vector3(s.pos.x, s.pos.y + 0.32f, s.pos.z), 0.13f);
-        // Live status on the billboard (W5.8): Heat shows the temperature climb,
+        // Live status on the billboard: Heat shows the temperature climb,
         // the other sims show percent progress — the player can SEE the verb work.
         if (zoneSim && labelTmp != null)
             pad.AddComponent<StationStatusLabel>().Bind(labelTmp, s.label, s.sim, temp, cryst, filt, gas, s.simTargetC);
     }
 
-    /// A functional balance fixture at a Weigh station (W5.8): the Balance model
+    /// A functional balance fixture at a Weigh station: the Balance model
     /// (fixed, not grabbable), a live grams display, and the WeighStation whose
     /// TaskGraph condition completes the weigh task. The required measure comes
     /// from the layout's vessel binding for the same task (chemical mode); a
@@ -550,7 +545,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
         inst.AddComponent<GrabPhysicsPolicy>();
         GrabTuning.Apply(inst.GetComponent<XRGrab>());   // held items collide with the world
         inst.AddComponent<HoverHighlight>().Bind(inst.GetComponent<XRGrab>());   // hover affordance
-        // Scooping tools transfer solid reagents by the scoopful (W5.12).
+        // Scooping tools transfer solid reagents by the scoopful.
         if (p.prefabName == "Scoopula" || p.prefabName == "Spatula")
             inst.AddComponent<ScoopController>().Bind(inst.GetComponent<XRGrab>());
         var respawn = inst.AddComponent<DropRespawn>();
@@ -572,7 +567,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
             var chem = assets.GetChemical(p.fillChemical);
             if (chem != null)
                 lp.SetContents(chem, SupplyFor(p, chem));   // finite: ~need + 2 spare pours
-            EnsureLiquidVisual(inst, lp);                    // visible fill (W5.8)
+            EnsureLiquidVisual(inst, lp);                    // visible fill
             var pourer = inst.GetComponent<LiquidPourer>() ?? inst.AddComponent<LiquidPourer>();
             pourer.Bind(lp);
             if (pourer.spout == null)
@@ -595,7 +590,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
             var plp = inst.GetComponent<LiquidPhysics>();
             if (plp != null)
             {
-                inst.AddComponent<VesselStatus>().Bind(plp, pl, p.displayName, 1.6f);   // live supply tag (W5.8)
+                inst.AddComponent<VesselStatus>().Bind(plp, pl, p.displayName, 1.6f);   // live supply tag
                 inst.AddComponent<MixFeedback>().Bind(plp);
             }
         }
@@ -604,7 +599,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
     /// Empty ChemLab prefabs have no liquid child mesh — their `_WithLiquid`
     /// twin carries the authored PharmaLiquid setup (fill bounds, precipitate
     /// renderer). Receiving vessels swap to the twin so poured liquid RENDERS
-    /// (W5.8: "pouring into a beaker showed nothing").
+    /// (otherwise a pour into a beaker shows nothing).
     private GameObject VesselPrefabFor(string prefabName)
     {
         if (assets == null) return null;
@@ -631,14 +626,12 @@ public class ExperimentSceneBuilder : MonoBehaviour
     /// One RackTaskGroup per (rackGroup, shared task): the step completes only once as many
     /// tubes are READY as the step has roles.
     ///
-    /// ⭐ W5.55 — the members are now the whole family POOL, not the group's own tubes.
-    /// A rack group used to be a closed set: Exp 2's five alcohols could only go into
-    /// `Kit_TestTube_0-4`, and the four permanganate tubes only into 5-8. All 19 tubes sit
-    /// on the same shelf and look identical, so a headset player put Phenol in tube 5 and
-    /// Benzyl in tube 6, had every drop refused, and the step could never tick. Which TUBE
-    /// is not a decision the player can be asked to make. What still counts is how MANY
+    /// ⭐ The members are the whole family POOL, not a fixed set of tubes.
+    /// All 19 tubes sit on the same shelf and look identical, so which TUBE is
+    /// not a decision the player can be asked to make; a closed set refuses every drop
+    /// into a tube outside it and the step never ticks. What still counts is how MANY
     /// tubes the step names: a role the step does not name — Exp 2's negative control —
-    /// is not counted, so leaving the control alone stays correct play. (2026-07-16, pooled W5.55)
+    /// is not counted, so leaving the control alone stays correct play.
     private void WireRackGroups(Transform stage, ExperimentLayout layout)
     {
         var pools = WireGlasswarePools(layout);
@@ -662,8 +655,8 @@ public class ExperimentSceneBuilder : MonoBehaviour
 
             foreach (var taskId in tasks)
             {
-                // REQUIRED = how many of the group's roles name the task, derived exactly as
-                // the member list used to be. Three butyl alcohols beside one untouched
+                // REQUIRED = how many of the group's roles name the task.
+                // Three butyl alcohols beside one untouched
                 // control is "3 of 4 tubes", and it must stay 3.
                 int required = 0;
                 foreach (var v in layout.vessels)
@@ -681,8 +674,8 @@ public class ExperimentSceneBuilder : MonoBehaviour
         }
     }
 
-    /// ANY GLASSWARE WILL DO (W5.53 tubes · W5.54 every spared kind · W5.55 rack groups too;
-    /// user 2026-09-06: "any racks there can hold the test tube while I perform experiment").
+    /// ANY GLASSWARE WILL DO (tubes, every spared kind, and rack groups too:
+    /// any rack can hold a test tube while the experiment runs).
     ///
     /// A role authored onto a SPECIFIC bench object is guidance a VR player cannot follow:
     /// they grab whichever glass is nearest, and every tube in the lab looks the same. Every
@@ -699,7 +692,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
         var pools = new Dictionary<string, GlasswarePool>();
 
         // The roles: EVERY bench-bound vessel of this layout, racked or standalone, grouped
-        // by pool key. Racked vessels used to be excluded here and wired as closed groups.
+        // by pool key. Racked vessels are included, never wired as closed groups.
         var rolesByKey = new Dictionary<string, List<ExperimentLayout.Vessel>>();
         foreach (var v in layout.vessels)
         {
@@ -775,7 +768,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
                     if (claimed < 0 || claimed >= roleVessels.Count || m == null) return;
                     var role = roleVessels[claimed];
                     AttachAnchors(inst, role, m, lp);
-                    // A claimed role lives in ONE place (W5.54): the authored object's now
+                    // A claimed role lives in ONE place: the authored object's now
                     // orphaned anchors for this role are removed, so the inert twin can neither
                     // register as a guidance target nor complete anything.
                     if (authoredObject.TryGetValue(claimed, out var authored) && authored != null && authored != inst)
@@ -863,8 +856,8 @@ public class ExperimentSceneBuilder : MonoBehaviour
         lp.registry = registry;
         // Bench glass keeps LiquidPhysics' serialized default of 1000 ml — a "test
         // tube" the size of a bucket. Fill renders as volume/maxVolume, so 5 counted
-        // drops was 0.5%: invisible, and the playtest read it as "no drop landed"
-        // (2026-07-17). Adopting a bench vessel gives it its REAL capacity.
+        // drops was 0.5%: invisible, as if no drop landed.
+        // Adopting a bench vessel gives it its REAL capacity.
         if (!string.IsNullOrEmpty(v.benchItem))
             lp.maxVolume = BenchMaxVolumeFor(v.prefabName, lp.maxVolume);
         // ALWAYS set contents explicitly: the _WithLiquid twin serializes a
@@ -875,9 +868,8 @@ public class ExperimentSceneBuilder : MonoBehaviour
         EnsureLiquidVisual(inst, lp);
         var bind = inst.AddComponent<LiquidTaskBinding>();
         bind.SetVesselAndRunner(lp, runner);
-        // The hood ref was NEVER wired (2026-07-18) — every requiresFumeHood
-        // pour graded a violation no matter where the player stood. The check
-        // is now position-based: sanctioned when THIS vessel is inside the hood.
+        // No hood reference is wired, so the requiresFumeHood check is position-based.
+        // The pour is sanctioned only when THIS vessel is inside the hood.
         bind.SetFumeHood(FindAnyObjectByType<FumeHoodZone>(FindObjectsInactive.Include));
         foreach (var b in v.bindings)
         {
@@ -897,16 +889,16 @@ public class ExperimentSceneBuilder : MonoBehaviour
     /// Every NON-POUR anchor a role needs (heat, weigh, vapor, chill, litmus, flame, stir,
     /// ferment), attached to `inst` for the role `v` describes.
     ///
-    /// Extracted from BuildVessel (W5.53) so it can be called for a role the object was NOT
+    /// Extracted from BuildVessel so it can be called for a role the object was NOT
     /// authored for: a pooled tube attaches these the moment it CLAIMS a role, so the litmus
     /// strip or the water bath completes the step on the tube the player actually used.
     /// Every anchor gates on the binding's readiness for its task, so one attached to a tube
     /// that never claims that role stays inert; the clear path strips it on the next build.
     private void AttachAnchors(GameObject inst, ExperimentLayout.Vessel v, LiquidTaskBinding bind, LiquidPhysics lp)
     {
-        // ZONE-FREE heat step (2026-07-17): the vessel's deferred task completes
+        // ZONE-FREE heat step: the vessel's deferred task completes
         // when it is served AND heated to heatToC — wherever the player does it.
-        // Replaces the fixed Heat station (pad/label/teleport anchor all gone).
+        // There is no fixed Heat station, pad, label or teleport anchor.
         // An EXPLICIT heatTaskId (Exp 6's heat-glow) wins over the inferred
         // first-deferred binding — for heat steps with no reagents of their own,
         // where the binding gate is skipped (null binding = vacuously served).
@@ -987,7 +979,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
 
     /// The per-vessel services every task vessel gets: hazard reactor, neutral label,
     /// live status, mix feedback and the ability to pour OUT. Shared by BuildVessel and
-    /// the tube pools (W5.53), so a pooled extra is indistinguishable from an authored tube.
+    /// the tube pools, so a pooled extra is indistinguishable from an authored tube.
     private void WireVesselServices(GameObject inst, LiquidPhysics lp, string labelName)
     {
         // GetComponent-or-Add: a SPAWNED vessel is fresh, but a BENCH item survives
@@ -996,16 +988,16 @@ public class ExperimentSceneBuilder : MonoBehaviour
         (inst.GetComponent<HazardousMixReactor>() ?? inst.AddComponent<HazardousMixReactor>()).Bind(lp, runner);
         // A BENCH item is shared apparatus, so its floating label must stay NEUTRAL
         // ("Test Tube 3"), never the layout's internal role name ("TollensTube_1") —
-        // that read as "this tube is only for Tollens" and would go stale the moment
-        // another module adopts the same tube (user 2026-07-17).
+        // that reads as "this tube is only for Tollens" and goes stale the moment
+        // another module adopts the same tube.
         var pl = inst.GetComponent<ProximityLabel>() ?? inst.AddComponent<ProximityLabel>();
         pl.SetLabel(labelName, 1.6f);
         (inst.GetComponent<VesselStatus>() ?? inst.AddComponent<VesselStatus>()).Bind(lp, pl, labelName, 1.6f);
         (inst.GetComponent<MixFeedback>() ?? inst.AddComponent<MixFeedback>()).Bind(lp);
-        // POUR-OUT ability (2026-07-18): a task vessel must also POUR — "tilt the
+        // POUR-OUT ability: a task vessel must also POUR — "tilt the
         // beaker through the funnel" and every draw-from-your-own-product step
-        // were unplayable by hand because only shelf bottles carried a
-        // LiquidPourer (the sim's direct PourOut calls masked it). WireBottle is
+        // need a LiquidPourer on the vessel, not only on shelf bottles
+        // (the sim's direct PourOut calls would hide its absence). WireBottle is
         // idempotent: pourer + spout + spill grading, only where missing.
         ShelfPourWiring.WireBottle(inst, runner, registry);
     }
@@ -1061,7 +1053,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
     /// Build() clears only the STAGE's children, so bindings attached to bench objects
     /// (which live outside it) would survive into the next module and silently complete
     /// its steps with the previous experiment's reagents. Bench-bound vessels only work
-    /// if their wiring is torn down first. (2026-07-16)
+    /// if their wiring is torn down first.
     private void ClearBenchBindings()
     {
         foreach (var b in FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -1134,8 +1126,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
         if (inst == null || lp == null) return;
 
         // Solids/powders (sodium acetate, soda lime, salicylic acid…) must NOT
-        // read as a sloshing liquid vial (user 2026-07-13: "it's misleading… the
-        // vial and its content is for liquid"). Render an opaque granular mound in
+        // read as a sloshing liquid vial. Render an opaque granular mound in
         // the lower part of the jar instead of the translucent liquid shader.
         var chem = lp.currentChemical;
         if (chem != null && (chem.state == PhysicalState.Solid || chem.state == PhysicalState.Powder))
@@ -1160,10 +1151,10 @@ public class ExperimentSceneBuilder : MonoBehaviour
             lp.mainRenderer = liquidR;
         }
 
-        // PRECIPITATE layer (2026-07-18): bench-adopted glass had NO
-        // precipitateRenderer — only the authored _WithLiquid twins carry one —
-        // so Exp 4's MnO2 sludge, white benzoic crystals and buff ferric
-        // benzoate fired their observation text with NOTHING visible in the
+        // PRECIPITATE layer: bench-adopted glass has no
+        // precipitateRenderer (only the authored _WithLiquid twins carry one),
+        // and without it Exp 4's MnO2 sludge, white benzoic crystals and buff ferric
+        // benzoate would fire their observation text with NOTHING visible in the
         // vessel. Same inset-cylinder trick, slightly wider so the settled
         // layer reads at the bottom through the liquid.
         if (lp.precipitateRenderer == null)
@@ -1180,8 +1171,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
     /// Inset PharmaLiquid cylinder fitted to the vessel's glass bounds — the
     /// runtime fill surface for adopted bench glass (Liquid + Precipitate layers).
     /// Round-bottom glassware: the fill must take the BULB's shape, not a beaker's
-    /// straight column (user 2026-07-27: "the liquid poured inside takes the shape
-    /// of a cylinder similar to the beakers"). A sphere clipped by the same _Fill
+    /// straight column. A sphere clipped by the same _Fill
     /// height gives exactly the spherical cap a round bottom holds. Pure + pinned.
     public static bool IsRoundBottom(string objectName)
     {
@@ -1223,7 +1213,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
     // ---- vessel fitting (local space) ---------------------------------------
     // Contents must be placed in the vessel's LOCAL frame, never world axes — a
     // tilted/held tube would otherwise get a world-vertical fill sticking out of
-    // it (user 2026-07-15: "the content isn't aligned/contained").
+    // it.
 
     /// Local-space bounds of a vessel's solid meshes, skipping fill/label children.
     public static Bounds LocalMeshBounds(Transform root, params string[] skipNames)
@@ -1259,9 +1249,9 @@ public class ExperimentSceneBuilder : MonoBehaviour
     ///
     /// LongestAxis is right for a tube and wrong for anything wide and shallow. A
     /// watch glass (90 x 15 x 90 mm) and a mortar are LONGEST across, so the mound
-    /// was laid along a horizontal axis: sized from a 15 mm "bore" and parked at
-    /// the RIM — "a very tiny dot that isn't even centered and doesn't grow" (user
-    /// 2026-07-27). Measuring roundness instead picks Y for both, and still picks
+    /// would lie along a horizontal axis: sized from a 15 mm "bore" and parked at
+    /// the RIM as a tiny dot that never grows.
+    /// Measuring roundness instead picks Y for both, and still picks
     /// the long axis of a tube lying on X or Z. Ties (a cube) go to Y.
     public static int VesselAxis(Vector3 size)
     {
@@ -1303,12 +1293,12 @@ public class ExperimentSceneBuilder : MonoBehaviour
             if (r.name == "Powder") heap = r;
             else if (r.name == "Liquid")
             {
-                // ⛔ The liquid surface is KEPT, not destroyed. Destroying it left
-                // LiquidPhysics.mainRenderer dangling (5106 MissingReferenceExceptions in
-                // one run) and meant a vessel scooped full of powder could never draw
-                // liquid again, however much was later poured on it. Hiding it is enough:
+                // ⛔ The liquid surface is KEPT, not destroyed. Destroying it leaves
+                // LiquidPhysics.mainRenderer dangling (thousands of MissingReferenceExceptions per
+                // run) and means a vessel scooped full of powder can never draw
+                // liquid again, however much is later poured on it. Hiding it is enough:
                 // LiquidPhysics.DryPowder decides every frame which layer shows, so a dry
-                // jar still reads as a jar of powder (user 2026-07-13) and a wetted mixture
+                // jar still reads as a jar of powder and a wetted mixture
                 // reads as liquid.
                 if (owner != null && owner.mainRenderer == null
                     && r.sharedMaterial != null && r.sharedMaterial.HasProperty("_Fill"))
@@ -1318,8 +1308,8 @@ public class ExperimentSceneBuilder : MonoBehaviour
         }
 
         // (The vessel is measured below in its LOCAL frame, always excluding the
-        // mound itself — including it once made each re-run wrap the previous,
-        // bigger mound and balloon it into a giant blob. — user 2026-07-14.)
+        // mound itself — including it makes each re-run wrap the previous,
+        // bigger mound and balloon it into a giant blob.)
         if (heap == null)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);   // squashed = a mound
@@ -1339,28 +1329,28 @@ public class ExperimentSceneBuilder : MonoBehaviour
 
         // Fit the mound INSIDE the vessel in its own LOCAL frame, so a tilted or
         // held vessel (e.g. the hard-glass tube) keeps its contents aligned and
-        // contained instead of a world-vertical blob poking out (user 2026-07-15).
+        // contained instead of a world-vertical blob poking out.
         var lb = LocalMeshBounds(inst.transform, "Powder", "Liquid", "CollectedGas");
         int ax = VesselAxis(lb.size);
         float bore = BoreOf(lb.size, ax);
         // Size PURELY as a fraction of the vessel's own local bounds — never mix in
         // absolute metres. lb is in LOCAL units, so a metre cap here becomes
-        // microscopic on an import-scaled prefab (user 2026-07-15: the powder was
-        // invisible inside the glass tube). Fractions stay contained at any scale.
+        // microscopic on an import-scaled prefab (the powder vanishes
+        // inside the glass tube). Fractions stay contained at any scale.
         //
         // Width stays half the bore (it must never poke through the glass wall);
-        // HEIGHT is now scaled off the BORE and only capped by the vessel's own
-        // depth. The old min(depth * 0.22, bore * 0.6) took the depth term on any
-        // shallow dish and collapsed the mound to a film — combined with the wrong
-        // axis that is what made a scoop on a watch glass a dot.
+        // HEIGHT is scaled off the BORE and only capped by the vessel's own
+        // depth. min(depth * 0.22, bore * 0.6) would take the depth term on any
+        // shallow dish and collapse the mound to a film — combined with the wrong
+        // axis it turns a scoop on a watch glass into a dot.
         float w = bore * 0.5f * Mathf.Lerp(0.6f, 1f, fill01);                       // half the bore
         float h = Mathf.Min(bore * Mathf.Lerp(0.10f, 0.34f, fill01), lb.size[ax] * 0.6f);
         h = Mathf.Max(bore * 0.06f, h);                                             // always a little visible
 
         // A hand-placed anchor wins for placement — and, ONLY if it is a size-setting
-        // anchor, for size too (user 2026-07-15: "set its size manually").
+        // anchor, for size too.
         // "PowderAnchor" = position + SIZE; "BowlAnchor" (mortar) = position ONLY.
-        // A position-only anchor has scale 1, so taking its scale produced a 1-unit
+        // A position-only anchor has scale 1, so taking its scale gives a 1-unit
         // beach-ball of powder — never size from an anchor unless it says it sizes.
         var anchor = inst.transform.Find("PowderAnchor") ?? inst.transform.Find("BowlAnchor");
         if (anchor != null)
@@ -1426,15 +1416,15 @@ public class ExperimentSceneBuilder : MonoBehaviour
     /// Every effect child must be excluded, because two of them are authored in
     /// WORLD space and outlive the pour that made them: LiquidPourer's StreamLine
     /// (a world-space LineRenderer still holding the arc's last floor point) and
-    /// its PourStream particles. Encapsulating those dragged a poured-from test
-    /// tube's bounds down to the floor, so seating it in a rack lifted it a metre
-    /// into the air — "positioned so high above that I thought they disappeared"
-    /// (user 2026-07-27). Same poison mis-sized every bounds-fitted child.
+    /// its PourStream particles. Encapsulating those drags a poured-from test
+    /// tube's bounds down to the floor, so seating it in a rack lifts it a metre
+    /// into the air.
+    /// The same applies to every bounds-fitted child.
     /// Is this mesh part of a vessel's actual BODY? Effect children and text meshes
     /// are not. Extracted so every consumer shares one definition — the Tutorial Mode
-    /// x-ray ghost originally rolled its own and forgot the TMP_Text clause, which
-    /// silhouetted each item's floating ProximityLabel. That label carries a large
-    /// compensating scale to undo its parent's, so the ghost came out hugely oversized.
+    /// x-ray ghost needs the TMP_Text clause too: without it it
+    /// silhouettes each item's floating ProximityLabel. That label carries a large
+    /// compensating scale to undo its parent's, so the ghost comes out hugely oversized.
     public static bool IsSolidMesh(MeshFilter mf)
         => mf != null && mf.sharedMesh != null
            && !IsEffectChild(mf.gameObject.name)
@@ -1466,8 +1456,8 @@ public class ExperimentSceneBuilder : MonoBehaviour
     /// World bounds of a prop's SOLID mesh only — skips the given child names
     /// (the powder/liquid fill so it can't inflate its own host on a re-run) AND
     /// any non-mesh renderer: floating TMP name labels, the pour-arc LineRenderer,
-    /// particle systems. Those used to balloon the measured jar size, so a tiny
-    /// vial grew a beach-ball of powder (user 2026-07-14).
+    /// particle systems. Those balloon the measured jar size, so a tiny
+    /// vial would grow a beach-ball of powder.
     private static Bounds BoundsExcluding(GameObject g, params string[] skipNames)
     {
         Bounds b = default; bool has = false;

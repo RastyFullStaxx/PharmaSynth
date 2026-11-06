@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
-/// Builds the mirror-only first-person avatar (user 2026-07-10). Expects a rigged
+/// Builds the mirror-only first-person avatar. Expects a rigged
 /// humanoid prefab (Tripo image→3D + Tripo Rigging v1, casual clothes, T-pose) in
 /// Art/Generated/Models with "player"/"avatar" in its name — or select it in the
 /// Project. Places it under the XR rig, puts it on the PlayerAvatar layer (culled by
@@ -147,8 +147,8 @@ public static class PlayerAvatarBuilder
         var d = ik.data;
         d.root = root; d.mid = mid; d.tip = tip; d.target = target; d.hint = hint;
         // Position-only: the controller's rotation convention differs from the hand
-        // bone's — driving wrist rotation raw twisted the hands backwards (user
-        // 2026-07-10). Arms reach the controllers; wrists keep their natural pose.
+        // bone's — driving wrist rotation raw twisted the hands backwards.
+        // Arms reach the controllers; wrists keep their natural pose.
         d.targetPositionWeight = 1f; d.targetRotationWeight = 0f; d.hintWeight = 1f;
         ik.data = d;
     }

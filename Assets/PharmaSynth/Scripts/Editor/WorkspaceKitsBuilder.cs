@@ -5,9 +5,9 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// W5.12 apparatus kits on the workspace gantry shelf (user: "assemble
-/// apparatus that belong together… place them tightly but not overlapping…
-/// generous duplicates of high-use glass"). Kit composition follows the
+/// Apparatus kits on the workspace gantry shelf (assemble
+/// apparatus that belong together, tightly but not overlapping,
+/// with generous duplicates of high-use glass). Kit composition follows the
 /// manuscript's Appendix C Equipment lists + the game's Methane heating rig:
 ///   TOP row   — Heating Set A (full Bunsen rig), Heating Set B (compact
 ///               Bunsen rig), Alcohol-Burner Set (spirit lamp + clay triangle
@@ -41,8 +41,7 @@ public static class WorkspaceKitsBuilder
     /// TOP row (tall items — full headroom above the gantry).
     public static KitSlot[] Row0Plan() => new[]
     {
-        // ONE Bunsen set — the user removed Set B during the W5.12 hand layout
-        // (one train is all the manuscript ever runs at once).
+        // ONE Bunsen set: the manuscript only ever runs one train at once.
         new KitSlot("Heating Set A", "RetortStand",   "Retort Stand",    0.16f),
         new KitSlot("Heating Set A", "IronRing",      "Iron Ring",       0.18f),
         new KitSlot("Heating Set A", "Tripod",        "Tripod",          0.18f),
@@ -269,8 +268,8 @@ public static class WorkspaceKitsBuilder
         || prefabName == "Vial" || prefabName == "WatchGlass"
         || prefabName == "EvaporatingDish" || prefabName == "Crucible";
 
-    /// Fill a rack with its capped, reusable tube pool + a RackDispenser (user
-    /// 2026-07-12: unmovable rack, pull single tubes, hard cap = hole count).
+    /// Fill a rack with its capped, reusable tube pool + a RackDispenser
+    /// (unmovable rack, pull single tubes, hard cap = hole count).
     /// Each tube's DropRespawn home is its hole, so an abandoned tube returns and
     /// the rack visibly re-stocks; the finite pool IS the cap. Returns the count.
     static int FillRack(GameObject rack, string display, SceneAssetLibrary lib,
@@ -326,7 +325,7 @@ public static class WorkspaceKitsBuilder
     }
 
     /// Amber borosilicate tint so hard-glass tubes read apart from regular ones
-    /// (user 2026-07-12). One persisted material asset, shared by all of them.
+    /// One persisted material asset, shared by all of them.
     static void ApplyHardGlassTint(GameObject tube)
     {
         var mat = AssetDatabase.LoadAssetAtPath<Material>(HardMatPath);

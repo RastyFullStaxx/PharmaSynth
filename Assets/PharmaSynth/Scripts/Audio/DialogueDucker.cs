@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// Ducks the looping ambient + music beds while ANY NPC is speaking, so dialogue
-/// reads clearly, then eases them back afterward (user 2026-07-10 UX pass). Ref-counts
+/// reads clearly, then eases them back afterward (UX pass). Ref-counts
 /// speakers so overlapping lines (Pharmee + Dr. Jimenez) hold the dip until both stop.
 /// Subscribes to every NPCNarrationController in the scene at Start — no wiring needed.
 /// Only touches the source volumes while a duck is active; otherwise leaves them to

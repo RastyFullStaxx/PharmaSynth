@@ -4,8 +4,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// W5.12 (user 2026-07-13): reveal the Methane set + the waypoint marker in the
-/// editor so the user can hand-align them, and permanently strip the waypoint's
+/// Reveal the Methane set + the waypoint marker in the
+/// editor so they can be hand-aligned, and permanently strip the waypoint's
 /// yellow ground glow (keep only the arrow). The Methane STATIONS carry the
 /// step-detection zones AND are what the waypoint arrow follows, so moving them
 /// with the props is how both detection and the arrow get aimed correctly.

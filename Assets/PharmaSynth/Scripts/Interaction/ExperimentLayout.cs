@@ -8,7 +8,7 @@ using UnityEngine;
 /// Positions are WORLD-space (the lab is a fixed room).
 /// How a station completes. None = the prop simply entering the zone completes the
 /// step. Heat/Crystallise/Filter/Collect run a sustained chemistry sim while the
-/// prop occupies the zone. Stir/Grind/Weigh (W5.8, append-only — serialized ints
+/// prop occupies the zone. Stir/Grind/Weigh (append-only — serialized ints
 /// stay valid) are TOOL verbs: circle the rod in the vessel, work the pestle in
 /// the mortar, rest the right load on the balance pan.
 public enum StationSim { None, Heat, Crystallise, Filter, Collect, Stir, Grind, Weigh }

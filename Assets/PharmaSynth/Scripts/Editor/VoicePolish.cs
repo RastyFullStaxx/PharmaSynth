@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-/// Pre-recording copy pass over the CUTSCENE beats (2026-07-27). Every beat is a
+/// Pre-recording copy pass over the CUTSCENE beats. Every beat is a
 /// SUBTITLE **and** a text-to-speech script, so a line can be perfectly good on
-/// screen and wrong in the ear — or, worse, describe apparatus that no longer
-/// exists. Run this before spending voice credits: changing a line changes its
+/// screen and wrong in the ear, or describe apparatus that is not in the scene.
+/// Run this before spending voice credits: changing a line changes its
 /// VoiceLineId, so the manifest must be re-exported afterwards anyway.
 ///
 /// Edits the assets through SerializedObject rather than the YAML, because these
@@ -17,8 +17,8 @@ public static class VoicePolish
     /// (find, replace, why). Ordered; applied to every CutsceneData beat subtitle.
     static readonly (string find, string replace, string why)[] Rules =
     {
-        // ACCURACY — the thermometer was deleted from the scene as VR-inappropriate
-        // scaffolding (2026-07-17). Telling the player to watch one is a lie, and
+        // ACCURACY: the thermometer is deleted from the scene as VR-inappropriate
+        // scaffolding, so telling the player to watch one is wrong, and
         // Exp 3's cut is driven by the distillation sim, not a readable instrument.
         ("Watch the thermometer through the 70-80 degree window.",
          "Hold the cut steady between 70 and 80 degrees.",
@@ -83,14 +83,11 @@ public static class VoicePolish
 
     /// The gate's dialogue is a [SerializeField], so the SCENE keeps its own copy
     /// of every line and that copy is what the player actually hears. Any edit to
-    /// the code defaults silently fails to reach the game, and — because the voice
-    /// manifest is built from the CODE — the spoken text stops matching any clip
-    /// and the line drops back to placeholder blips (user 2026-07-27: "some
-    /// dialogs of Pharmee are still the robot beep, that 'Hold on...' one").
-    ///
-    /// The scene copy had drifted badly: it still asked for a lab coat ALONE, while
-    /// the door has required coat + goggles + gloves for weeks. So this is not only
-    /// a voice fix — it was telling players to do the wrong thing.
+    /// the code defaults silently fails to reach the game, and because the voice
+    /// manifest is built from the CODE, the spoken text stops matching any clip
+    /// and the line drops back to placeholder blips. A drifted scene copy can also
+    /// give wrong instructions (asking for a lab coat alone, while the door
+    /// requires coat + goggles + gloves).
     ///
     /// Code is the source of truth: it is reviewed, version-controlled, and what the
     /// manifest and the generated audio were built from. Every change is logged.
@@ -143,11 +140,10 @@ public static class VoicePolish
     }
 
     /// The guided tour has the SAME [SerializeField] trap as the gate: its stops
-    /// carry their own beat text, which had drifted to copy that is now simply
-    /// untrue — it still sends the player to "the equipment cabinet" (every
-    /// instrument lives permanently on the bench) and to "the reagent shelf"
-    /// (emptied into the wall cabinets on 2026-07-16), with the trigger landmark
-    /// still pointing at the emptied shelf. Reseeding fixes the words, the
+    /// carry their own beat text, which drifts out of date (e.g. sending the player
+    /// to "the equipment cabinet" when every instrument lives on the bench, or to
+    /// "the reagent shelf" since emptied into the wall cabinets, with the trigger
+    /// landmark still pointing at the emptied shelf). Reseeding fixes the words, the
     /// landmark, and the missing voice clips in one go.
     static List<string> SyncTourBeats()
     {

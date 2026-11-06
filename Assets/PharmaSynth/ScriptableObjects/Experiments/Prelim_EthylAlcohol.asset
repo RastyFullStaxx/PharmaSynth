@@ -49,10 +49,14 @@ MonoBehaviour:
     skill: 0
     rubricCategory: 0
     required: 1
-    hint: "12% sugar + 4 g yeast + a pinch of ammonium phosphate ferments to alcohol.\n\u2192 Florence Flask: 6 scoopula dips of brown sugar, 2 scoopula dips of yeast, 1 scoopula dip of ammonium phosphate, then tilt-pour distilled water to the 20 ml band."
+    hint: "12% sugar + 4 g yeast + a pinch of ammonium phosphate ferments to alcohol.\n\u2192
+      Florence Flask: 6 scoopula dips of brown sugar, 2 scoopula dips of yeast, 1
+      scoopula dip of ammonium phosphate, then tilt-pour distilled water to the 20
+      ml band."
     autoCompleteWhenOthersDone: 0
     longProcess: 0
     longProcessMessage: 
+    timelapseHours: 0
   - taskId: ferment
     label: Ferment; confirm CO2 with limewater
     phase: 1
@@ -62,11 +66,14 @@ MonoBehaviour:
     skill: 3
     rubricCategory: 0
     required: 1
-    hint: "Yeast digests sugar to ethanol + CO2; the CO2 clouds limewater (CaCO3) \u2014 proof it works.\n\u2192 Pour 10 ml of limewater into a clean test tube, then lead the delivery tube from the flask into it and watch it turn milky."
+    hint: "Yeast digests sugar to ethanol + CO2; the CO2 clouds limewater (CaCO3)
+      \u2014 proof it works.\n\u2192 Pour 10 ml of limewater into a clean test tube,
+      then lead the delivery tube from the flask into it and watch it turn milky."
     autoCompleteWhenOthersDone: 0
     longProcess: 1
     longProcessMessage: "One week later \u2014 the mixture has fermented. Time to
       distil."
+    timelapseHours: 168
   - taskId: adjust-ph
     label: Adjust the wash slightly alkaline
     phase: 1
@@ -76,10 +83,13 @@ MonoBehaviour:
     skill: 0
     rubricCategory: 0
     required: 1
-    hint: "Distilling runs cleaner from a slightly alkaline wash.\n\u2192 Squeeze 2 dropper-loads of 10% sodium hydroxide into the Florence Flask to bring the wash slightly alkaline."
+    hint: "Distilling runs cleaner from a slightly alkaline wash.\n\u2192 Squeeze
+      2 dropper-loads of 10% sodium hydroxide into the Florence Flask to bring the
+      wash slightly alkaline."
     autoCompleteWhenOthersDone: 0
     longProcess: 0
     longProcessMessage: 
+    timelapseHours: 0
   - taskId: distill
     label: "Distil; collect the 70\u201380\xB0C fraction"
     phase: 1
@@ -89,10 +99,13 @@ MonoBehaviour:
     skill: 1
     rubricCategory: 0
     required: 1
-    hint: "Ethanol boils at 78\u00b0C \u2014 collect the 70-80\u00b0C cut and leave the water behind.\n\u2192 Decant 20 ml of the fermented wash into the Distilling Flask, then warm it at the water bath until it reads 70 C."
+    hint: "Ethanol boils at 78\xB0C \u2014 collect the 70-80\xB0C cut and leave the
+      water behind.\n\u2192 Decant 20 ml of the fermented wash into the Distilling
+      Flask, then warm it at the water bath until it reads 70 C."
     autoCompleteWhenOthersDone: 0
     longProcess: 0
     longProcessMessage: 
+    timelapseHours: 0
   - taskId: test-combustion
     label: Combustion test (blue flame)
     phase: 2
@@ -102,10 +115,13 @@ MonoBehaviour:
     skill: 5
     rubricCategory: 1
     required: 1
-    hint: "Pure ethanol burns with a clean BLUE flame (complete combustion).\n\u2192 Pour 3 ml of your distillate onto the Watch Glass, then strike a match and hold the flame to it."
+    hint: "Pure ethanol burns with a clean BLUE flame (complete combustion).\n\u2192
+      Pour 3 ml of your distillate onto the Watch Glass, then strike a match and
+      hold the flame to it."
     autoCompleteWhenOthersDone: 0
     longProcess: 0
     longProcessMessage: 
+    timelapseHours: 0
   - taskId: test-iodoform
     label: Iodoform test (yellow precipitate)
     phase: 2
@@ -115,10 +131,14 @@ MonoBehaviour:
     skill: 5
     rubricCategory: 1
     required: 1
-    hint: "Ethanol gives a pale-YELLOW iodoform precipitate with KI + hypochlorite.\n\u2192 In a clean test tube: 1 squeeze of your distillate, 10 squeezes of potassium iodide 10%, 5 squeezes of sodium hypochlorite - then warm it at the water bath to 60 C."
+    hint: "Ethanol gives a pale-YELLOW iodoform precipitate with KI + hypochlorite.\n\u2192
+      In a clean test tube: 1 squeeze of your distillate, 10 squeezes of potassium
+      iodide 10%, 5 squeezes of sodium hypochlorite - then warm it at the water bath
+      to 60 C."
     autoCompleteWhenOthersDone: 0
     longProcess: 0
     longProcessMessage: 
+    timelapseHours: 0
   - taskId: test-ester
     label: Ester formation (fruity odour)
     phase: 2
@@ -128,10 +148,13 @@ MonoBehaviour:
     skill: 5
     rubricCategory: 1
     required: 1
-    hint: "Ethanol + acetic acid + sulfuric acid make a sweet, fruity ESTER smell.\n\u2192 In a clean test tube: 10 squeezes of your distillate, 4 squeezes of diluted acetic acid, 1 squeeze of sulfuric acid - then warm it at the water bath."
+    hint: "Ethanol + acetic acid + sulfuric acid make a sweet, fruity ESTER smell.\n\u2192
+      In a clean test tube: 10 squeezes of your distillate, 4 squeezes of diluted
+      acetic acid, 1 squeeze of sulfuric acid - then warm it at the water bath."
     autoCompleteWhenOthersDone: 0
     longProcess: 0
     longProcessMessage: 
+    timelapseHours: 0
   - taskId: record-yield
     label: Record your observations
     phase: 3
@@ -148,6 +171,7 @@ MonoBehaviour:
     autoCompleteWhenOthersDone: 1
     longProcess: 0
     longProcessMessage: 
+    timelapseHours: 0
   assessmentMode: 0
   masteryThreshold: 0.9
   bkt:
@@ -155,9 +179,7 @@ MonoBehaviour:
     pTransit: 0.3
     pSlip: 0.1
     pGuess: 0.2
-  trackedSkills:
-  - 0
-  - 5
+  trackedSkills: 0000000005000000
   rubricWeights:
     procedure: 0.4
     chemicalTests: 0.2

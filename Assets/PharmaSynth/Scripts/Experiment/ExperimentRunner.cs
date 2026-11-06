@@ -20,10 +20,8 @@ public struct ExperimentResult
 /// and raises the events the HUD / tablet / wrist-watch / grade screen subscribe to.
 ///
 /// All scoring/mastery logic lives in the (unit-tested) pure classes; this is thin
-/// glue plus per-frame time + auto-check. Drives the v2 TaskGraph data model — the
-/// sole runner since the legacy ExperimentFlowManager cluster was deleted
-/// (2026-08-07); it had been in no scene or prefab, and its callers reached it
-/// through `?.`, so every one of them had been silently doing nothing.
+/// glue plus per-frame time + auto-check. Drives the v2 TaskGraph data model and is
+/// the sole runner.
 public class ExperimentRunner : MonoBehaviour
 {
     [SerializeField] private ExperimentModuleDefinition module;
@@ -42,6 +40,7 @@ public class ExperimentRunner : MonoBehaviour
     public event Action<float> ProgressChanged;                 // 0..1
     public event Action<LabErrorType, string> MistakeRecorded;
     public event Action<ExperimentResult> ExperimentFinished;
+    public event Action Aborted;                                // HUD Restart / abandon — cutscenes must bail out
 
     private TaskGraph _graph;
     private MasteryModel _mastery;
@@ -86,6 +85,8 @@ public class ExperimentRunner : MonoBehaviour
         _grader = new ExperimentGrader(module.BuildScoreCalculator(), gradingConfig);
         _elapsed = 0f;
         _clockFrozen = false;
+        _clockPaused = false;
+        _outOfOrderScolded.Clear();
 
         _graph.TaskCompleted += OnGraphTaskCompleted;
         _graph.PhaseCompleted += OnGraphPhaseCompleted;
@@ -141,8 +142,7 @@ public class ExperimentRunner : MonoBehaviour
 
     private void OnGraphPhaseCompleted(TaskPhase p)
     {
-        // Finishing a whole PHASE was quieter than finishing one step inside it —
-        // `task-complete` had a clip and no caller at all (2026-07-29 audit).
+        // Finishing a whole PHASE must sound at least as big as finishing one step inside it.
         AudioService.TryPlay("task-complete");
         LabHaptics.StepComplete();     // the hands confirm progress too, not just the ears
         PhaseCompleted?.Invoke(p);
@@ -151,14 +151,20 @@ public class ExperimentRunner : MonoBehaviour
 
     /// Complete a task (from a trigger/UI/auto-check). An out-of-order attempt is
     /// auto-recorded as a WrongStep mistake — the error matrix wiring.
+    ///
+    /// ONE mistake per task per attempt, however many times it is tried early: a pour
+    /// binding calls this on every delivery tick, so a one-second early pour would log a
+    /// WrongStep (-4 grade points) per tick and make the run unwinnable at once.
     public TaskCompletionResult CompleteTask(string taskId)
     {
         if (!IsRunning) return TaskCompletionResult.UnknownTask;
         TaskCompletionResult r = _graph.TryComplete(taskId);
-        if (r == TaskCompletionResult.BlockedByPrerequisite)
+        if (r == TaskCompletionResult.BlockedByPrerequisite && _outOfOrderScolded.Add(taskId))
             RecordMistake(LabErrorType.WrongStep, "Attempted '" + taskId + "' out of order");
         return r;
     }
+
+    private readonly System.Collections.Generic.HashSet<string> _outOfOrderScolded = new System.Collections.Generic.HashSet<string>();
 
     /// Report an error from the safety/interaction systems. Lowers the associated
     /// skill's mastery and feeds the grade penalty.
@@ -166,9 +172,9 @@ public class ExperimentRunner : MonoBehaviour
     {
         // Armed-but-not-started (and Lab Tour, where nothing is built) never grades.
         if (!IsRunning || _mistakes == null) return;
-        // ⛔ PRACTICE IS NOT ASSESSED (W5.55, user: "scores are not important for tutorial or
-        // practice mode ... if I have a lot of errors making my score unrecoverable and is
-        // blocking me, stop that"). Tutorial Mode already refills starved reagents; it kept
+        // ⛔ PRACTICE IS NOT ASSESSED (scores do not matter in tutorial or
+        // practice mode; a pile of errors must never make the score unrecoverable and
+        // block the player). Tutorial Mode already refills starved reagents; it kept
         // recording mistakes and pulling mastery down, so a practice run could still be
         // spoiled by the very experimenting it exists for. The player still SEES every scold
         // — those are raised at the call site — but nothing reaches the log or the mastery
@@ -176,7 +182,7 @@ public class ExperimentRunner : MonoBehaviour
         if (TutorialSession.Active) return;
         _mistakes.Record(type, message);
         LabSkill skill = MistakeLog.SkillFor(type);
-        if (_mastery != null && _mastery.IsTracked(skill))
+        if (_mastery != null && MistakeLog.AffectsMastery(type) && _mastery.IsTracked(skill))
             _mastery.Observe(skill, false);
     }
 
@@ -191,7 +197,7 @@ public class ExperimentRunner : MonoBehaviour
     /// Advance the experiment clock (called by Update; exposed for deterministic tests).
     public void AdvanceTime(float dt)
     {
-        if (IsRunning && dt > 0f && !_clockFrozen && ClockRuns) _elapsed += dt;
+        if (IsRunning && dt > 0f && !_clockFrozen && !_clockPaused && ClockRuns) _elapsed += dt;
     }
 
     private bool _clockFrozen;
@@ -203,6 +209,14 @@ public class ExperimentRunner : MonoBehaviour
 
     public bool ClockFrozen => _clockFrozen;
 
+    private bool _clockPaused;
+
+    /// Hold the clock for a mid-run cinematic cutscene, then release it. Separate
+    /// from FreezeClock (one-way, end of run) so a cutscene ending never thaws a
+    /// clock the review froze.
+    public void PauseClock(bool paused) => _clockPaused = paused;
+    public bool ClockPaused => _clockPaused;
+
     private void Update()
     {
         if (!IsRunning) return;
@@ -213,12 +227,12 @@ public class ExperimentRunner : MonoBehaviour
     private ExperimentResult _lastResult;
 
     /// Compute the result without ending the attempt (for a live grade preview).
-    /// Guarded: no attempt built yet → default result (W5.9 — used to NRE).
+    /// Guarded: no attempt built yet → default result (no NRE).
     public ExperimentResult Evaluate(float quizFraction)
         => _graph != null ? BuildResult(quizFraction) : default;
 
     /// End the attempt and emit the final result to the grade screen + gate.
-    /// W5.9 guards: calling with no attempt built is ignored instead of
+    /// Guards: calling with no attempt built is ignored instead of
     /// throwing (dev F-key before B); a second call returns the SAME recorded
     /// result instead of recomputing with a different quiz fraction.
     public ExperimentResult Finish(float quizFraction = 0f)
@@ -239,7 +253,7 @@ public class ExperimentRunner : MonoBehaviour
         return result;
     }
 
-    /// End the attempt WITHOUT grading, recording or cutscenes (W5.9): the HUD
+    /// End the attempt WITHOUT grading, recording or cutscenes: the HUD
     /// Restart / reset-to-entrance path — "your current attempt ends" — must not
     /// leave a zombie run ticking (clock, graph auto-checks, supply monitor,
     /// NPC chatter all key off IsRunning). No ExperimentFinished fires; a later
@@ -250,6 +264,8 @@ public class ExperimentRunner : MonoBehaviour
         _armed = false;
         _finished = true;
         _clockFrozen = false;
+        _clockPaused = false;
+        Aborted?.Invoke();
     }
 
     /// Retry rebuilds a fresh attempt from the module (deterministic reset).

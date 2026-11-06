@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// Tutorial Mode's verb demonstration (W5.39): a translucent ghost of the object the
+/// Tutorial Mode's verb demonstration: a translucent ghost of the object the
 /// player has to move, miming the actual motion of the step, twice, then gone.
 ///
 /// ⭐ Deliberately NOT a hand. Rigging and animating a pair of hands is days of art for
@@ -82,9 +82,9 @@ public class VerbDemoPlayer : MonoBehaviour
 
         if (TaskTargetRegistry.TaskCount == 0) TutorialTargets.Build();
         // A pool of interchangeable glassware collapses to the SAME member the glow and the
-        // arrow use (W5.54) — Endpoints takes the first destination it sees, and with pool
-        // targets registered that was whichever extra happened to be listed first, so the
-        // ghost mimed at one tube while the glow lit another. One chooser for every cue.
+        // arrow use — Endpoints takes the first destination it sees, and with pool
+        // targets registered that is whichever extra happens to be listed first, so the
+        // ghost would mime at one tube while the glow lit another. One chooser for every cue.
         var all = TaskTargetRegistry.Targets(taskId);
         var cam = Camera.main;
         var chosen = TaskTargetRegistry.ChoosePoolMember(all, TutorialHighlighter.IsHeld,

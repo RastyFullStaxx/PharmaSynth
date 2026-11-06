@@ -1,8 +1,8 @@
 using TMPro;
 using UnityEngine;
 
-/// Live status on a sim station's billboard label (W5.8: "the temperature
-/// showing in heaters etc"): Heat shows "62 C -> 150 C", Filter/Collect/
+/// Live status on a sim station's billboard label (the temperature
+/// shown on heaters etc.): Heat shows "62 C -> 150 C", Filter/Collect/
 /// Crystallise show percent progress. Throttled + change-gated; formats live
 /// in VesselStatusMath so the suite pins them.
 public class StationStatusLabel : MonoBehaviour
@@ -19,7 +19,7 @@ public class StationStatusLabel : MonoBehaviour
     private string _last;
     private System.Func<bool> _ignitionLit;   // burner-gated Heat: hint until lit
 
-    /// Burner-gated Heat stations (W5.8): show a "light the burner" hint while
+    /// Burner-gated Heat stations: show a "light the burner" hint while
     /// the gate is cold so nobody stalls wondering why the temperature sits still.
     public void SetIgnitionHint(System.Func<bool> isLit) => _ignitionLit = isLit;
 

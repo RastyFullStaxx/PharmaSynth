@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// Pure format functions for the live-status feedback layer (W5.8): vessel
+/// Pure format functions for the live-status feedback layer: vessel
 /// name tags that show contents/volume, hover-card "Now:" lines, and station
 /// billboards that show temperature / sim progress. Kept plain so the suite
 /// pins every format. All output is TMP-safe ASCII except the em-dash, which
@@ -19,8 +19,8 @@ public static class VesselStatusMath
         return name + " — " + Mathf.RoundToInt(ml) + " ml " + chem;
     }
 
-    /// Mixed-contents name tag (user 2026-07-17: "clear text of the current
-    /// elements in this tube and their proportions"): the ledger story IS the
+    /// Mixed-contents name tag (clear text of the current
+    /// contents of this tube and their proportions): the ledger story IS the
     /// proportions — "Test Tube 3 — Ethanol 1 ml + Distilled Water 10 ml".
     public static string ComposeMixed(string displayName, string ledgerSummary)
     {
@@ -46,8 +46,8 @@ public static class VesselStatusMath
         => baseLabel + "\n" + Mathf.RoundToInt(currentC) + " C -> " + Mathf.RoundToInt(targetC) + " C";
 
     /// Live temperature goal on a vessel that owns a zone-free heat/chill step
-    /// (2026-07-18, user: "ensure texts for monitoring of things such as temp
-    /// are there"): "25 C — warm to 50 C (water bath)" / "25 C — chill to 8 C
+    /// so the temperature can be monitored:
+    /// "25 C — warm to 50 C (water bath)" / "25 C — chill to 8 C
     /// (ice bath)". Empty once the goal side is reached — the step's own
     /// completion feedback takes over from there.
     public static string TempGoalLine(float currentC, float targetC, bool chill)
@@ -58,12 +58,11 @@ public static class VesselStatusMath
     }
 
     /// Generic sim-progress billboard: "5. Filter\nFiltering 40%".
-    /// What this vessel still wants for the step being guided (W5.44).
+    /// What this vessel still wants for the step being guided.
     ///
-    /// Pouring is the commonest verb in the game, and until now the have/required readout
-    /// only appeared once the player had ALREADY started pouring into this vessel — so the
-    /// first pour of every step was a guess. Shown on the guided destination only, so the
-    /// bench does not turn into a wall of numbers.
+    /// Pouring is the commonest verb in the game, so the have/required readout shows
+    /// BEFORE the first pour into this vessel, not only once pouring starts. Shown on the
+    /// guided destination only, so the bench does not turn into a wall of numbers.
     ///
     /// Returns "" when nothing is wanted, which is also what a satisfied step returns —
     /// the label should go quiet the moment the amount is reached, not sit there reading
@@ -76,7 +75,7 @@ public static class VesselStatusMath
         return chemName + "  " + have.ToString("0.#") + " / " + required.ToString("0.#") + unit;
     }
 
-    /// Why the last pour bounced (W5.55). The scold is spoken once and gone; the vessel
+    /// Why the last pour bounced. The scold is spoken once and gone; the vessel
     /// keeps saying it, because "nothing happened" is the single most confusing outcome in
     /// the lab — a headset player poured four reagents into tubes that could not take them
     /// and had no way to tell. Cleared by an accepted pour or by emptying the glass.

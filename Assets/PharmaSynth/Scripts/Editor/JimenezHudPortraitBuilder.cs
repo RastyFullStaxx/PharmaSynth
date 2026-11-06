@@ -6,20 +6,18 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UImage = UnityEngine.UI.Image;
 
-/// Gives Dr. Jimenez a HUD presence equal to Pharmee's (user 2026-07-19: "let's
-/// make dr jimenez same as pharmee that appears in our HUD as well. so we'll
-/// need to create an icon image for dr. jimenez as well").
+/// Gives Dr. Jimenez a HUD presence equal to Pharmee's — he appears in the
+/// HUD with his own icon image, just as she does.
 ///
 /// Two jobs, both idempotent:
-///  1. RENDER his portrait from his own rigged model — a transparent-background
-///     headshot framed on the humanoid Head bone. No AI generation (so no
-///     credits, and no risk of a portrait that looks like a different person):
-///     the icon IS the character the player meets. → Art/UI/jimenez_icon.png,
+///  1. RENDER his portrait from his own rigged model: a transparent-background
+///     headshot framed on the humanoid Head bone, so the icon IS the character the
+///     player meets. → Art/UI/jimenez_icon.png,
 ///     imported with pharmee_icon.png's settings (Sprite/Single, alpha, no mips).
 ///  2. WIRE the HudDialogueBar for two speakers: the existing DialogueBar
 ///     Portrait Image + Pharmee's icon as the primary channel, and Jimenez's
-///     narration + name + new icon as an extra channel. Before this his lines
-///     only ever appeared in his own world bubble — the HUD bar showed nothing.
+///     narration + name + new icon as an extra channel. Without it his lines
+///     appear only in his own world bubble and the HUD bar shows nothing.
 public static class JimenezHudPortraitBuilder
 {
     const string IconPath = "Assets/PharmaSynth/Art/UI/jimenez_icon.png";
@@ -129,10 +127,9 @@ public static class JimenezHudPortraitBuilder
     }
 
     /// Crop to the rendered subject and re-centre it on a square canvas. The raw
-    /// render sits wherever the rig's pose put it (the first pass came out
-    /// off-centre with a third of the frame empty), which reads as a small,
+    /// render sits wherever the rig's pose put it, which reads as a small,
     /// badly-hung portrait in the bar's PreserveAspect slot. Framing from the
-    /// actual opaque pixels is pose-proof — no camera numbers to re-tune.
+    /// actual opaque pixels is pose-proof, with no camera numbers to re-tune.
     static Texture2D CenterOnOpaqueBounds(Texture2D src, float marginFrac = 0.06f)
     {
         int w = src.width, h = src.height;

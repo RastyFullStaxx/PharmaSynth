@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-/// Pure, testable record of what went into a vessel (W5.8 feedback layer).
+/// Pure, testable record of what went into a vessel (feedback layer).
 /// Display-only — chemistry stays in LiquidPhysics/ReactionRegistry; this just
 /// remembers the story so hover cards and mix feedback can say "Ethanol 120 ml
 /// + NaOH 50 ml" or "Reacted -> Acetanilide". Volumes are per-chemical totals;
@@ -20,9 +20,8 @@ public class VesselLedger
     /// the vessel's STORY ("product + wash water only" = decantable, Exp 7).
     public System.Collections.Generic.IReadOnlyList<string> Names => _order;
 
-    /// Record an accepted add of `ml` of `chemicalName`. `solid` switches the
-    /// summary unit to grams — "Aspirin 0.5 g", not the int-rounded "0 ml" a
-    /// spatula dip used to read as (2026-07-17).
+    /// Record an accepted add of `ml` of `chemicalName`. `solid` switches the summary
+    /// unit to grams: "Aspirin 0.5 g", not the int-rounded "0 ml" of a spatula dip.
     public void Add(string chemicalName, float ml, bool solid = false)
     {
         if (string.IsNullOrEmpty(chemicalName) || ml <= 0f) return;
@@ -58,9 +57,9 @@ public class VesselLedger
 
     /// A PARTIAL pour-out: a mixture leaves evenly, so every entry shrinks by the
     /// same fraction. Without this the name tag kept quoting the volumes that were
-    /// poured IN, so a half-spilled tube still read "Ethanol 20 ml" (user
-    /// 2026-07-27: "the measurement still continues or remains there from the
-    /// spilled reagents"). frac >= 1 is a no-op; frac <= 0 empties the story.
+    /// poured IN, so a half-spilled tube still read "Ethanol 20 ml" after the
+    /// spill: the measurement stayed behind from the
+    /// spilled reagent). frac >= 1 is a no-op; frac <= 0 empties the story.
     public void Scale(float frac)
     {
         if (frac >= 0.999f) return;
@@ -71,8 +70,8 @@ public class VesselLedger
     /// "Ethanol 120 ml + NaOH 50 ml" (insertion order, at most `max` entries,
     /// "+ n more" tail beyond that). Sub-ml amounts keep one decimal; solids
     /// read in grams. Empty ledger -> "".
-    /// Pass All to name every reagent (W5.55, user: "show all reagents text in the test
-    /// tube, dont hide in + more"). The vessel's own label uses it — a tube holding four
+    /// Pass All to name every reagent (every reagent in the test
+    /// tube is shown, never folded into "+ more"). The vessel's own label uses it — a tube holding four
     /// things is exactly when the player needs to read all four. The cap stays for the
     /// narrow hover card, where a long story would overflow the panel.
     public const int All = 0;

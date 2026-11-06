@@ -9,7 +9,7 @@ using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractab
 /// the task completes through its existing binding exactly as in campaign, and the
 /// glow follows on the next poll because the available set changed. Since no parallel
 /// completion detector exists, the guidance cannot disagree with the game — which is
-/// the whole failure mode the W5.34 hint audit was spent unpicking.
+/// the failure mode this design avoids.
 public class TutorialHighlighter : MonoBehaviour
 {
     [SerializeField] private ExperimentRunner runner;
@@ -111,10 +111,10 @@ public class TutorialHighlighter : MonoBehaviour
         }
     }
 
-    /// A soft directional ping from whatever the step needs (W5.44).
+    /// A soft directional ping from whatever the step needs.
     ///
-    /// The mode was entirely visual before this, so a player looking the wrong way had no
-    /// cue at all. Fires ONCE on a step change — never on a loop, which is the fastest way
+    /// A visual-only cue gives a player looking the wrong way
+    /// nothing. Fires ONCE on a step change — never on a loop, which is the fastest way
     /// to make someone mute the game — and reuses an existing SoundBank key so it costs no
     /// new audio asset.
     private void PingTarget(string taskId)
@@ -155,7 +155,7 @@ public class TutorialHighlighter : MonoBehaviour
 
     private void Update()
     {
-        // The glow runs in every mode from W5.55 (user: "in every mode is best"), alongside
+        // The glow runs in every mode, alongside
         // the floor path and the beacon. The COACH stays Tutorial-only — a stuck ladder and a
         // no-score summary belong to practice, the cue that says "this glass" does not.
         if (Time.time < _nextPoll) return;
@@ -188,7 +188,7 @@ public class TutorialHighlighter : MonoBehaviour
             // the experiment actually has. (The waypoint still shows a single arrow.)
             var targets = TaskTargetRegistry.Targets(task.taskId);
             // A POOL of interchangeable tubes collapses to ONE glow — the tube in hand,
-            // else the nearest (user 2026-09-06: never the whole rack). Same chooser as
+            // else the nearest (never the whole rack). Same chooser as
             // PickTarget, so the glow and the arrow cannot point at different tubes.
             var chosen = TaskTargetRegistry.ChoosePoolMember(targets, IsHeld, from);
             for (int i = 0; i < targets.Count; i++)

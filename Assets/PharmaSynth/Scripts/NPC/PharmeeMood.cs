@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// Keeps Pharmee's face in sync with what he's doing (user 2026-07-10: expressions
+/// Keeps Pharmee's face in sync with what he's doing (expressions
 /// depend on what he's saying; HAPPY by default, especially while following you).
 /// PharmeeBrain/PharmeeGatekeeper set the per-line expression when a line starts;
 /// this component resets the face to its default (happy) when the line ENDS, so he

@@ -7,7 +7,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// Tutorial Mode scene wiring (2026-08-07). Mirrors DemoModeBuilder's shape so the
+/// Tutorial Mode scene wiring. Mirrors DemoModeBuilder's shape so the
 /// two special modes are built the same way:
 ///   • Build Tutorial Menu Button — MainMenu scene: clones the Laboratory button
 ///     into a "Tutorial" button wired to MainMenuController.OnTutorialLaboratory.
@@ -91,14 +91,14 @@ public static class TutorialModeBuilder
 
     /// Reflows the cube-room menu column and lifts the canvas so nothing is buried.
     ///
-    /// Two separate faults produced the sunken menu (user capture, 2026-08-07):
-    ///   1. `ResultsButton` is INACTIVE but still occupied a row, leaving a visible
+    /// Two traps sink the menu:
+    ///   1. `ResultsButton` is INACTIVE but would still occupy a row, leaving a visible
     ///      hole in the column and pushing everything below it a slot further down.
-    ///   2. New buttons were appended BELOW the lowest existing one, so the column
-    ///      grew downward until its tail crossed the floor plane.
-    /// Fixed by laying the KNOWN buttons out in an explicit order, skipping any that
-    /// are absent or inactive, then setting the canvas height ABSOLUTELY so the lowest
-    /// visible button clears the floor. Absolute, not an offset — an offset would sink
+    ///   2. Appending new buttons BELOW the lowest existing one grows the column
+    ///      downward until its tail crosses the floor plane.
+    /// So the KNOWN buttons are laid out in an explicit order, skipping any that
+    /// are absent or inactive, then the canvas height is set ABSOLUTELY so the lowest
+    /// visible button clears the floor. Absolute, not an offset: an offset would sink
     /// or launch the menu a little further on every re-run.
     ///
     /// Order is also the UX order: the two ways to play first, then settings/quit,
@@ -106,10 +106,10 @@ public static class TutorialModeBuilder
     static readonly string[] MenuOrder =
         { "LaboratoryButton", "TutorialModeButton", "SettingsButton", "QuitButton", "DemoModeButton" };
 
-    // The column was 5 rows x 170 units = 1.83 m tall, which cannot both sit clear of
-    // the floor AND stay in reach — every attempt to lift it just traded a buried
-    // bottom for an unreachable top. Shrinking the rows is the fix that satisfies both
-    // (5 rows x 128 = 1.37 m), and 0.24 m-tall buttons are still a generous VR target.
+    // 5 rows x 170 units = 1.83 m, which cannot both sit clear of the floor AND stay in
+    // reach: lifting it trades a buried bottom for an unreachable top. Smaller rows
+    // satisfy both (5 rows x 128 = 1.37 m), and 0.24 m-tall buttons are still a generous
+    // VR target.
     const float MenuRowHeight = 110f;
     const float MenuRowSpacing = 128f;
     const float MenuFloorClearance = 0.5f;  // metres from the floor to the lowest edge
@@ -135,7 +135,7 @@ public static class TutorialModeBuilder
         foreach (var name in MenuOrder)
         {
             var t = parent.Find(name);
-            // Inactive buttons are SKIPPED, not spaced around — that hole was the gap.
+            // Inactive buttons are SKIPPED, not spaced around, so the column has no gap.
             if (t == null || !t.gameObject.activeSelf) continue;
             var rt = t.GetComponent<RectTransform>();
             if (rt == null) continue;
@@ -152,7 +152,7 @@ public static class TutorialModeBuilder
         var canvasT = canvas != null ? canvas.transform : parent;
         float unitsToMetres = canvasT.lossyScale.y;
 
-        // TWO constraints, not one. Lifting only until the bottom clears the floor put
+        // TWO constraints, not one. Lifting only until the bottom clears the floor puts
         // the top at ~2.18 m with every button shown, which the player has to crane at.
         // Take the LOWER placement that still clears the floor.
         float liftForFloor = MenuFloorClearance - lowestBottom * unitsToMetres;
@@ -256,7 +256,7 @@ public static class TutorialModeBuilder
         main.simulationSpace = ParticleSystemSimulationSpace.World;
         main.playOnAwake = true;
         // ⛔ Every curve stays in Constant mode. Mixing curve modes on a particle
-        // system is what produced 711 errors/second from SpawnVFX (W5.34) — the
+        // system is what produced 711 errors/second from SpawnVFX — the
         // system spams every frame and the console becomes unusable.
         var emission = ps.emission;
         emission.rateOverTime = rate;
@@ -286,8 +286,8 @@ public static class TutorialModeBuilder
 
     /// Wires Tutorial Mode into the lab scene:
     ///   • TutorialHighlighter on the runner's object, bound to the runner
-    ///   • WaypointGuide bound to the runner (it has been dead since the zone-free
-    ///     conversion killed the station registry it used to read)
+    ///   • WaypointGuide bound to the runner (the zone-free bench has no station
+    ///     registry for it to read)
     ///   • the beacon's arrow + disc switched to a ZTest Always material so the
     ///     marker reads THROUGH a closed cabinet door — the "see it through things"
     ///     requirement, without touching any shared bench material.
@@ -316,7 +316,7 @@ public static class TutorialModeBuilder
         coach.Bind(runner);
         EditorUtility.SetDirty(coach);
 
-        // Verb demonstration (W5.39). Its own material, NOT TutorialXray: that one is
+        // Verb demonstration. Its own material, NOT TutorialXray: that one is
         // ZTest Greater and would draw the miming ghost only where it happens to be
         // hidden — the exact inverse of what a demonstration needs.
         var demo = runner.GetComponent<VerbDemoPlayer>();
@@ -324,9 +324,9 @@ public static class TutorialModeBuilder
         demo.Bind(runner, EnsureDemoGhostMaterial());
         EditorUtility.SetDirty(demo);
 
-        // Ground path (W5.44). Its own material: a floor chevron must read on top of the
+        // Ground path. Its own material: a floor chevron must read on top of the
         // floor it lies on, so ZTest Always, and NEVER a shared bench material.
-        // Name tags stop stacking on each other (W5.55). Scene-level, one instance, and it
+        // Name tags stop stacking on each other. Scene-level, one instance, and it
         // idles at 5 Hz over whatever labels happen to be visible — no per-label authoring.
         var declutter = runner.GetComponent<LabelDeclutter>();
         if (declutter == null) declutter = runner.gameObject.AddComponent<LabelDeclutter>();
@@ -338,8 +338,8 @@ public static class TutorialModeBuilder
         path.Bind(runner, EnsureGuideMaterial("GuideChevron", new Color(0.35f, 0.95f, 1f, 0.75f),
                                               UnityEngine.Rendering.CompareFunction.Always, 4000));
         // ⚠ Values pushed explicitly: changing a [SerializeField] default does NOTHING to a
-        // scene that already saved it — the trap that silently un-applied the waypoint fix.
-        // 1 = the authored chevron size; the mesh now carries real metres (was a 0.22 m square).
+        // scene that already saved it.
+        // 1 = the authored chevron size; the mesh carries real metres.
         path.SetTuning(GuidePathMath.Spacing, GuidePathMath.FlowSpeed, 1f);
         EditorUtility.SetDirty(path);
 
@@ -350,8 +350,8 @@ public static class TutorialModeBuilder
             guide.SetRunner(runner);
             guide.SetMarkerScale(0.16f);                 // METRES tall at the reference distance
             // Clear the TOP; cage → pull in front; then hold a constant APPARENT size.
-            // minMul 0.35 (not 0.55) because the complaint was the marker filling the
-            // view at arm's length — the near end needs room to shrink further.
+            // minMul 0.35 (not 0.55) so the marker doesn't fill the view at arm's
+            // length: the near end needs room to shrink further.
             guide.SetPlacement(0.16f, 0.4f, 0.3f, refDistance: 2f, minMul: 0.35f, maxMul: 3.5f);
             EditorUtility.SetDirty(guide);
             foreach (var r in guide.GetComponentsInChildren<Renderer>(true))
@@ -393,15 +393,14 @@ public static class TutorialModeBuilder
             AssetDatabase.CreateAsset(mat, path);
         }
         mat.shader = shader;
-        // Tuned against a headset capture (user 2026-08-07: "slower, larger, brighter,
-        // halo wider"). The first pass was a fast, tight, dim shimmer that read as a
-        // specular highlight rather than a deliberate marker.
+        // Slow, large, bright and wide-haloed, so it reads as a deliberate marker;
+        // a fast, tight, dim shimmer reads as a specular highlight.
         mat.SetColor("_BaseColor", colour);
-        mat.SetFloat("_Intensity", 4.5f);      // was 2.2 — brighter
-        mat.SetFloat("_RimPower", 1.1f);       // was 2.2 — LOWER = wider halo
-        mat.SetFloat("_PulseSpeed", 1.3f);     // was 3.0 — slower, ~5 s a breath
-        mat.SetFloat("_PulseMin", 0.15f);      // was 0.35 — deeper swing = bigger pulse
-        mat.SetFloat("_Occluded", 0.5f);       // was 0.35 — clearer through a door
+        mat.SetFloat("_Intensity", 4.5f);      // brightness
+        mat.SetFloat("_RimPower", 1.1f);       // LOWER = wider halo
+        mat.SetFloat("_PulseSpeed", 1.3f);     // slow, ~5 s a breath
+        mat.SetFloat("_PulseMin", 0.15f);      // deeper swing = bigger pulse
+        mat.SetFloat("_Occluded", 0.5f);       // visibility through a door
         mat.SetFloat("_Swell", 0.012f);        // 12 mm breath, so the pulse changes SIZE
         EditorUtility.SetDirty(mat);
         AssetDatabase.SaveAssets();
@@ -488,7 +487,7 @@ public static class TutorialModeBuilder
         }
 
         // The sim starts real runs; restore vessel contents afterwards or an edit-mode
-        // pass permanently corrupts the saved scene's supplies (SimulatedRun's lesson).
+        // pass permanently corrupts the saved scene's supplies.
         var snapshot = new List<(LiquidPhysics lp, ChemicalData chem, float ml, ChemicalData ppt, float pptMl)>();
         foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             snapshot.Add((lp, lp.currentChemical, lp.currentLiquidVolume, lp.currentPptChemical, lp.currentPptVolume));
@@ -532,7 +531,7 @@ public static class TutorialModeBuilder
                     if (lit) guided++;
                     else if (!next.autoCompleteWhenOthersDone) blind.Add(next.taskId);
 
-                    // W5.39: can the step also be DEMONSTRATED? Endpoints resolving is the
+                    // can the step also be DEMONSTRATED? Endpoints resolving is the
                     // whole precondition for the miming ghost, and a step that lights but
                     // cannot be mimed silently downgrades the coach's level-2 rung to a
                     // point with nothing to look at.

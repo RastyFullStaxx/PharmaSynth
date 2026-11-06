@@ -2,15 +2,15 @@ using XRBase = UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractab
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 using SelectMode = UnityEngine.XR.Interaction.Toolkit.Interactables.InteractableSelectMode;
 
-/// Held-item collision policy (user 2026-07-10: grabbed props could be forced
+/// Held-item collision policy (grabbed props must never be forced
 /// through walls/floor/furniture). The ChemLab pack prefabs shipped with
 /// movementType = Instantaneous, which teleports the transform to the hand each
 /// frame — no physics sweep, so a held beaker passes straight through static
 /// geometry. VelocityTracking drives the rigidbody with velocities instead, so
 /// PhysX resolves collisions and a held item stops against the world.
 ///
-/// Two-handed grab (user 2026-07-11: "hold a container in one hand and pour with
-/// the other; steady the mortar and grind with the pestle — for everything").
+/// Two-handed grab (hold a container in one hand and pour with
+/// the other; steady the mortar and grind with the pestle — for everything).
 /// selectMode = Multiple lets two interactors select the SAME item at once; XRI's
 /// default General grab transformer blends the two-handed pose (midpoint position,
 /// hand-to-hand rotation). Single-hand use is unchanged — it just also permits a

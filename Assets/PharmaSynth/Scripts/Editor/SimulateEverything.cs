@@ -6,21 +6,18 @@ using UnityEditor;
 using UnityEngine;
 
 /// ONE command that plays the whole game and answers one question: is every experiment
-/// actually doable right now? (user 2026-09-02: "there are too many experiments and it
-/// would take me time to play and find bugs each by each").
+/// actually doable right now?
 ///
-/// It adds no new simulation of its own — `SimulatedRun.Run` and `SimulatedCampaign.Run`
-/// were already public and already return structured results. What was missing was a
-/// single entry point and a single verdict: before this you clicked 8 Simulate Run items,
-/// then Campaign, then two tutorial audits, and read 11 separate log files hoping to spot
-/// the one line that mattered.
+/// It adds no simulation of its own. `SimulatedRun.Run` and `SimulatedCampaign.Run`
+/// already return structured results; this is the single entry point and the single
+/// verdict over them and the two tutorial audits.
 ///
-/// Everything lands in Logs/simulate-everything.txt, worst module FIRST — a report you
+/// Everything lands in Logs/simulate-everything.txt, worst module FIRST: a report you
 /// have to scroll to find the failure in is a report that gets skimmed.
 public static class SimulateEverything
 {
     /// All NINE, tutorial included. Methane is deliberately first: it is the first thing
-    /// a player ever touches, and it was the one module no simulator covered until W5.40.
+    /// a player ever touches.
     static readonly string[] AllModules =
     {
         "tutorial-methane",
@@ -193,13 +190,13 @@ public static class SimulateEverything
     }
 
     /// Can each module be STARTED without the supply monitor immediately declaring
-    /// starvation? (user, 2026-09-02: "Not enough reagents left to finish. Restart the
-    /// period?" appearing at Progress 0% on a fresh run — and restarting does not help.)
+    /// starvation ("Not enough reagents left to finish. Restart the period?" at
+    /// Progress 0% on a fresh run, which restarting does not help)?
     ///
     /// This is the monitor's OWN arithmetic, run on a freshly built stage with nothing
-    /// consumed. Every other supply check in this repo asks whether a bottle runs dry
-    /// during a run; none asked the much simpler question of whether the bench can satisfy
-    /// the module at all before the player has touched anything.
+    /// consumed. The other supply checks ask whether a bottle runs dry during a run;
+    /// this asks whether the bench can satisfy the module at all before the player has
+    /// touched anything.
     ///
     /// ⚠ The monitor deliberately counts as AVAILABLE only vessels with NO
     /// LiquidTaskBinding — so a reagent whose only source in the scene is itself a task

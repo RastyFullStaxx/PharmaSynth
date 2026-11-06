@@ -232,6 +232,11 @@ Dev-only capture bridge: renders a one-off camera to a PNG on disk so out-of-edi
 
 lying down — adoption bakes whatever pose it finds, tipped or not. ⛔ An item whose visible mesh is not on its own PIVOT cannot be placed by anyone and is held nowhere near the player's hand (W5.57). Four Tripo/USD imports carried their geometry 0.7–1.9 m from their origin: both distilling flasks, the ice bucket and the matchstick. Dragging the object in the Scene view moves the pivot; the mesh keeps its offset and hangs in the air wherever it is put. Worse, the runtime reads `transform.position`
 
+### `Tools/PharmaSynth/Fit Solid Jars (powder mounds)`
+<sub>`Assets/PharmaSynth/Scripts/Editor/SolidJarFitter.cs`</sub>
+
+Gives every solid reagent jar on the shelf its powder mound (W5.59, user: "brown sugar is liquid in its beaker, but it can be scooped when I try the scoopula on it"). Both halves of that report are true and explain each other. `Build Reagent Cabinets` stocks a PowderJar row from the `Beaker_100mL_WithLiquid` prefab, which carries a `Liquid` surface and nothing else, so 150 units of a SOLID were drawn as a column of brown liquid — `LiquidPhysics.DrawsLiquidColumn` had no mound to show instead. Th
+
 ### `Tools/PharmaSynth/Fix Cube Room Menu Layout`
 <sub>`Assets/PharmaSynth/Scripts/Editor/TutorialModeBuilder.cs`</sub>
 
@@ -556,6 +561,11 @@ The old menu path still works — the docs and muscle memory both use it.
 <sub>`Assets/PharmaSynth/Scripts/Editor/EndProductShelfStocker.cs`</sub>
 
 Acetanilide · Benzamide · Chloroform · Wine are named as a reagent by NO manuscript procedure — their own chemical tests consume the product the player just made (Exp 5's "place 1 gram of acetanilide in a test tube" is testing YOUR synthesis). They are never inputs to anything, so they are simply absent rather than gated. Caffeine went with its dropped module. Ethanol · Acetone · Benzoic Acid are the exception: each is some module's goal AND a manuscript-listed reagent for others (Ethanol → Exp 
+
+### `Tools/PharmaSynth/Style Grade Card (slide layout)`
+<sub>`Assets/PharmaSynth/Scripts/Editor/GradeCardStyler.cs`</sub>
+
+Restyles the grade screen into the client slides' "Mission Complete" card: a row of three white tiles (Time · Mistakes · Grade) with large blue figures, the verdict under them, the rubric breakdown below in a smaller type, buttons unchanged. Idempotent: tiles are found-or-created and every rect is SET, never nudged. The controller's text references are untouched (it still fills the same objects).
 
 ### `Tools/PharmaSynth/Swap Acetate Vial → Open Beaker`
 <sub>`Assets/PharmaSynth/Scripts/Editor/MethaneBeakerSwap.cs`</sub>

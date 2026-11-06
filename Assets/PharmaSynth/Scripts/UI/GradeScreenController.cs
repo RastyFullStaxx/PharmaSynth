@@ -17,12 +17,12 @@ public class GradeScreenController : MonoBehaviour
     [SerializeField] private GameObject passedVisuals;   // confetti + happy Pharmee
     [SerializeField] private GameObject failedVisuals;
     [SerializeField] private GameObject continueButton;  // hidden until passed
-    [SerializeField] private GameObject backButton;      // shown only on FAIL (W5.9: choose another experiment)
+    [SerializeField] private GameObject backButton;      // shown only on FAIL (choose another experiment)
 
     [Header("Events")]
     public UnityEvent onRetry;
     public UnityEvent onContinue;
-    public UnityEvent onBackToEntrance;                   // fail-path exit (W5.9)
+    public UnityEvent onBackToEntrance;                   // fail-path exit
 
     [Header("Auto-show")]
     [SerializeField] private ExperimentRunner runner;
@@ -45,11 +45,36 @@ public class GradeScreenController : MonoBehaviour
         if (runner != null && isActiveAndEnabled) runner.ExperimentFinished += Show;
     }
 
-    /// Subscribe this to ExperimentRunner.ExperimentFinished.
+    private Coroutine _pendingShow;
+
+    /// Subscribe this to ExperimentRunner.ExperimentFinished. In Play mode it waits
+    /// one frame (the outro starts off the same event) and then for any cinematic
+    /// outro to end — the slides put "Mission Complete" AFTER the cutscene. Hide()
+    /// cancels a pending show (the starvation restart hides it in the same breath).
     public void Show(ExperimentResult r)
     {
+        if (Application.isPlaying && isActiveAndEnabled)
+        {
+            if (_pendingShow != null) StopCoroutine(_pendingShow);
+            _pendingShow = StartCoroutine(ShowAfterCinematic(r));
+            return;
+        }
+        ShowNow(r);
+    }
+
+    private System.Collections.IEnumerator ShowAfterCinematic(ExperimentResult r)
+    {
+        yield return null;
+        var d = FindAnyObjectByType<CutsceneDirector>();
+        while (d != null && d.PlayingCinematic) yield return null;
+        _pendingShow = null;
+        ShowNow(r);
+    }
+
+    public void ShowNow(ExperimentResult r)
+    {
         if (root != null) root.SetActive(true);
-        // FLOOR the gate-relevant numbers (W5.9): RoundToInt showed "90%" beside
+        // FLOOR the gate-relevant numbers: RoundToInt showed "90%" beside
         // TRY AGAIN when the raw Total was 89.5-89.99 (the gate compares raw).
         if (gradeText != null) gradeText.text = GradeDisplay.Percent(r.grade.Total) + "%";
         if (mistakesText != null) mistakesText.text = r.mistakeCount.ToString();
@@ -59,9 +84,9 @@ public class GradeScreenController : MonoBehaviour
         if (passedVisuals != null) passedVisuals.SetActive(r.passed);
         if (failedVisuals != null) failedVisuals.SetActive(!r.passed);
         if (continueButton != null) continueButton.SetActive(r.passed); // gate: can't advance until passed
-        if (backButton != null) backButton.SetActive(!r.passed);        // fail: offer "choose another" (W5.9)
+        if (backButton != null) backButton.SetActive(!r.passed);        // fail: offer "choose another"
         if (AudioService.Instance != null) AudioService.Instance.Play(r.passed ? "grade-pass" : "grade-fail");
-        // Confetti burst over the panel on a pass (VFX-set completion 2026-07-10).
+        // Confetti burst over the panel on a pass (VFX set).
         if (r.passed && Application.isPlaying)
         {
             var origin = (passedVisuals != null ? passedVisuals.transform
@@ -72,16 +97,15 @@ public class GradeScreenController : MonoBehaviour
 
     /// The PRACTICE ending: same panel, no score.
     ///
-    /// Tutorial Mode used to announce its summary as floating text and teleport you
-    /// home in the same breath, which is easy to miss entirely — campaign's ending
-    /// holds attention because a panel waits for you. This reuses that panel and
-    /// deliberately shows NO percentage: a score would turn practice back into an exam,
-    /// which is the one thing the mode exists to avoid.
+    /// Floating text plus an immediate teleport home is easy to miss entirely; a panel
+    /// that waits for the player holds attention. It deliberately shows NO percentage:
+    /// a score would turn practice back into an exam, which the mode exists to avoid.
     ///
     /// `onDone` runs when the player dismisses it, so the caller keeps ownership of
     /// what "finished" means rather than this panel reaching into the flow.
     public void ShowPractice(int stepsDone, int corrections, System.Action onDone)
     {
+        if (_pendingShow != null) { StopCoroutine(_pendingShow); _pendingShow = null; }   // practice replaces the graded card
         if (root != null) root.SetActive(true);
         if (gradeText != null) gradeText.text = stepsDone.ToString();
         if (mistakesText != null) mistakesText.text = corrections.ToString();
@@ -99,7 +123,11 @@ public class GradeScreenController : MonoBehaviour
 
     private System.Action _practiceDone;
 
-    public void Hide() { if (root != null) root.SetActive(false); }
+    public void Hide()
+    {
+        if (_pendingShow != null) { StopCoroutine(_pendingShow); _pendingShow = null; }
+        if (root != null) root.SetActive(false);
+    }
 
     public void OnRetryPressed() { Hide(); onRetry?.Invoke(); }
     public void OnContinuePressed()
@@ -110,9 +138,9 @@ public class GradeScreenController : MonoBehaviour
         if (_practiceDone != null) { var done = _practiceDone; _practiceDone = null; done(); return; }
         onContinue?.Invoke();
     }
-    public void OnBackPressed() { Hide(); onBackToEntrance?.Invoke(); }   // fail-path exit (W5.9)
+    public void OnBackPressed() { Hide(); onBackToEntrance?.Invoke(); }   // fail-path exit
 
-    /// Builder seam (W5.9): lets Build Review Corner wire the fail-path button.
+    /// Builder seam: lets Build Review Corner wire the fail-path button.
     public void SetBackButton(GameObject b) => backButton = b;
 
     /// Per-criteria lines + the gate reason (why passed / what fell short).
@@ -126,11 +154,11 @@ public class GradeScreenController : MonoBehaviour
         sb.Append("Time Management: ").Append(Mathf.RoundToInt(b.TimeManagement)).Append('\n');
         sb.Append("Sanitation: ").Append(Mathf.RoundToInt(b.Sanitation)).Append('\n');
         sb.Append("Documentation: ").Append(Mathf.RoundToInt(b.Documentation)).Append('\n');
-        // The quiz score, plainly (user 2026-07-15) — the quiz is never gated, so
+        // The quiz score, plainly — the quiz is never gated, so
         // this is what you weigh when choosing Retry (to perfect it) vs Complete.
         sb.Append("Quiz: ").Append(Mathf.RoundToInt(r.quizScore01 * 100f)).Append("%")
           .Append(r.quizScore01 >= 0.999f ? "  <color=#5FD08A>perfect!</color>" : "").Append('\n');
-        sb.Append("Mastery: ").Append(GradeDisplay.MasteryPercent(r.overallMastery)).Append('%');   // floored — gate-relevant (W5.9)
+        sb.Append("Mastery: ").Append(GradeDisplay.MasteryPercent(r.overallMastery)).Append('%');   // floored — gate-relevant
         if (!r.passed)
         {
             if (!r.gradePassed) sb.Append("\n<color=#FF7070>Grade below the pass mark.</color>");

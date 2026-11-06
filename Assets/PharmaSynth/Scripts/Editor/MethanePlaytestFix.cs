@@ -4,11 +4,10 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using XRGrabInteractable = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// W5.12 playtest fixes (user 2026-07-13): the workspace burners had no
-/// BurnerController (couldn't be lit) and NOTHING in the scene was a
-/// MatchStrikerSurface (a match couldn't be struck), which blocked the whole
-/// heat step; and the Methane reagent jar had no LiquidPhysics so it couldn't be
-/// scooped/poured. This wires all three so the location-free Methane rig works:
+/// Wires the location-free Methane rig's missing pieces: a workspace burner
+/// needs a BurnerController to be lit, striking a match needs a
+/// MatchStrikerSurface, and the Methane reagent jar needs a LiquidPhysics to be
+/// scooped/poured. Without them the heat step is blocked.
 ///   • every Bunsen/Alcohol burner gets BurnerController + MatchStrikerSurface
 ///     (strike a match on the burner base to light it, then it lights the tube),
 ///   • any matchbox-like object becomes a striker too,
@@ -56,8 +55,8 @@ public static class MethanePlaytestFix
             // Mortar: give it a grind verb (cosmetic taskId — the Methane rig
             // re-points it to "prepare-mixture" while the tutorial runs) AND a
             // LiquidPhysics receiver so the scoop can DEPOSIT the solid into it
-            // (deposit needs a LiquidPhysics on the target — user 2026-07-14:
-            // "I can't transfer the scooped content to the mortar").
+            // (deposit needs a LiquidPhysics on the target — without one the
+            // scooped content could not be transferred to the mortar).
             if (IsKind(go, "Motar") || IsKind(go, "Mortar"))
             {
                 if (go.GetComponent<GrindController>() == null)
@@ -71,8 +70,8 @@ public static class MethanePlaytestFix
                     mlp.registry = registry;
                     if (mlp.currentChemical == null && mlp.currentLiquidVolume <= 0.01f)
                         mlp.SetContents(null, 0f);       // starts empty; scoops fill it
-                    // The mortar's OWN mesh must never become the fill renderer (that
-                    // vanished it in play — user 2026-07-14). LiquidPhysics.Start now
+                    // The mortar's OWN mesh must never become the fill renderer (it
+                    // would vanish in play). LiquidPhysics.Start
                     // refuses to adopt an opaque host mesh, so mainRenderer stays null
                     // and the mortar mesh is never disabled; the mound is a Powder child.
                     EditorUtility.SetDirty(go);
@@ -100,7 +99,7 @@ public static class MethanePlaytestFix
 
             // Methane reagent jar → scoopable solid (Sodium Acetate + Soda Lime).
             // Idempotent: re-assert contents + the POWDER visual even if a prior
-            // run already added LiquidPhysics with the old liquid-fill twin.
+            // run already added LiquidPhysics with a liquid-fill twin.
             var item = go.GetComponent<LabItem>();
             if (item != null && item.itemId == "reagent-jar")
             {
@@ -109,7 +108,7 @@ public static class MethanePlaytestFix
                 var chem = lib != null ? lib.GetChemical("Sodium Acetate") : null;
                 if (lp.currentChemical == null || lp.currentLiquidVolume <= 0.01f)
                     lp.SetContents(chem, chem != null ? 60f : 0f);
-                ExperimentSceneBuilder.EnsureLiquidVisual(go, lp);   // now branches to powder
+                ExperimentSceneBuilder.EnsureLiquidVisual(go, lp);   // branches to powder
                 jars++; EditorUtility.SetDirty(go);
             }
         }

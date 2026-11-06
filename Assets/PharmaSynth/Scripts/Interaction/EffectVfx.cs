@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-/// One-shot procedural particle bursts (VFX-set completion, user 2026-07-10),
+/// One-shot procedural particle bursts,
 /// the event twin of StationVfx's looping station effects. All built at runtime
 /// from a shared soft-dot material (no asset deps, Quest-cheap, auto-destroy):
 ///   • Shatter  — glass breaks into a quick outward spray of pale shards (fired
@@ -26,10 +26,10 @@ public static class EffectVfx
     public static void FlamePop(Vector3 pos) => Play(Kind.FlamePop, pos, new Color(1f, 0.55f, 0.15f, 0.9f));
 
     /// Cold-air puff: a soft white vapour cloud that spreads out and sinks — fired
-    /// when the lab door opens (user 2026-07-10 atmosphere pass).
+    /// when the lab door opens.
     public static void ColdAir(Vector3 pos) => Play(Kind.ColdAir, pos, new Color(0.72f, 0.82f, 0.95f, 0.6f));
 
-    // ---- Error-effect set (user 2026-07-10: wrong-mix consequences) ----------
+    // ---- Error-effect set (wrong-mix consequences) ----------
 
     /// Rising smoke plume — overheated/ruined batch. Grey default; ToxicGas mixes
     /// pass a chlorine green-yellow tint.
@@ -47,7 +47,7 @@ public static class EffectVfx
 
     /// Effervescence: small bright bubbles breaking the surface and popping. The visual
     /// half of every gas-evolving reaction — CO2 off a fermentation, ammonia off the
-    /// benzamide boil, nitrogen off the nitrous test (W5.45: these had none).
+    /// benzamide boil, nitrogen off the nitrous test.
     public static void Fizz(Vector3 pos) => Play(Kind.Fizz, pos, new Color(0.92f, 0.97f, 1f, 0.85f));
 
     /// Shared soft-dot particle material (reused by AtmosphereVfx so vapour matches).
@@ -236,7 +236,7 @@ public static class EffectVfx
     }
 
     private static Material _smokeMat;
-    /// Alpha-blended material using the AI-generated soft-smoke texture — for the
+    /// Alpha-blended material using the generated soft-smoke texture — for the
     /// realistic cold vapour (AtmosphereVfx + cold-air puff). Falls back to the soft
     /// dot if the texture is missing.
     public static Material SmokeMaterial()

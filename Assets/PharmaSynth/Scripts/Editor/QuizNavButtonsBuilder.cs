@@ -7,8 +7,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 
-/// Add "< Back" / "Next >" buttons to the quiz tablet (user 2026-07-15: "so users
-/// can review their answers before submitting"). Clones the existing Submit button
+/// Add "< Back" / "Next >" buttons to the quiz tablet so players can review
+/// their answers before submitting. Clones the existing Submit button
 /// so styling matches, wires them to PostLabController.PreviousQuestion/NextQuestion,
 /// assigns the controller's prevButton/nextButton refs (which grey out at the ends),
 /// and makes sure the quiz canvas is XR-ray clickable. Idempotent.
@@ -29,13 +29,13 @@ public static class QuizNavButtonsBuilder
         var parent = submit.transform.parent;
         // Submit shrinks with its neighbours — three equal buttons across the row.
         Narrow(submit.GetComponent<RectTransform>(), parent as RectTransform);
-        // Offset by the button's own WIDTH, in CANVAS units — a hardcoded 0.16 was
+        // Offset by the button's own WIDTH, in CANVAS units. A hardcoded 0.16 is
         // ~zero on a canvas whose buttons are hundreds of units wide, so Back and
-        // Next landed exactly on top of each other (user 2026-07-15).
+        // Next would land exactly on top of each other.
         var prev = MakeButton(parent, submit, "QuizPrevButton", "< Back", -1f);
         var next = MakeButton(parent, submit, "QuizNextButton", "Next >", +1f);
 
-        // The tablet is the quiz — say so (user 2026-07-15).
+        // The tablet is the quiz — say so.
         foreach (var t in post.GetComponentsInChildren<TMP_Text>(true))
             if (t != null && t.text != null && t.text.Contains("Data Sheet & Documentation"))
             { t.text = "Quiz"; EditorUtility.SetDirty(t); }
@@ -63,8 +63,8 @@ public static class QuizNavButtonsBuilder
     /// Clone the Submit button for consistent styling and sit it beside Submit.
     /// `dir` is -1 (left) or +1 (right); the step is the button's own width, so the
     /// three never overlap regardless of the canvas's unit scale. Re-running ALWAYS
-    /// re-lays them out — an earlier build left them stacked, so a "respect the
-    /// existing position" rule would preserve that bug forever.
+    /// re-lays them out, so buttons left stacked by an earlier build get fixed rather
+    /// than preserved by a "respect the existing position" rule.
     static Button MakeButton(Transform parent, Button template, string name, string label, float dir)
     {
         var existing = parent != null ? parent.Find(name) : null;
@@ -101,11 +101,10 @@ public static class QuizNavButtonsBuilder
     }
 
     /// The width the three bottom buttons must SHRINK to so Back | Submit | Next
-    /// fit side by side inside the panel. Containment alone was not enough: on the
+    /// fit side by side inside the panel. Containment alone is not enough: on the
     /// real 820-wide quiz panel three 300-wide buttons need 900, so clamping only
-    /// the STEP pulled Back and Next inward until they sat 73 units ON TOP of
-    /// Submit ("some buttons are still overlapping in the quiz's submit", user
-    /// 2026-07-27). Shrinking first is what actually removes the overlap.
+    /// the STEP pulls Back and Next inward until they sit 73 units ON TOP of
+    /// Submit. Shrinking first is what removes the overlap.
     /// parentWidth &lt;= 1 (unresolvable rect) keeps the authored width. Pure + pinned.
     public static float WidthFor(float buttonWidth, float parentWidth)
     {
@@ -115,8 +114,8 @@ public static class QuizNavButtonsBuilder
     }
 
     /// How far from Submit each side button sits, in canvas units — CONTAINED
-    /// (user 2026-07-19: "contain the next and prev button, currently it's going
-    /// out of bounds") and NON-OVERLAPPING (user 2026-07-27). Measured from the
+    /// ("contain the next and prev button, currently it's going
+    /// out of bounds") and NON-OVERLAPPING. Measured from the
     /// SHRUNK width, and floored at that width plus a hair so the clamp can never
     /// push a neighbour under Submit. Pure + pinned.
     public static float StepFor(float buttonWidth, float parentWidth, float submitOffsetX)

@@ -1,9 +1,9 @@
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// Pure rules for scooping solids (W5.12, user: "some reagents are needed to be
-/// scooped… scoop adds a specific amount per scoop… the visual increases and so
-/// does the scale text"). Kept plain so the suite pins the policy.
+/// Pure rules for scooping solids (solid reagents are
+/// scooped: each scoop adds a fixed amount, and the heap visual grows and so
+/// does the scale reading). Kept plain so the suite pins the policy.
 public static class ScoopMath
 {
     /// Fixed charge one dip transfers, in grams (1 g/ml proxy — WeighMath's
@@ -14,7 +14,7 @@ public static class ScoopMath
     /// acid and 0.5 g of aspirin — both SMALLER than one 2 g scoopful, so the
     /// scoop simply cannot express them. A spatula dip is 0.1 g, making those
     /// 1 and 5 dips: the same "the number in the instruction is the action count"
-    /// contract the dropper uses for drops (user 2026-07-16).
+    /// contract the dropper uses for drops.
     public const float GramsPerSpatula = 0.1f;
 
     /// A dip picks up ONLY from a solid/powder store with something left, and
@@ -31,6 +31,13 @@ public static class ScoopMath
     /// vessel's own capacity/reaction rules take over via AddLiquid).
     public static bool CanDeposit(bool carrying, bool sameContainer)
         => carrying && !sameContainer;
+
+    /// Brushing a loaded blade past a vessel tips it in only where that can't be a
+    /// mistake: an unbound vessel, or one whose step expects this chemical now. A bound
+    /// vessel that does NOT expect it needs a deliberate trigger pull — an accidental
+    /// brush would otherwise record a wrong-reagent mistake (-4 grade) for a hand that drifted.
+    public static bool DepositsOnTouch(bool vesselIsBound, bool expectsChemical)
+        => !vesselIsBound || expectsChemical;
 
     /// Popup for a deposit: running total so repeated scoops read as progress.
     public static string DepositLabel(string chem, float addedG, float totalG)
@@ -66,7 +73,26 @@ public class ScoopController : MonoBehaviour
     void Awake() { if (_grab == null) Bind(GetComponent<XRGrab>()); }
 
     /// Edit-mode / builder seam.
-    public void Bind(XRGrab grab) => _grab = grab;
+    public void Bind(XRGrab grab)
+    {
+        if (_grab != null && Application.isPlaying) _grab.activated.RemoveListener(OnTrigger);
+        _grab = grab;
+        if (_grab != null && Application.isPlaying) _grab.activated.AddListener(OnTrigger);
+    }
+
+    /// Trigger = tip the blade into the nearest vessel, whatever it expects (deliberate).
+    private void OnTrigger(UnityEngine.XR.Interaction.Toolkit.ActivateEventArgs _)
+    {
+        if (!Carrying || Time.time < _readyAt) return;
+        foreach (var col in Physics.OverlapSphere(ProbeCenter(), probeRadius * 1.5f, ~0, QueryTriggerInteraction.Ignore))
+        {
+            if (col == null || col.transform.IsChildOf(transform)) continue;
+            var lp = col.GetComponentInParent<LiquidPhysics>();
+            if (lp != null && Deposit(lp)) return;
+        }
+    }
+
+    private float _nextTipHint;
 
     /// Builder seam for the finer porcelain-spatula charge (ScoopMath.GramsPerSpatula).
     public void SetGramsPerDip(float grams) { if (grams > 0f) gramsPerDip = grams; }
@@ -94,6 +120,17 @@ public class ScoopController : MonoBehaviour
             var lp = col.GetComponentInParent<LiquidPhysics>();
             if (lp == null) continue;
             if (!Carrying) { if (Dip(lp)) return; continue; }
+            var binding = lp.GetComponentInParent<LiquidTaskBinding>();
+            if (!ScoopMath.DepositsOnTouch(binding != null, binding != null && binding.IsExpectedNow(_carrying)))
+            {
+                if (Time.time >= _nextTipHint && lp != _lastSource)
+                {
+                    _nextTipHint = Time.time + 4f;
+                    FloatingText.Show("Not this one — pull the trigger to tip it in anyway", probe + Vector3.up * 0.06f,
+                                      new Color(1f, 0.85f, 0.55f), 1.1f);
+                }
+                continue;
+            }
             if (Deposit(lp)) return;
         }
         // Once the loaded scoop has LEFT its source jar, forget it — so a later
@@ -109,7 +146,7 @@ public class ScoopController : MonoBehaviour
     }
 
     /// One DIP into a solid store: the charge leaves the jar, the tinted heap rides the
-    /// blade. Public so the play-mode visual sweep can perform the REAL verb (W5.45)
+    /// blade. Public so the play-mode visual sweep can perform the REAL verb
     /// instead of teleporting grams; Update() calls it on blade contact. False when
     /// nothing can be picked up (empty jar, a liquid, already carrying).
     public bool Dip(LiquidPhysics lp)
@@ -124,7 +161,7 @@ public class ScoopController : MonoBehaviour
         ShowHeap(chem);
         RefreshPowder(lp);                                  // source mound shrinks
         var probe = ProbeCenter();
-        // GRANULAR, never liquid (user 2026-07-15): a dry blade-into-powder
+        // GRANULAR, never liquid: a dry blade-into-powder
         // dig. No "pour" fallback — silence beats the wrong material's sound.
         AudioService.TryPlayFirstAt(probe, 0.55f, "scoop");
         FloatingText.Show("+" + charge.ToString("0.#") + " g " + chem.chemicalName,
@@ -138,6 +175,7 @@ public class ScoopController : MonoBehaviour
     public bool Deposit(LiquidPhysics lp)
     {
         if (lp == null || !ScoopMath.CanDeposit(Carrying, lp == _lastSource)) return false;
+        if (LabReset.RefusesTransfer(lp, _carrying)) return false;   // never contaminate shelf stock
         var deposited = _carrying; float grams = _carryingG;
         lp.AddLiquid(_carrying, _carryingG);
         RefreshPowder(lp);                                      // receiver mound grows
@@ -155,14 +193,14 @@ public class ScoopController : MonoBehaviour
     /// Where the blade is right now (world) — lets a simulator hold it over a jar.
     public Vector3 BladeTip => ProbeCenter();
 
-    /// The scooping BLADE tip — the far end of the tool's longest axis (user
-    /// 2026-07-13: the pick-up probe and the carried heap were at the whole-tool
-    /// centre, so the powder appeared to ride the middle of the handle and the
-    /// bowl never seemed to touch the jar). Now both live on the blade.
+    /// The scooping BLADE tip — the far end of the tool's longest axis.
+    /// Both the pick-up probe and the carried heap live on the blade, not at the
+    /// whole-tool centre, or the powder rides the middle of the handle and the
+    /// bowl never seems to touch the jar.
     private Vector3 ProbeCenter()
     {
-        // Hand-placed "ScoopAnchor" child wins (drag it onto the bowl/blade; user
-        // 2026-07-14) — otherwise use the far end of the tool's longest axis.
+        // Hand-placed "ScoopAnchor" child wins (drag it onto the bowl/blade)
+        // — otherwise use the far end of the tool's longest axis.
         var anchor = transform.Find("ScoopAnchor");
         if (anchor != null) return anchor.position;
         // SOLID meshes only — the carried ScoopHeap is a child, and including it
@@ -201,8 +239,7 @@ public class ScoopController : MonoBehaviour
     private void HideHeap() { if (_heap != null) _heap.SetActive(false); }
 
     /// Keep a solid/powder container's mound in sync with its contents so it grows
-    /// as scoops go in and shrinks as they come out (user 2026-07-14: "content
-    /// should appear nicely and increase as more is poured in").
+    /// as scoops go in and shrinks as they come out.
     private void RefreshPowder(LiquidPhysics lp)
     {
         if (lp == null) return;
@@ -220,8 +257,8 @@ public class ScoopController : MonoBehaviour
 
     /// Pure (suite): how full the mound reads for `grams` in the vessel. Square-root
     /// so the FIRST dips show the biggest visible jump — a linear grams/20 with a
-    /// 0.28 floor made scoops 1-5 look identical ("doesn't even grow when I scoop
-    /// more into it", user 2026-07-27). 0 g stays 0 so an emptied jar hides its heap.
+    /// 0.28 floor makes scoops 1-5 look identical.
+    /// 0 g stays 0 so an emptied jar hides its heap.
     public static float MoundFill(float grams, float fullAtG = 20f)
     {
         if (grams <= 0.001f) return 0f;

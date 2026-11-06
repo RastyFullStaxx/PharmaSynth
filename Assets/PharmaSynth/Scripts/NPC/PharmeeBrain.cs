@@ -11,7 +11,7 @@ public enum PharmeeState { Idle, Greeting, Instructing, Warning, Celebrating, En
 public interface IPharmeeFace { void SetExpression(PharmeeFaceExpression e); }
 
 /// Robot-guide brain: reacts to ExperimentRunner events with subtitle dialogue and
-/// a face expression (user requirement: "NPC robot must have dialogues"). Greets on
+/// a face expression (a core requirement: the NPC robot has dialogue). Greets on
 /// start, instructs the current step, warns on mistakes, celebrates or encourages at
 /// the end. Dialogue lives in serialized data (client-reviewable); step instructions
 /// come from each task's hint.
@@ -39,7 +39,7 @@ public class PharmeeBrain : MonoBehaviour
 
     [Header("Ambient chatter (user 2026-07-10: richer interactions)")]
     [Tooltip("Seconds of quiet before Pharmee offers an idle comment while a run is active.")]
-    [SerializeField] private float idleChatterGap = 80f;   // W5.12: was 16 s; 2026-07-19: 45 → 80
+    [SerializeField] private float idleChatterGap = 80f;   // seconds; long enough that idle chatter stays rare
     [SerializeField] private bool idleChatterEnabled = true;
     [Tooltip("Minimum gap between REACTION lines (step done). Collapses genuine duplicates — e.g. one pour satisfying two bindings in the same frame — WITHOUT silencing the instruction for a newly-available step. Kept short on purpose: the wrist checklist is the authoritative guidance, but the spoken next-step hint is what a lost player leans on.")]
     [SerializeField] private float reactionCooldown = 3f;
@@ -122,12 +122,11 @@ public class PharmeeBrain : MonoBehaviour
     {
         if (_assessment) return;
         if (runner == null || runner.Graph == null) return;
-        // ONE pour can satisfy two bindings in the same frame — that fired two
-        // Speak() calls back-to-back and read as Pharmee talking over himself
-        // (user 2026-07-19: "speaks rapidly from time to time"). SAFETY warnings
+        // ONE pour can satisfy two bindings in the same frame, which fires two Speak()
+        // calls back-to-back and reads as Pharmee talking over himself. SAFETY warnings
         // deliberately bypass this cooldown (see OnMistake).
         if (Time.time - _lastLineTime < reactionCooldown) return;
-        // ⛔ NEVER CONCATENATE SPOKEN LINES (2026-07-28). Voice clips are keyed by
+        // ⛔ NEVER CONCATENATE SPOKEN LINES. Voice clips are keyed by
         // the hash of the WHOLE string, so "Nice work! " + an instruction hashes to
         // something that exists in no bank and silently drops the line back to
         // placeholder blips — even though both halves are voiced individually.
@@ -144,16 +143,16 @@ public class PharmeeBrain : MonoBehaviour
     }
 
     /// Idle chatter: after a stretch of quiet mid-run, Pharmee offers a friendly
-    /// comment (never in assessment mode; never overlapping a fresh line; W5.9:
+    /// comment (never in assessment mode; never overlapping a fresh line;
     /// never during the scripted review flow — IsRunning stays true through the
     /// quiz, and idle lines were cutting off the gate's congratulations).
     private void Update()
     {
         // While the wrist procedures panel is up, clear any line Pharmee is
-        // showing so it never lingers over the panel (user 2026-07-13) — but
+        // showing so it never lingers over the panel — but
         // NEVER mid-reveal: this ran every frame with no IsRevealing check, so a
         // single stray palm-up frame (suppression latches 1.5 s) truncated the
-        // sentence the player was still reading (2026-07-19). A typing line is
+        // sentence the player was still reading. A typing line is
         // allowed to finish; only a fully-revealed one is cleared early.
         if (WristWatchController.SuppressNpcPokes)
         {
@@ -164,8 +163,10 @@ public class PharmeeBrain : MonoBehaviour
         if (!idleChatterEnabled || _assessment) return;
         if (PharmeeGatekeeper.ReviewFlowActive) return;
         if (runner == null || !runner.IsRunning) return;
+        // Never chatter at someone mid-pour or during a cinematic: wait until they are idle.
+        if (LiquidPourer.SecondsSinceAnyPour < 6f || CinemaView.AnyActive) return;   // quiet until 6 s after the last pour
         // Enforce a long quiet gap even if the scene serialized an older value
-        // (user 2026-07-13: Pharmee was on the player's nerves; 2026-07-19: 45 -> 80).
+        // (constant chatter was distracting; the gap went 45 -> 80).
         if (Time.time - _lastLineTime < Mathf.Max(idleChatterGap, 80f)) return;
         Speak(PharmeeState.Encouraging, PharmeeFaceExpression.Happy,
               PharmeeLines.Pick(PharmeeLines.Idle, _variant++));
@@ -184,8 +185,20 @@ public class PharmeeBrain : MonoBehaviour
     private void OnMistake(LabErrorType type, string message)
     {
         if (Time.time - _lastLineTime < 1.5f) return;
+        // The same warning twice in a row reads as nagging; the HUD toast still marks
+        // every mistake. A DIFFERENT mistake is still spoken at once.
+        if (!WarnAgain(type, _lastWarnType, Time.time - _lastWarnTime)) return;
+        _lastWarnType = type; _lastWarnTime = Time.time;
         Speak(PharmeeState.Warning, PharmeeFaceExpression.Warning, WarnLineFor(type));
     }
+
+    private LabErrorType? _lastWarnType;
+    private float _lastWarnTime = float.NegativeInfinity;
+    public const float RepeatWarnSeconds = 6f;
+
+    /// Pure (suite-pinned): speak this warning? A repeat of the same type waits 6 s.
+    public static bool WarnAgain(LabErrorType type, LabErrorType? lastType, float secondsSinceLast)
+        => lastType != type || secondsSinceLast >= RepeatWarnSeconds;
 
     private void OnFinished(ExperimentResult r)
     {
@@ -210,13 +223,12 @@ public class PharmeeBrain : MonoBehaviour
 
     private void Speak(PharmeeState state, PharmeeFaceExpression face, string line)
     {
-        // While the wrist-watch procedures panel is up (user 2026-07-13: Pharmee
-        // kept talking over it, blocking the read), stay quiet — the player is
-        // reading, not acting. The window also covers 1.5 s after it closes.
+        // Stay quiet while the wrist-watch procedures panel is up, so Pharmee never talks
+        // over it: the player is reading, not acting. The window also covers 1.5 s after it closes.
         if (WristWatchController.SuppressNpcPokes) return;
-        // ⛔ THE REVIEW BELONGS TO THE GATEKEEPER'S SCRIPT (user 2026-07-19:
-        // "pharmee is still speaking something even if I am now in the quiz cut
-        // scenes where dr jimenez now speaks"). Only Update() checked this, so
+        // ⛔ THE REVIEW BELONGS TO THE GATEKEEPER'S SCRIPT (Pharmee
+        // kept talking through the quiz cutscenes
+        // while Dr. Jimenez spoke). Only Update() checked this, so
         // Pharmee's AUTONOMOUS reactions still fired over Dr. Jimenez: submitting
         // the quiz completes the DataSheet task → OnTaskCompleted → an
         // instruction line, and runner.Finish → OnFinished → a celebrate line
@@ -231,11 +243,9 @@ public class PharmeeBrain : MonoBehaviour
         _lastLineTime = Time.time;
         _face?.SetExpression(face);
         if (narration != null) narration.Say(line, lineSeconds);
-        // ⛔ No mood beep. Until 2026-09-05 every line ALSO fired a SoundBank buzzer
-        // (pharmee-instruct / -greet / -celebrate / -warn) on top of the real clip. It was
-        // "Pharmee's robotic voice" from before voice-over existed; with 344 real clips it
-        // read as an error tone announcing each sentence ("like a broken machine"). The
-        // keys stay in the SoundBank; nothing runtime plays them any more.
+        // ⛔ No mood beep. The SoundBank buzzers (pharmee-instruct / -greet / -celebrate / -warn)
+        // predate voice-over; on top of the real clips they read as an error tone on every
+        // sentence. The keys stay in the SoundBank; nothing at runtime plays them.
     }
 
     private string WarnLineFor(LabErrorType type)
@@ -250,7 +260,7 @@ public class PharmeeBrain : MonoBehaviour
     }
 
     /// The spoken instruction for a step: its hint, or a fallback from the label.
-    /// Two-line watch hints are "fact\n→ action" (the verb contract, 2026-07-18):
+    /// Two-line watch hints are "fact\n→ action" (the verb contract):
     /// Pharmee GUIDES, so he speaks only the ACTION — short and imperative, what
     /// to do right now — while the fact line stays on the wrist panel to read.
     /// Speaking the whole hint had him slowly typing out a paragraph the player

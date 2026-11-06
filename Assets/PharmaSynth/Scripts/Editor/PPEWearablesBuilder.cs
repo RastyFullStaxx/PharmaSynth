@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
-/// Wires the per-piece wearable PPE (user 2026-07-10):
+/// Wires the per-piece wearable PPE:
 ///   1. The locker's goggles + gloves become CLICKABLE (collider + XRSimpleInteractable
 ///      + PPEDonOnSelect), the coat display forwards Coat, and the legacy don-everything
 ///      paths are disabled (host donOnSelect off, coat display's old persistent calls cleared).
@@ -131,7 +131,7 @@ public static class PPEWearablesBuilder
         if (it == null) it = go.AddComponent<XRSimpleInteractable>();
         if (clearOldCalls)
         {
-            // The coat display used to don EVERYTHING via a persistent call — clear it.
+            // The coat display's persistent call dons EVERYTHING; clear it.
             var soIt = new SerializedObject(it);
             var calls = soIt.FindProperty("m_SelectEntered.m_PersistentCalls.m_Calls");
             if (calls != null && calls.arraySize > 0)

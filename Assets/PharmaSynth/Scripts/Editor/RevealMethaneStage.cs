@@ -4,8 +4,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// W5.12 (user 2026-07-13): the Methane tutorial stage is authored inactive
-/// (m_IsActive:0) so it stays hidden in the editor. The user wants to review /
+/// The Methane tutorial stage is authored inactive
+/// (m_IsActive:0) so it stays hidden in the editor. To review /
 /// delete it by hand, so this switches it (and any other hidden methane roots)
 /// ON in edit mode and lists what became visible. Runtime is unaffected —
 /// ExperimentSceneBuilder still SetActive(moduleId==methane) each build.
@@ -29,7 +29,7 @@ public static class RevealMethaneStage
                     if (t.name == name) { go = t.gameObject; break; }
             if (go == null) continue;
             if (!go.activeSelf) { go.SetActive(true); revealed++; }
-            Selection.activeGameObject = go;   // leave it selected for the user
+            Selection.activeGameObject = go;   // leave it selected for inspection
             sb.Append("\n  • ").Append(name).Append("  (children: ");
             foreach (Transform c in go.transform) sb.Append(c.name).Append(", ");
             sb.Append(")");

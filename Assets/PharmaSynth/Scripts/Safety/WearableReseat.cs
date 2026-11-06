@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// Restores the PPE locker displays (lab coat / goggles / gloves) to their original
-/// pegs on demand (user 2026-07-10: the lab coat went missing after restarting from
-/// the lab tour, so campaign couldn't be entered). Snapshots each display's local
+/// pegs on demand, so a restart from the lab tour can never leave a piece missing
+/// and the campaign unenterable. Snapshots each display's local
 /// pose + active state at scene start; `Reseat()` puts them back AND strips any worn
 /// PPE, giving a clean, dressable locker every time the player is asked to gear up
 /// (gate CoatPrompt) or restarts (ResetToEntrance).

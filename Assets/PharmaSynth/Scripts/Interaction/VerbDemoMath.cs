@@ -17,7 +17,7 @@ public struct VerbPose
     public Quaternion rotation;
 }
 
-/// Pure motion curves for Tutorial Mode's verb demonstration (W5.39): given a verb and
+/// Pure motion curves for Tutorial Mode's verb demonstration: given a verb and
 /// two world points, where should the ghost be at normalised time t?
 ///
 /// Pure so the suite can pin the SHAPE of each motion without a headset — that a pour

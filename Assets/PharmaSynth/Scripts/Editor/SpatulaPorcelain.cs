@@ -3,13 +3,13 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// W5.12 (user): the manuscript specifies a PORCELAIN spatula, but our Spatula
-/// prefab shipped with the shared metal EquipmentMat and read as steel. This
+/// The manuscript specifies a PORCELAIN spatula, but the Spatula prefab uses the
+/// shared metal EquipmentMat and reads as steel. This
 /// finds every Spatula prefab instance in the scene (by SOURCE prefab, so it
 /// catches hand-placed/renamed copies like "Eq_Spatula" that carry no LabItem),
 /// applies the pack's white PorcelainMat, renames + labels it "Porcelain
 /// Spatula", gives it the full interaction wiring, and fixes the source prefab.
-/// Via the Mishandling table it now clinks like ceramic instead of clattering
+/// Via the Mishandling table it clinks like ceramic instead of clattering
 /// like metal. Idempotent.
 public static class SpatulaPorcelain
 {
@@ -38,7 +38,7 @@ public static class SpatulaPorcelain
             PhysicsAudit.WireSceneItem(go, "Spatula", runner);              // grab/physics/respawn/impact/ceramic-clink/home
             var pl = go.GetComponent<ProximityLabel>() ?? go.AddComponent<ProximityLabel>();
             pl.SetLabel("Porcelain Spatula", 1.4f);
-            // Preserve the user's "Eq_" naming convention when renaming.
+            // Preserve the "Eq_" naming convention when renaming.
             go.name = go.name.StartsWith("Eq_") ? "Eq_PorcelainSpatula" : "PorcelainSpatula";
             EditorUtility.SetDirty(go);
             scene++;

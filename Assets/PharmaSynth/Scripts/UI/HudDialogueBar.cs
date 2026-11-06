@@ -8,12 +8,9 @@ using UnityEngine.UI;
 /// the player can read them without looking at them. Visible ONLY while a line is
 /// live; fades out smoothly when the line ends.
 ///
-/// MULTI-SPEAKER (user 2026-07-19: "let's make dr jimenez same as pharmee that
-/// appears in our HUD as well"). Pharmee and Dr. Jimenez own SEPARATE
-/// NPCNarrationControllers (their own world bubbles); the bar used to subscribe
-/// to exactly one, so Jimenez's briefing/verdict never reached the HUD at all and
-/// the "Pharmee" name was baked into the scene text. Now each channel carries its
-/// own name + portrait, and whichever speaks last owns the bar.
+/// MULTI-SPEAKER. Pharmee and Dr. Jimenez own SEPARATE NPCNarrationControllers (their
+/// own world bubbles), so the bar subscribes to each channel; each carries its own
+/// name + portrait, and whichever speaks last owns the bar.
 public class HudDialogueBar : MonoBehaviour
 {
     [System.Serializable]
@@ -145,8 +142,8 @@ public class HudDialogueBar : MonoBehaviour
             lineText.text = line;
             lineText.maxVisibleCharacters = typing ? 0 : int.MaxValue;
         }
-        // Set the name UNCONDITIONALLY — the old IsNullOrEmpty guard meant the
-        // scene's baked "Pharmee" was sticky, so a second speaker kept his name.
+        // Set the name UNCONDITIONALLY: guarding on IsNullOrEmpty makes the scene's baked
+        // "Pharmee" sticky, so a second speaker would show that name.
         if (speakerText != null && ch != null && !string.IsNullOrEmpty(ch.speakerName))
             speakerText.text = ch.speakerName;
         if (portraitImage != null && ch != null && ch.portrait != null)

@@ -2,27 +2,25 @@
 using UnityEditor;
 using UnityEngine;
 
-/// Makes the lab door actually open, and actually stop you before it does (W5.55, user in
-/// the headset: "fix the door opening. it is not doing that open function. Im just walking
-/// through it now").
+/// Makes the lab door actually open, and actually stop you before it does.
 ///
-/// ⛔ THE DOOR WAS NEVER BROKEN IN CODE. `DoorOpener` was wired correctly — its `door` field
-/// resolves to the leaf, `PharmeeGatekeeper.doorOpener` is assigned, and `SetOpen(true)`
-/// fires on DoorArmed. Two SCENE faults hid all of that:
+/// ⛔ THE FAULTS ARE IN THE SCENE, NOT THE CODE. `DoorOpener` is wired correctly: its `door`
+/// field resolves to the leaf, `PharmeeGatekeeper.doorOpener` is assigned, and `SetOpen(true)`
+/// fires on DoorArmed. Two SCENE faults break it:
 ///
 ///   1. The leaf inherits the Environment prefab's `m_StaticEditorFlags = 87`, which
 ///      includes **Batching Static**. A static-batched renderer is merged into a combined
-///      mesh at load and then IGNORES its transform, so the leaf's collider swung open
-///      while the drawn door stayed shut. The player walks through what looks like a closed
-///      door, and no amount of reading DoorOpener explains it. Contribute GI goes with it:
+///      mesh at load and then IGNORES its transform, so the leaf's collider swings open
+///      while the drawn door stays shut, and the player walks through what looks like a
+///      closed door. Contribute GI goes with it:
 ///      a door that moves must not carry a lightmap baked in the closed position.
-///   2. `doorBlocker` was null, so nothing held the player back while the gate was still
+///   2. A null `doorBlocker` leaves nothing to hold the player back while the gate is still
 ///      talking. The blocker is a plain trigger-free box across the doorway that the
-///      gatekeeper enables and disables; it is created here so the scene stops depending on
-///      someone having hand-placed one.
+///      gatekeeper enables and disables; it is created here so the scene does not depend on
+///      a hand-placed one.
 ///
 /// Idempotent: re-running finds the same objects and rewrites the same values.
-/// ⚠ The leaf was lightmap- and navmesh-static, so after running this go through
+/// ⚠ The leaf's lightmap- and navmesh-static flags change, so after running this go through
 /// `Build Lab Probes` → `Run Lab Lighting Bake` → `Build Lab NavMesh`.
 public static class LabDoorFixBuilder
 {
@@ -58,8 +56,8 @@ public static class LabDoorFixBuilder
         blocker.transform.SetPositionAndRotation(
             new Vector3(b.center.x, b.center.y, b.center.z), leaf.rotation);
         // ⛔ Explicit null check, never `??`: GetComponent hands back Unity's fake-null for a
-        // freshly created object in some editor paths, and `??` happily accepts it — the
-        // first run of this menu threw MissingComponentException on the very next line.
+        // freshly created object in some editor paths, and `??` accepts it, so the very next
+        // line throws MissingComponentException.
         var box = blocker.GetComponent<BoxCollider>();
         if (box == null) box = blocker.AddComponent<BoxCollider>();
         if (box == null) { Debug.LogError("[LabDoor] could not add a collider to the blocker."); return; }

@@ -89,7 +89,7 @@ public class TutorialCoach : MonoBehaviour
         if (!TutorialSession.Active) return;
         // The subtitle carries the numbers; the VOICE says the fixed stem. A line assembled
         // at runtime can never match a clip (clips are keyed by the hash of the whole text),
-        // so this summary had ended every practice run in fallback blips (2026-09-05).
+        // so this summary had ended every practice run in fallback blips.
         Announce(SummaryText(_stepsDone, _corrections), PharmeeLines.PracticeComplete);
     }
 
@@ -113,7 +113,7 @@ public class TutorialCoach : MonoBehaviour
         //
         // ⛔ Levels 1 and 2 existed in LevelFor from the start but Update() returned
         // unless the level was 3, so the "15 s nudge / 30 s marker" the docs promised had
-        // never once run (found W5.39). LevelFor was right; nothing consumed it.
+        // never once run. LevelFor was right; nothing consumed it.
         int level = LevelFor(Time.time - _onStepSince);
         while (_shownLevel < level) Escalate(++_shownLevel, id, hint);
     }

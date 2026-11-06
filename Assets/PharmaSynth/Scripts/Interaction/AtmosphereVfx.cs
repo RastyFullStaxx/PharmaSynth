@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// Ambient lab atmosphere (user 2026-07-10): gentle white vapour so the room feels
+/// Ambient lab atmosphere: gentle white vapour so the room feels
 /// alive — a cool stream sinking from the AC unit, and faint slow-drifting haze near
 /// the floor/ceiling. Procedural (shares EffectVfx's soft-dot material, no asset
 /// deps) and deliberately LOW-density — transparent smoke is the main overdraw cost

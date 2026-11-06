@@ -15,7 +15,9 @@ MonoBehaviour:
   moduleId: final-winemaking
   moduleTitle: 'Final 4: Wine Making'
   intendedLearningOutcomes:
-  - 'Objective: Learn the basic methodology in preparation and synthesis of alcohol using the fermentation technique, with basic ingredients found in any household kitchen.'
+  - 'Objective: Learn the basic methodology in preparation and synthesis of alcohol
+    using the fermentation technique, with basic ingredients found in any household
+    kitchen.'
   materialReagents:
   - "Mixed Fruit Juice \u2014 250 mL min (tilt-pour to 40 ml)"
   - "Brown Sugar \u2014 3 scoopula dips (feeds the yeast)"
@@ -23,24 +25,32 @@ MonoBehaviour:
   - "Yeast \u2014 2 scoopula dips (the fermenting catalyst)"
   - "Limewater \u2014 10 ml (CO2 confirmation)"
   materialApparatus:
-  - "Fermentation Jar - Beaker 500 mL (the must)"
-  - "Glass rod (rouse the yeast)"
-  - "Test Tube 5 (limewater CO2 check)"
-  - "Racking funnel + Wine Bottle - Florence flask"
-  - "Watch Glass (clarity) \u00B7 Beaker 100 mL (tasting glass)"
+  - Fermentation Jar - Beaker 500 mL (the must)
+  - Glass rod (rouse the yeast)
+  - Test Tube 5 (limewater CO2 check)
+  - Racking funnel + Wine Bottle - Florence flask
+  - "Watch Glass (clarity) \xB7 Beaker 100 mL (tasting glass)"
   tasks: []
   graphTasks:
   - taskId: prepare-must
-    label: "Prepare the must - fruit juice (NOT grapes) + sugar + yeast"
+    label: Prepare the must - fruit juice (NOT grapes) + sugar + yeast
     phase: 0
     prerequisites: []
     progressWeight: 1
     skill: 0
     rubricCategory: 0
     required: 1
-    hint: "The manual: ferment at least 250 mL of any fruit juice EXCEPT grapes. Sugar feeds the yeast; a pinch of nutrient keeps it healthy.\n\u2192 Fermentation Jar: tilt-pour Mixed Fruit Juice to the 40 ml band, 3 scoopula dips of brown sugar, 1 scoopula dip of ammonium phosphate, then pitch 2 scoopula dips of yeast - watch the tag turn to 'Wine'."
+    hint: "The manual: ferment at least 250 mL of any fruit juice EXCEPT grapes.
+      Sugar feeds the yeast; a pinch of nutrient keeps it healthy.\n\u2192 Fermentation
+      Jar: tilt-pour Mixed Fruit Juice to the 40 ml band, 3 scoopula dips of brown
+      sugar, 1 scoopula dip of ammonium phosphate, then pitch 2 scoopula dips of
+      yeast - watch the tag turn to 'Wine'."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: stir-must
-    label: "Swirl the must to rouse the yeast"
+    label: Swirl the must to rouse the yeast
     phase: 0
     prerequisites:
     - prepare-must
@@ -48,9 +58,15 @@ MonoBehaviour:
     skill: 1
     rubricCategory: 0
     required: 1
-    hint: "Rousing spreads the yeast evenly through the sugary juice so every part ferments.\n\u2192 Circle the GLASS ROD in the jar until the 'Well stirred!' cue shows."
+    hint: "Rousing spreads the yeast evenly through the sugary juice so every part
+      ferments.\n\u2192 Circle the GLASS ROD in the jar until the 'Well stirred!'
+      cue shows."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: confirm-ferment
-    label: "Confirm fermentation - CO2 turns limewater milky"
+    label: Confirm fermentation - CO2 turns limewater milky
     phase: 1
     prerequisites:
     - stir-must
@@ -58,11 +74,17 @@ MonoBehaviour:
     skill: 4
     rubricCategory: 0
     required: 1
-    hint: "Fermenting wine gives off CO2; leading that gas through limewater proves it is alive - the limewater turns milky (CaCO3).\n\u2192 Pour 10 ml of limewater into a clean test tube and hold it at the jar's mouth until it clouds - then the week-long ferment passes."
+    hint: "Fermenting wine gives off CO2; leading that gas through limewater proves
+      it is alive - the limewater turns milky (CaCO3).\n\u2192 Pour 10 ml of limewater
+      into a clean test tube and hold it at the jar's mouth until it clouds - then
+      the week-long ferment passes."
+    autoCompleteWhenOthersDone: 0
     longProcess: 1
-    longProcessMessage: "Seven days and seven nights later - fermentation is complete and the wine has cleared over its lees."
+    longProcessMessage: Seven days and seven nights later - fermentation is complete
+      and the wine has cleared over its lees.
+    timelapseHours: 168
   - taskId: rack
-    label: "Rack the clear wine off the lees"
+    label: Rack the clear wine off the lees
     phase: 1
     prerequisites:
     - confirm-ferment
@@ -70,9 +92,16 @@ MonoBehaviour:
     skill: 2
     rubricCategory: 0
     required: 1
-    hint: "Racking siphons the clear wine off the sediment (lees) without disturbing it - the manual: 'do not shake; decant the liquid'.\n\u2192 Tilt-pour the clear wine from the jar THROUGH the racking funnel into the Wine Bottle (Florence flask) to the 30 ml band, leaving the lees behind."
+    hint: "Racking siphons the clear wine off the sediment (lees) without disturbing
+      it - the manual: 'do not shake; decant the liquid'.\n\u2192 Tilt-pour the clear
+      wine from the jar THROUGH the racking funnel into the Wine Bottle (Florence
+      flask) to the 30 ml band, leaving the lees behind."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: test-clarity
-    label: "Assess clarity, colour and appearance"
+    label: Assess clarity, colour and appearance
     phase: 2
     prerequisites:
     - rack
@@ -80,9 +109,15 @@ MonoBehaviour:
     skill: 5
     rubricCategory: 1
     required: 1
-    hint: "General appearance is a fifth of the wine-tasting grade - a bright, clear pour with no haze scores well.\n\u2192 Pour a splash (about 6 ml) of your racked wine onto the Watch Glass and judge its clarity against the light."
+    hint: "General appearance is a fifth of the wine-tasting grade - a bright, clear
+      pour with no haze scores well.\n\u2192 Pour a splash (about 6 ml) of your racked
+      wine onto the Watch Glass and judge its clarity against the light."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: test-tasting
-    label: "Tasting finale - evaluate aroma and flavour"
+    label: Tasting finale - evaluate aroma and flavour
     phase: 2
     prerequisites:
     - rack
@@ -90,9 +125,15 @@ MonoBehaviour:
     skill: 5
     rubricCategory: 1
     required: 1
-    hint: "Flavour, smell and taste are a quarter of the grade - the tasting finale of the whole course.\n\u2192 Pour about 12 ml into the Tasting Glass and evaluate the aroma and flavour."
+    hint: "Flavour, smell and taste are a quarter of the grade - the tasting finale
+      of the whole course.\n\u2192 Pour about 12 ml into the Tasting Glass and evaluate
+      the aroma and flavour."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: record-label
-    label: "Create the label & record volume and observations"
+    label: Create the label & record volume and observations
     phase: 3
     prerequisites:
     - test-clarity
@@ -101,8 +142,13 @@ MonoBehaviour:
     skill: 0
     rubricCategory: 5
     required: 1
-    hint: "Design the bottle label and log the final volume (250-500 mL) with your appearance and tasting notes.\n\u2192 Review your wine, then answer on the data sheet."
+    hint: "Design the bottle label and log the final volume (250-500 mL) with your
+      appearance and tasting notes.\n\u2192 Review your wine, then answer on the
+      data sheet."
     autoCompleteWhenOthersDone: 1
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   assessmentMode: 0
   masteryThreshold: 0.9
   bkt:
@@ -110,9 +156,7 @@ MonoBehaviour:
     pTransit: 0.3
     pSlip: 0.1
     pGuess: 0.2
-  trackedSkills:
-  - 5
-  - 0
+  trackedSkills: 0500000000000000
   rubricWeights:
     procedure: 0.4
     chemicalTests: 0.2

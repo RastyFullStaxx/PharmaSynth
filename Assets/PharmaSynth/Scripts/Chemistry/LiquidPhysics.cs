@@ -21,11 +21,11 @@ public class LiquidPhysics : MonoBehaviour
 
     [Header("Volume Settings")]
     public float maxVolume = 1000f;
-    // 0 by default (W5.8): a freshly AddComponent'ed receiver must start EMPTY so
+    // 0 by default: a freshly AddComponent'ed receiver must start EMPTY so
     // AddLiquid's wake-from-empty branch can adopt the first poured chemical.
-    // (The old 500 default left stage-built vessels with a phantom half-fill that
-    // blocked adoption forever — the "pouring into a beaker does nothing" bug.
-    // Serialized prefabs/scene objects keep their authored values.)
+    // (A non-zero default leaves stage-built vessels with a phantom half-fill that
+    // blocks adoption forever, so pouring into them does nothing. Serialized
+    // prefabs/scene objects keep their authored values.)
     public float currentLiquidVolume = 0f;
     public float currentPptVolume = 0f;
     public float HorizonalFloatAdj = 0.13f;
@@ -35,14 +35,12 @@ public class LiquidPhysics : MonoBehaviour
     public ChemicalData currentPptChemical;
     public ReactionRegistry registry;
 
-    // ---- temperature-gated reactions (user 2026-07-17: "achieve the needed in
-    // the procedure first, before these reactions come") -----------------------
-    // A rule whose minTemperatureC isn't met at mix time no longer fires early —
-    // the Tollens mirror popped the instant you poured, cold, making the "warm
-    // it in the water bath" step meaningless. The mix is HELD as pending and
-    // fires the moment the vessel is actually heated to the rule's threshold
-    // (heat stations / the water bath propagate their sim temperature to
-    // vessels in their zone).
+    // ---- temperature-gated reactions -------------------------------------------
+    // A rule whose minTemperatureC isn't met at mix time does not fire early, or the
+    // Tollens mirror would appear the instant you pour, cold, making the "warm it in
+    // the water bath" step meaningless. The mix is HELD as pending and fires the
+    // moment the vessel is actually heated to the rule's threshold (heat stations /
+    // the water bath propagate their sim temperature to vessels in their zone).
     [Header("Temperature")]
     public float currentTempC = 25f;   // ambient; SetTemperature raises it
 
@@ -69,15 +67,14 @@ public class LiquidPhysics : MonoBehaviour
     /// hover cards and mix feedback. Chemistry stays in the fields above.
     public VesselLedger Ledger { get; } = new VesselLedger();
 
-    // MIXTURE pH, not the first-poured chemical's (2026-07-18): the litmus strip
-    // used to read currentChemical.pH, so "water first, then the acid" read 7
-    // forever and soft-locked Exp 4's litmus test. The more extreme component
-    // dominates (LitmusMath.DominantPH) — an acid stays acidic under any amount
-    // of water, which is what a real strip dipped in the mixture reports.
+    // MIXTURE pH, not the first-poured chemical's: reading currentChemical.pH makes
+    // "water first, then the acid" read 7 forever and soft-locks Exp 4's litmus test.
+    // The more extreme component dominates (LitmusMath.DominantPH): an acid stays
+    // acidic under any amount of water, which is what a real strip in the mixture reports.
     private float _mixPH = 7f;
     public float CurrentPH => _mixPH;
 
-    // Reaction-sting dedupe (2026-07-18): see ApplyReaction.
+    // Reaction-sting dedupe: see ApplyReaction.
     private ReactionRule _lastCueRule;
     private float _lastCueAt = -999f;
 
@@ -150,9 +147,9 @@ public class LiquidPhysics : MonoBehaviour
 
     /// Pure (suite-pinned): may LiquidPhysics adopt its host's OWN renderer as the
     /// liquid fill surface? Only when that material runs the PharmaLiquid "_Fill"
-    /// shader. An opaque VESSEL mesh must NOT be adopted — UpdateFillPhysics disables
-    /// mainRenderer while empty, so a mortar/beaker that lent its own mesh vanished
-    /// in Play the moment it was empty (user 2026-07-14).
+    /// shader. An opaque VESSEL mesh must NOT be adopted: UpdateFillPhysics disables
+    /// mainRenderer while empty, so a mortar/beaker lending its own mesh would vanish
+    /// in Play the moment it was empty.
     public static bool ShouldAdoptHostRenderer(Material hostMaterial)
         => hostMaterial != null && hostMaterial.HasProperty("_Fill");
 
@@ -266,7 +263,7 @@ public class LiquidPhysics : MonoBehaviour
     /// puts 2 ml of aniline in a 250 ml Florence flask — which is 0.8% of its height and
     /// simply invisible at arm's length in VR. The quantity stays honest everywhere it is
     /// judged (VesselStatus, the watch panel, every binding); only the DRAWN column is
-    /// floored, so "there is something in this flask" is legible (W5.45).
+    /// floored, so "there is something in this flask" is legible.
     public const float MinVisibleFill01 = 0.06f;
 
     /// Volume below which a column counts as nothing at all.
@@ -283,7 +280,7 @@ public class LiquidPhysics : MonoBehaviour
     /// shows a mound and no liquid column; the moment something is poured on it — water,
     /// acid — it is a wet mixture and must draw as one, whatever the resulting chemical's
     /// authored state says. Exp 2 boils aspirin in acid and the product, Salicylic Acid, is
-    /// authored Solid: the tube held 13.5 ml and drew nothing at all (W5.45).
+    /// authored Solid, so 13.5 ml in the tube would otherwise draw nothing at all.
     private bool _wetted;
 
     /// Pure (suite-pinned): are these contents a DRY solid rather than a wet mixture?
@@ -342,11 +339,10 @@ public class LiquidPhysics : MonoBehaviour
 
         if (precipitateRenderer)
         {
-            // ⛔ Was `> 1f`. Every precipitate rule deposits exactly the incoming pour — one
-            // dropper squeeze, so 1.0 ml — and 1.0 is not greater than 1.0, so the milky
-            // limewater, both iodoform yellows, the acetanilide plates and the benzamide
-            // solid were authored, fired, announced in text and NEVER DRAWN: six of the
-            // manuscript's headline observations, invisible on one comparison (W5.45).
+            // ⛔ `>` ShowFromMl, not `> 1f`. Every precipitate rule deposits exactly the incoming
+            // pour (one dropper squeeze, 1.0 ml), and 1.0 is not greater than 1.0, so the milky
+            // limewater, both iodoform yellows, the acetanilide plates and the benzamide solid
+            // would never be drawn.
             bool hasPpt = currentPptVolume > ShowFromMl;
             if (precipitateRenderer.enabled != hasPpt) precipitateRenderer.enabled = hasPpt;
         }
@@ -360,9 +356,8 @@ public class LiquidPhysics : MonoBehaviour
 
     /// How hard this vessel's contents are boiling, 0-1.
     ///
-    /// `boilingPointC` was pure chemistry data until 2026-08-28 - nothing ever displayed it,
-    /// so heating a beaker vented steam from the STATION while the liquid inside sat perfectly
-    /// still. It ramps over the last 8 degrees rather than switching on at the threshold, so a
+    /// Driven by `boilingPointC`, so the liquid itself moves when heated instead of only
+    /// the station venting steam. It ramps over the last 8 degrees rather than switching on at the threshold, so a
     /// vessel coming up to temperature visibly starts to move before it runs.
     public float BoilAmount()
         => BoilFor(currentLiquidVolume, currentTempC,
@@ -410,16 +405,15 @@ public class LiquidPhysics : MonoBehaviour
 
     /// notify=false: run the chemistry (reactions, precipitate, ledger) WITHOUT
     /// raising LiquidAdded/WrongReagentMixed — for a REACTION DRIVER that is not a
-    /// procedure reagent (Exp 3's CO₂ bubbled into limewater). Without this the
-    /// task binding graded every CO₂ bubble a "wrong reagent" even as the
-    /// registered Limewater_CO2 reaction correctly clouded the tube (2026-07-17).
+    /// procedure reagent (Exp 3's CO₂ bubbled into limewater). Without this the task
+    /// binding grades every CO₂ bubble a "wrong reagent" while the Limewater_CO2 reaction clouds the tube.
     public void AddLiquid(ChemicalData incomingChemical, float amountToAdd, bool notify = true)
     {
         if (incomingChemical == null)
             return;
 
-        // Capacity guard FIRST — a rejected overflow must not raise LiquidAdded
-        // (it used to complete tasks on pours into an already-full vessel).
+        // Capacity guard FIRST: a rejected overflow must not raise LiquidAdded, or a pour
+        // into an already-full vessel completes tasks.
         if (currentLiquidVolume + currentPptVolume + amountToAdd > maxVolume)
         {
             if (notify) LiquidRejected?.Invoke(incomingChemical, amountToAdd);
@@ -430,19 +424,16 @@ public class LiquidPhysics : MonoBehaviour
         LastChemical = incomingChemical;
         bool solid = incomingChemical.state == PhysicalState.Solid || incomingChemical.state == PhysicalState.Powder;
 
-        // If waking up from empty, ensure visuals update. The ledger is CLEARED
-        // first and only then given the incoming pour: recording before the wake
-        // check let a vessel the player had spilled empty carry its old story into
-        // the refill, so the name tag kept naming reagents that were no longer in
-        // there (user 2026-07-27).
+        // If waking up from empty, ensure visuals update. The ledger is CLEARED first and
+        // only then given the incoming pour; recording before the wake check would carry a
+        // spilled vessel's old story into the refill, naming reagents no longer in it.
         // ⛔ `currentChemical == null` MUST wake too, even with precipitate still in the
-        // glass. PourOut drops the identity once the liquid runs dry but leaves the
-        // settled precipitate behind, so a tube emptied after a test holds residue and NO
-        // chemical — and the old guard (both columns near-empty) then refused to adopt
-        // anything poured in next. The liquid piled up with no identity at all, which
-        // makes `FindReaction(null, x)` miss forever: no reaction, no colour, no product.
-        // The W5.45 visual sweep caught it as two unplayable experiments — Exp 7 carried
-        // 5 ml of residue into its flask, so the chloroform reaction could never fire.
+        // glass. PourOut drops the identity once the liquid runs dry but leaves the settled
+        // precipitate behind, so a tube emptied after a test holds residue and NO chemical.
+        // Guarding on "both columns near-empty" alone refuses to adopt anything poured in
+        // next; the liquid piles up with no identity and `FindReaction(null, x)` misses
+        // forever: no reaction, no colour, no product (Exp 7 carries 5 ml of residue into
+        // its flask, so its chloroform reaction would never fire).
         if (!solid) _wetted = true;     // anything poured onto a powder makes it a mixture
         if (currentChemical == null || (currentLiquidVolume <= 0.1f && currentPptVolume <= 0.1f))
         {
@@ -524,7 +515,7 @@ public class LiquidPhysics : MonoBehaviour
         // Gas had NO visual consumer at all: `evolvesGas` and the Fizzing / GasEvolved
         // outcomes drove a sound and a line of text and nothing else, so brisk
         // effervescence, the CO2 of both fermentations and the ammonia boil were all
-        // invisible (W5.45). Same dedupe as the sting, so a burst of squeezes fizzes once.
+        // invisible. Same dedupe as the sting, so a burst of squeezes fizzes once.
         if (freshCue && EvolvesGas(rule)) EffectVfx.Fizz(GasVentPos());
         _lastCueRule = rule; _lastCueAt = Time.time;
         ReactionOccurred?.Invoke(rule);
@@ -549,7 +540,7 @@ public class LiquidPhysics : MonoBehaviour
     {
         // Play-mode only: LerpColor instantiates renderer.material, which leaks
         // (and errors) in edit mode — the suite drives AddLiquid on vessels that
-        // now carry REAL liquid renderers (W5.8), so guard here, not per-caller.
+        // now carry REAL liquid renderers, so guard here, not per-caller.
         if (!Application.isPlaying) return;
 
         // 1. Handle Main Liquid Transition
@@ -613,7 +604,7 @@ public class LiquidPhysics : MonoBehaviour
     /// ⛔ "Who emptied this vessel?" — set to a name prefix and any vessel matching it logs a
     /// STACK TRACE whenever its contents are cleared. Editor-only. A vessel losing its charge
     /// between two steps is otherwise undebuggable: every reader sees the aftermath and none
-    /// sees the caller (W5.46, the chloroform redistillation).
+    /// sees the caller.
     public static string DrainProbeName;
 
     private bool _probed;
@@ -633,7 +624,7 @@ public class LiquidPhysics : MonoBehaviour
     /// Pour/scoop the vessel out. The ledger follows the liquid: a PARTIAL pour
     /// shrinks every entry proportionally, and a vessel taken to dry forgets what
     /// it held entirely — so spilling a tube and refilling it starts a clean story
-    /// instead of stacking the old amounts onto the new ones (user 2026-07-27).
+    /// instead of stacking the old amounts onto the new ones.
     public ChemicalData PourOut(float amountToRemove)
     {
         if (currentLiquidVolume <= 0) return null;
@@ -662,7 +653,7 @@ public class LiquidPhysics : MonoBehaviour
         _mixPH = 7f;
         Ledger.Clear();
         // A rinsed vessel is a free vessel: LiquidTaskBinding listens and gives its claimed
-        // role back, so a wrong pour is recoverable instead of dead for the run (W5.55).
+        // role back, so a wrong pour is recoverable instead of dead for the run.
         Emptied?.Invoke();
     }
 }

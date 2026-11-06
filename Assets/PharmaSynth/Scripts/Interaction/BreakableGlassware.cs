@@ -26,7 +26,7 @@ public class BreakableGlassware : MonoBehaviour
 
     void Awake()
     {
-        // Display name, never the GO/prefab code name (user 2026-07-12: shatter
+        // Display name, never the GO/prefab code name (otherwise shatter
         // messages read "Reagent_AceticAcid_Diluted").
         if (_rb == null)
             Bind(FindAnyObjectByType<ExperimentRunner>(), GetComponent<DropRespawn>(), GetComponent<Rigidbody>(),
@@ -41,8 +41,8 @@ public class BreakableGlassware : MonoBehaviour
         if (_grab == null) _grab = GetComponent<XRGrab>();
     }
 
-    // Velocity-tracked grabs keep the Rigidbody DYNAMIC while held (Batch A), so
-    // isKinematic no longer signals "in a hand" — track the grab directly and
+    // Velocity-tracked grabs keep the Rigidbody DYNAMIC while held, so
+    // isKinematic does not signal "in a hand" — track the grab directly and
     // stamp the release time so the grace window can start.
     private bool Held => _grab != null && _grab.isSelected;
 
@@ -71,11 +71,11 @@ public class BreakableGlassware : MonoBehaviour
         }
         if (_runner != null)
             _runner.RecordMistake(LabErrorType.DroppedGlassware, _label + " shattered — handle glassware gently");
-        // Positional shatter at the break point (2026-07-10) + shard burst.
+        // Positional shatter at the break point + shard burst.
         AudioService.TryPlayAt("glass-shatter", transform.position);
         if (Application.isPlaying) EffectVfx.Shatter(transform.position);
         // A liquid-carrying vessel leaves its contents pooled where it fell,
-        // lingering then fading out (user 2026-07-10).
+        // lingering then fading out.
         var liquid = GetComponent<LiquidPhysics>();
         if (Application.isPlaying && liquid != null && liquid.currentLiquidVolume > 1f)
             SpillPuddle.Spawn(transform.position, SpillMistake.LiquidColorOf(liquid));

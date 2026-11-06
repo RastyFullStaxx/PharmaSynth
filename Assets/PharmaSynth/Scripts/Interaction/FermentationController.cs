@@ -117,7 +117,7 @@ public class FermentationController : MonoBehaviour
     }
 
     /// CO₂ delivery reach: the hand-scaled "FermentZone" child on the flask
-    /// when present (wire-sphere diameter == world scale, user 2026-07-18),
+    /// when present (wire-sphere diameter == world scale),
     /// else the coded constant. The zone anchor survives on the bench flask.
     private Transform _fermentZone;
     public float DeliveryRadius

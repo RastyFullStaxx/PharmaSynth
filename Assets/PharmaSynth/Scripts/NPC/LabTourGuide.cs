@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// Location-triggered Lab Tour (storyboard, 2026-07-10): instead of narrating on a
+/// Location-triggered Lab Tour (storyboard): instead of narrating on a
 /// timer, Pharmee points each area out as the player physically walks up to it —
 /// workbench, equipment cabinet, reagent shelf — then signs off once they've
 /// seen them all. Started/stopped by PharmeeGatekeeper; speaks through its narration
@@ -41,10 +41,8 @@ public class LabTourGuide : MonoBehaviour
 
     /// The landmark whose beat is being spoken right now, or null between beats.
     ///
-    /// Until W5.38 the tour named each area and never INDICATED it - he narrated
-    /// "the reagent shelf" while facing wherever he happened to be facing. Exposing the
-    /// transform lets PharmeeGestures aim a point at it; the tour itself still owns all the
-    /// proximity logic and never touches a transform.
+    /// Exposed so PharmeeGestures can point at the area being described. The tour itself
+    /// still owns all the proximity logic and never touches a transform.
     public Transform CurrentLandmark { get; private set; }
 
     private void Awake() { if (stops.Count == 0) SeedDefaults(); }
@@ -148,7 +146,7 @@ public class LabTourGuide : MonoBehaviour
             new Stop { landmarkName = "DynamicStage", radius = 2.2f, beat = DefaultBeatTexts[1] },
             new Stop { landmarkName = "EquipmentShelf", radius = 2.0f, beat = DefaultBeatTexts[2] },
             // The west ReagentShelf cubby was emptied into the east cabinets
-            // (2026-07-16) — the tour must stop where the bottles actually are.
+            // — the tour must stop where the bottles actually are.
             new Stop { landmarkName = "ReagentCabinets", radius = 2.4f, beat = DefaultBeatTexts[3] },
         };
     }

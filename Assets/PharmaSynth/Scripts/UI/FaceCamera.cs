@@ -19,6 +19,10 @@ public class FaceCamera : MonoBehaviour
              "so the model keeps its upright orientation (never lies on its back). Use for Pharmee.")]
     public bool preserveInitialTilt = false;
 
+    /// While set (a cinematic cutscene), everything faces this viewer instead of the
+    /// player's head — Pharmee looks into the cutscene camera, labels stay readable.
+    public static Transform Override;
+
     private Transform _cam;
     private Quaternion _initial;
     private bool _haveInitial;
@@ -37,6 +41,7 @@ public class FaceCamera : MonoBehaviour
             if (c == null) return;      // no camera yet (e.g. edit mode)
             _cam = c.transform;
         }
+        var view = Override != null ? Override : _cam;
 
         if (preserveInitialTilt)
         {
@@ -48,8 +53,8 @@ public class FaceCamera : MonoBehaviour
             // never applied (he stared at one wall forever). Fall back to the
             // authored up-axis, which such imports point horizontally.
             if (f0.sqrMagnitude < 1e-4f) { f0 = _initial * Vector3.up; f0.y = 0f; }
-            Vector3 want = faceTowardCamera ? (_cam.position - transform.position)
-                                            : (transform.position - _cam.position);
+            Vector3 want = faceTowardCamera ? (view.position - transform.position)
+                                            : (transform.position - view.position);
             want.y = 0f;
             if (f0.sqrMagnitude < 1e-4f || want.sqrMagnitude < 1e-4f) return;
             float delta = Vector3.SignedAngle(f0, want, Vector3.up) + yawOffset;
@@ -60,8 +65,8 @@ public class FaceCamera : MonoBehaviour
         // UI text/panels read when +Z points AWAY from the viewer; a character faces
         // the viewer when +Z points TOWARD them.
         Vector3 dir = faceTowardCamera
-            ? _cam.position - transform.position
-            : transform.position - _cam.position;
+            ? view.position - transform.position
+            : transform.position - view.position;
         if (yAxisOnly) dir.y = 0f;
         if (dir.sqrMagnitude < 0.0001f) return;
         transform.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up)

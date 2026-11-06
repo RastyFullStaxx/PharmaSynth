@@ -28,12 +28,11 @@ public class NPCNarrationController : MonoBehaviour
 
     [Header("Typewriter (user 2026-07-10: type lines out + talking blips)")]
     [SerializeField] private bool typewriter = true;
-    // 32 cps ≈ 384 wpm — far past comfortable reading, and it read as Pharmee
-    // "speaking rapidly" (user 2026-07-19). 22 cps ≈ 260 wpm: brisk but legible.
+    // 22 cps ≈ 260 wpm: brisk but legible. 32 cps (≈ 384 wpm) is past comfortable
+    // reading and sounds rushed.
     [SerializeField] private float charsPerSecond = 22f;
-    // Every 6 characters, not 2 or 4: at 22 cps that is ~4 soft ticks a second. The old
-    // Pharmee value of 2 with a ±12% random pitch was a machine-gun stutter — the sound
-    // the user described as "a broken machine" whenever a line had no clip (2026-09-05).
+    // Every 6 characters, not 2 or 4: at 22 cps that is ~4 soft ticks a second. A value
+    // of 2 with a ±12% random pitch is a machine-gun stutter.
     [SerializeField] private int blipEveryChars = 6;            // a voice blip every N revealed non-space chars
     [SerializeField] private string voiceBlipKey = "";          // this speaker's talking blip (SoundBank key)
     [SerializeField, Range(0f, 1f)] private float blipVolume = 0.5f;
@@ -68,9 +67,8 @@ public class NPCNarrationController : MonoBehaviour
     private bool _skipReveal;
     private bool _voiceActive;   // a real voice clip is playing → suppress blips
 
-    // Lines that arrive while another is still TYPING are queued, not stomped
-    // (user 2026-07-12: Pharmee's dialogue cut off mid-sentence — every new line
-    // used to kill the reveal in progress). Bounded so stale chatter can't pile up.
+    // Lines that arrive while another is still TYPING are queued, not stomped, so a
+    // new line never cuts off the reveal in progress. Bounded so stale chatter can't pile up.
     private readonly Queue<(string subtitle, float seconds, AudioClip clip)> _queued
         = new Queue<(string, float, AudioClip)>();
     private const int MaxQueued = 2;
@@ -82,8 +80,7 @@ public class NPCNarrationController : MonoBehaviour
     [SerializeField] private float interLineGap = 1.25f;
 
     /// Post-reveal read time: the authored dwell minus what typing consumed,
-    /// floored so a long line always holds ≥ minHold once fully shown (long
-    /// lines used to vanish 0.6 s after the last character). Pure + tested.
+    /// floored so a long line always holds ≥ minHold once fully shown. Pure + tested.
     public static float HoldSecondsAfterReveal(float authoredWait, float revealSeconds, float minHold = 1.9f)
         => Mathf.Max(minHold, authoredWait - revealSeconds);
 
@@ -103,9 +100,8 @@ public class NPCNarrationController : MonoBehaviour
         IsRevealing = false;
         if (s_floor == this) s_floor = null;   // never strand the floor on a dead narrator
         _queued.Clear();
-        // A disable mid-line used to leave IsSpeaking TRUE and never raise
-        // LineEnded, so the HUD bar kept a half-revealed line on screen with no
-        // owner to finish or clear it (2026-07-19).
+        // Raise LineEnded on disable, or IsSpeaking stays TRUE and the HUD bar keeps a
+        // half-revealed line on screen with no owner to finish or clear it.
         if (IsSpeaking) { IsSpeaking = false; LineEnded?.Invoke(); }
         VisibleCount = int.MaxValue;
     }
@@ -125,7 +121,7 @@ public class NPCNarrationController : MonoBehaviour
     {
         if (panelRoot != null) panelRoot.SetActive(false); // silent until spoken to
         // Long lines must wrap and never truncate — some bubble/HUD texts were
-        // authored NoWrap/Ellipsis and visually cut lines off (user 2026-07-12).
+        // authored NoWrap/Ellipsis and visually cut lines off.
         if (subtitleText != null)
         {
             subtitleText.textWrappingMode = TextWrappingModes.Normal;
@@ -150,10 +146,9 @@ public class NPCNarrationController : MonoBehaviour
     {
         if (!isActiveAndEnabled) return; // edit-mode / disabled: no coroutine
         // QUEUE while a line is still typing OR while we're in the inter-line beat.
-        // The gap used to be a hole: for its 1.25 s neither IsSpeaking nor
-        // IsRevealing was true, so an arriving Say() stopped the outer SayRoutine
-        // and the line already queued behind it was silently destroyed, never
-        // shown at all (2026-07-19).
+        // During the 1.25 s beat neither IsSpeaking nor IsRevealing is true, so an
+        // arriving Say() would otherwise stop the outer SayRoutine and silently drop
+        // the line already queued behind it.
         if ((IsRevealing && IsSpeaking) || _chaining)
         {
             while (_queued.Count >= MaxQueued) _queued.Dequeue();   // drop the stalest
@@ -187,9 +182,9 @@ public class NPCNarrationController : MonoBehaviour
     }
 
     /// Coroutine-free line end: clears text, hides bubble + skip, raises LineEnded.
-    /// EXTERNAL interrupt — also kills the reveal coroutine, because an orphaned
-    /// RevealAndHold used to write VisibleCount/maxVisibleCharacters back over the
-    /// line this just cleared (2026-07-19).
+    /// EXTERNAL interrupt. Also kills the reveal coroutine, or an orphaned
+    /// RevealAndHold writes VisibleCount/maxVisibleCharacters back over the
+    /// line this just cleared.
     public void EndLine() => EndLine(true);
 
     private void EndLine(bool stopRoutine)
@@ -220,9 +215,7 @@ public class NPCNarrationController : MonoBehaviour
         if (clip == null) clip = ResolveVoice(subtitle);   // voice-over by text hash
 #if UNITY_EDITOR
         // A line with no clip is a content bug the ear finds last. Name it once, in the
-        // editor only, so the next play session's console shows exactly which text is
-        // falling back to blips (2026-09-05: the practice summary and the campaign finale
-        // had been doing so for weeks).
+        // editor only, so the console shows exactly which text is falling back to blips.
         if (clip == null && voiceBank != null && !string.IsNullOrEmpty(subtitle) && s_warnedUnvoiced.Add(subtitle))
             Debug.LogWarning("[Voice] " + speaker + " has NO clip for: \"" + subtitle + "\" — playing blips");
 #endif
@@ -238,9 +231,8 @@ public class NPCNarrationController : MonoBehaviour
         }
         yield return RevealAndHold(subtitle, waitSeconds);
         _voiceActive = false;
-        // Chain any line that queued while this one was typing — but leave a clear
-        // BEAT between lines (user 2026-07-13: Pharmee fired lines back-to-back too
-        // fast to follow). The pause lets the bubble/HUD fully clear before the next.
+        // Chain any line that queued while this one was typing, but leave a clear BEAT
+        // between lines so they can be followed. The pause lets the bubble/HUD fully clear.
         if (_queued.Count > 0)
         {
             var next = _queued.Dequeue();
@@ -256,8 +248,8 @@ public class NPCNarrationController : MonoBehaviour
 
     // ---- CROSS-NPC FLOOR -----------------------------------------------------
     // Pharmee and Dr. Jimenez own SEPARATE controllers with no shared timeline,
-    // so either could start a sentence on top of the other's (user 2026-07-19:
-    // "pharmee is still speaking ... where dr jimenez now speaks"). Whoever is
+    // so either could start a sentence on top of the other's (Pharmee
+    // kept talking once Dr. Jimenez began). Whoever is
     // mid-REVEAL holds the floor; another speaker waits for them to finish
     // instead of talking over. Only the reveal is protected — the post-reveal
     // read hold is interruptible, so conversation still feels responsive.
@@ -269,11 +261,9 @@ public class NPCNarrationController : MonoBehaviour
 
     /// True while THIS narrator's actual voice clip is still sounding.
     ///
-    /// Before voice-over, a line's typewriter reveal and its spoken length were
-    /// effectively the same thing, so holding the floor for the reveal was enough.
-    /// A real clip runs LONGER than the reveal, so the floor was released while
-    /// the audio was still playing and the other NPC started talking over it
-    /// (user 2026-07-27: "Pharmee and Dr speak at the same time").
+    /// A clip runs LONGER than the typewriter reveal, so holding the floor for the
+    /// reveal alone would release it while the audio still plays and let the other
+    /// NPC talk over it.
     public bool IsVoicing => _voiceActive && narratorAudioSource != null && narratorAudioSource.isPlaying;
 
     /// True while ANY narrator is still typing OR still audibly speaking.
@@ -287,7 +277,7 @@ public class NPCNarrationController : MonoBehaviour
     public static void ClearFloor() => s_floor = null;
 
     /// Every live narrator. The music must duck WHENEVER either NPC has something
-    /// to say (user 2026-07-27), and keying that off the floor-holder alone missed
+    /// to say, and keying that off the floor-holder alone missed
     /// two cases: a line started through BeginLine (the cutscene staging path never
     /// claims the floor) and the brief window where a second speaker has begun
     /// while the first still owns it. Registering the channels catches all of it.
@@ -342,14 +332,13 @@ public class NPCNarrationController : MonoBehaviour
     /// dialogue bar mirrors the reveal via LineStarted + the shared TypeCps().
     private IEnumerator RevealAndHold(string subtitle, float waitSeconds)
     {
-        // ⛔ ORDER IS LOAD-BEARING (the mid-sentence truncation bug, 2026-07-19).
+        // ⛔ ORDER IS LOAD-BEARING.
         // The panel must be ACTIVE before ForceMeshUpdate(): TMP does not rebuild
-        // textInfo on an inactive GameObject, so characterCount came back STALE
+        // textInfo on an inactive GameObject, so characterCount comes back STALE
         // FROM THE PREVIOUS LINE (or 0 on the very first). A shorter previous line
-        // meant `total` was too small, the reveal loop exited early, and the line
-        // sat permanently cut off mid-sentence for its whole dwell — exactly the
-        // "text doesn't get completely written" the user kept seeing on both the
-        // world bubble and the HUD bar (the HUD mirrors VisibleCount).
+        // makes `total` too small, the reveal loop exits early, and the line stays
+        // cut off mid-sentence for its whole dwell on both the world bubble and the
+        // HUD bar (the HUD mirrors VisibleCount).
         if (panelRoot != null) panelRoot.SetActive(true);
         if (skipButton != null) skipButton.SetActive(true);
         if (subtitleText != null)
@@ -464,8 +453,8 @@ public class NPCNarrationController : MonoBehaviour
         onNarrationFinished?.Invoke();
     }
 
-    /// A skipped line still leaves the beat before the next one (skip used to
-    /// chain with NO gap, so two lines ran together on a fast tap).
+    /// A skipped line still leaves the beat before the next one, so two lines never
+    /// run together on a fast tap.
     private IEnumerator SkipChain((string subtitle, float seconds, AudioClip clip) next)
     {
         _chaining = true;

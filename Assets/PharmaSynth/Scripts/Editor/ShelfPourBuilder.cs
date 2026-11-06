@@ -3,13 +3,13 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Wires the hand-placed reagent bottles for visible pouring (user 2026-07-10:
-/// tipping a shelf bottle showed nothing — LiquidPourer only existed on
-/// runtime-spawned props). Sweeps every LiquidPhysics under the ReagentShelf
-/// (and, once batch H lands, ReagentCabinets) root through
+/// Wires the hand-placed reagent bottles for visible pouring (LiquidPourer is
+/// otherwise only on runtime-spawned props, so tipping a shelf bottle shows
+/// nothing). Sweeps every LiquidPhysics under the ReagentShelf
+/// and ReagentCabinets roots through
 /// ShelfPourWiring.WireBottle, and ensures the persisted particle material
 /// asset exists so device builds don't strip the URP particle shader.
-/// Idempotent — re-running reports 0 additions.
+/// Idempotent; re-running reports 0 additions.
 public static class ShelfPourBuilder
 {
     const string FxMatPath = "Assets/PharmaSynth/Resources/FxParticleUnlit.mat";

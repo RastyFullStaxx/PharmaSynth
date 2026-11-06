@@ -1,20 +1,19 @@
 using UnityEngine;
 
-/// The one place a lab reset restores the APPARATUS (W5.59, user: "ensure that reset
-/// completely resets apparatus, not just the reagents").
+/// The one place a lab reset restores the APPARATUS, not just the reagents.
+/// Every used vessel is emptied, cooled, unlabelled and unclaimed.
 ///
-/// A reset used to re-home positions, put flames out, rebuild the task wiring and refill the
-/// bottles — and leave every piece of glassware exactly as the last attempt left it: the
+/// Without it, re-homing positions, putting flames out, rebuilding wiring and refilling
+/// bottles still leaves every piece of glassware as the last attempt left it: the
 /// contents, the temperature, the residue stamp and the " — Tollen's test" role suffix on the
-/// label all carried into the next run. A player who restarted mid-experiment inherited a
-/// bench that looked used, because it was.
+/// label all carry into the next run.
 ///
 /// ⛔ Apparatus is a vessel the builders marked as USED — one carrying a `CleanableVessel`,
 /// which every stage, kit and adopter builder adds to glassware the player fills and never to
-/// a source. The first cut used the naming rule instead ("not `Raw_`/`Reagent_`") and swept up
-/// nine sources with it: the wash bottles and the methane tutorial's charge jar and glass
-/// tube, so the tutorial's setup step starved. Simulate Everything caught it; the suite's
-/// fixture could not, because a fixture vessel is whatever the pin says it is. Each used
+/// a source. Never use a naming rule ("not `Raw_`/`Reagent_`"): it sweeps up
+/// sources too: the wash bottles and the methane tutorial's charge jar and glass
+/// tube, which starves the tutorial's setup step. Simulate Everything covers this; a suite
+/// fixture cannot, because a fixture vessel is whatever the pin says it is. Each used
 /// vessel is taken back to empty, cool, unlabelled and unclaimed;
 /// `LiquidPhysics.ClearContents` raises `Emptied`, so a pooled vessel gives its role back
 /// through the same seam a rinse uses. The bottles then refill through the supply monitor,
@@ -29,6 +28,19 @@ public static class LabReset
     /// bottle, the methane charge jar) never carry this component.
     public static bool IsUsedVessel(LiquidPhysics lp)
         => lp != null && lp.GetComponent<CleanableVessel>() != null;
+
+    /// A shelf reagent (bottle or jar, `Raw_*` / `Reagent_*`, not a builder-owned work
+    /// vessel) only ever takes back its OWN chemical. A loaded scoop brushing a jar of a
+    /// different solid, a dropper squeezed over the wrong bottle, or a stream crossing the
+    /// shelf would deposit into the stock, and every later dip from that jar would be the
+    /// wrong chemical.
+    public static bool RefusesTransfer(LiquidPhysics target, ChemicalData incoming)
+    {
+        if (target == null || incoming == null || IsUsedVessel(target)) return false;
+        bool stock = false;
+        for (var t = target.transform; t != null && !stock; t = t.parent) stock = IsReagent(t.name);
+        return stock && target.currentChemical != incoming;
+    }
 
     /// Pure, suite-pinned: is this the name of a SHELF reagent jar? (The solid-jar fitter and
     /// its pin use it; the reset itself goes by IsUsedVessel.)

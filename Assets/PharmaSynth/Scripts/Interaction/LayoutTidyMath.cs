@@ -1,7 +1,7 @@
 using UnityEngine;
 
-/// Pure zoning grid for the center-table layout pass (W5.8: "place all the
-/// equipment properly — facing, spacing, open space"). The wide landscape deck
+/// Pure zoning grid for the center-table layout pass (place all the
+/// equipment properly — facing, spacing, open space). The wide landscape deck
 /// (y 0.91, x −1.85…1.40, z −3.94…−2.74; the player works the +z front edge)
 /// is divided into four zones; every layout's items are re-seated onto the
 /// deterministic slots below, in authored order:

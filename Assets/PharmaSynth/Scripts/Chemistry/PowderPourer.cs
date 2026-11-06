@@ -15,8 +15,8 @@ public class PowderPourer : MonoBehaviour
     private PowderPhysics sourceContainer;
     private ParticleSystem.EmissionModule emissionModule;
 
-    // Null-safe mouth (W5.8): spout was never auto-created for powder jars, so an
-    // unwired `spout` used to NRE the whole Update loop on the first tilt.
+    // Null-safe mouth: powder jars have no auto-created spout, and an unwired `spout`
+    // would NRE the whole Update loop on the first tilt.
     private Transform Mouth => spout != null ? spout : transform;
 
     void Start()

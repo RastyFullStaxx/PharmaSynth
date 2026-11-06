@@ -1,9 +1,9 @@
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// Pure rules for glassware cleanliness (W5.12, user: "we scrub a test tube…
-/// a text appears that reduces the dirtiness for each swipe… after which the
-/// test tube is labeled clean"). Educational only — never graded.
+/// Pure rules for glassware cleanliness (scrub a test tube and
+/// a text shows the dirtiness dropping with each swipe until the
+/// test tube is clean). Educational only — never graded.
 public static class CleanupMath
 {
     public const float DirtyOnEmpty = 100f;      // residue after holding chemicals
@@ -64,7 +64,7 @@ public class CleanableVessel : MonoBehaviour
         _lastMl = ml;
     }
 
-    /// Back to a fresh vessel (W5.59): the lab reset calls this so residue never carries
+    /// Back to a fresh vessel: the lab reset calls this so residue never carries
     /// from one attempt into the next. Re-samples the volume so the next Update does not
     /// mistake the reset for an emptying and stamp the vessel dirty again.
     /// Test/builder seam: exactly what Update does the moment a used vessel runs empty.
@@ -97,52 +97,5 @@ public class CleanableVessel : MonoBehaviour
     {
         FloatingText.Show(text, transform.position + Vector3.up * 0.12f,
             Dirtiness > 0f ? new Color(0.95f, 0.8f, 0.5f) : new Color(0.6f, 1f, 0.7f), 0.85f);
-    }
-}
-
-/// The test-tube brush: while held and touching a dirty vessel, its travel
-/// accumulates — every SwipeDistance of scrubbing motion knocks one swipe off
-/// the dirtiness (the user's "repeated brushing" feel).
-public class BrushController : MonoBehaviour
-{
-    [SerializeField] private float probeRadius = 0.05f;
-
-    private XRGrab _grab;
-    private Vector3 _lastPos;
-    private float _travel;
-    private CleanableVessel _target;
-
-    public void Bind(XRGrab grab) { _grab = grab; _lastPos = transform.position; }
-
-    void Awake() { if (_grab == null) Bind(GetComponent<XRGrab>()); }
-
-    void Update()
-    {
-        if (!Application.isPlaying) return;
-        bool held = _grab != null && _grab.isSelected;
-        if (!held) { _target = null; _travel = 0f; _lastPos = transform.position; return; }
-
-        var cols = Physics.OverlapSphere(transform.position, probeRadius, ~0, QueryTriggerInteraction.Ignore);
-        CleanableVessel touching = null;
-        foreach (var col in cols)
-        {
-            if (col == null || col.transform.IsChildOf(transform)) continue;
-            var cv = col.GetComponentInParent<CleanableVessel>();
-            if (cv != null && cv.Dirtiness > 0f) { touching = cv; break; }
-        }
-
-        if (touching != _target) { _target = touching; _travel = 0f; }
-        if (_target != null)
-        {
-            _travel += (transform.position - _lastPos).magnitude;
-            if (_travel >= CleanupMath.SwipeDistance)
-            {
-                _travel = 0f;
-                _target.Scrub();
-                // Bristle-on-glass, not the liquid swirl it used to borrow.
-                AudioService.TryPlayFirstAt(transform.position, 0.35f, "scrub", "stir");
-            }
-        }
-        _lastPos = transform.position;
     }
 }

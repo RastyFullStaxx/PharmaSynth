@@ -3,28 +3,26 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-/// Calibrates the lab's SURFACE materials (user 2026-08-28: "improve the textures to make it
-/// an aesthetic lab"). The Laboratory pack and the ChemLab equipment pack both shipped with
-/// uncalibrated PBR values, and nothing in the project had ever checked them:
+/// Calibrates the lab's SURFACE materials.
+/// The Laboratory pack and the ChemLab equipment pack both ship with
+/// uncalibrated PBR values:
 ///
-///   * FOUR materials had _Smoothness ABOVE the 0-1 range (Ceiling_2 = 3.20, Floor = 2.51,
+///   * FOUR materials have _Smoothness ABOVE the 0-1 range (Ceiling_2 = 3.20, Floor = 2.51,
 ///     Cabinet = 2.19, Ceiling_1 = 2.60). URP clamps to 1 -> a PERFECT MIRROR. With no
-///     reflection probe in the scene they mirrored the built-in procedural SKYBOX, which is
-///     why a sealed indoor lab read as wet plastic.
-///   * The benchtops sat at 1.00. A lab bench is matte epoxy resin; a mirror benchtop is the
-///     single most obviously wrong thing in the room.
+///     reflection probe in the scene they mirror the built-in procedural SKYBOX, so
+///     a sealed indoor lab reads as wet plastic.
+///   * The benchtops sit at 1.00. A lab bench is matte epoxy resin.
 ///   * The four vessel materials the player handles constantly - beaker 100/500, Erlenmeyer,
-///     graduated cylinder - sat at smoothness 0. Glass with NO specular and NO reflection is
-///     why they read as pale plastic blobs. The same pack ships CORRECT glass values on
-///     GlassMat/GlassInnerMat/GlassOuterMat (0.92-0.95), so the right answer was already
-///     sitting next to the wrong one.
-///   * Several non-metals sat at metallic 0 + smoothness 1 - a physically impossible
+///     graduated cylinder - sit at smoothness 0, and glass with NO specular and NO reflection
+///     reads as pale plastic blobs. The same pack ships CORRECT glass values on
+///     GlassMat/GlassInnerMat/GlassOuterMat (0.92-0.95).
+///   * Several non-metals sit at metallic 0 + smoothness 1 - a physically impossible
 ///     "non-metal mirror" that produces a hard white specular blob instead of a highlight.
 ///
 /// Every value here is a judgement about what the surface IS, so they live in one table
 /// rather than being scattered. Suite-pinned (surface:) because a pack reimport or a stray
 /// inspector drag restores the bad values silently and pure math cannot see a material
-/// regression - the same lesson as the wiped MatchStrikerSurface.
+/// regression.
 ///
 /// Tools > PharmaSynth > Tune Lab Surfaces (edit mode, idempotent, re-runnable).
 public static class LabSurfaceTuner
@@ -51,10 +49,9 @@ public static class LabSurfaceTuner
     {
         // --- room shell: the four out-of-range mirrors + the mirror benchtops ---
         new Surface(LabMats + "Exterior/Ceiling_2.mat",               0.08f, -1f, "painted ceiling panel (was 3.20 = mirror)"),
-        // Ceiling_1 is DEAD - its FBX, material and prefabs are referenced by nothing - and was
-        // skipped on the first pass for exactly that reason. The suite pin then caught it,
-        // correctly: "no material has smoothness > 1" is an invariant, and an invariant with a
-        // hand-waved exception is not one. One float is cheaper than a documented exemption.
+        // Ceiling_1 is DEAD - its FBX, material and prefabs are referenced by nothing - but is
+        // still calibrated so the invariant "no material has smoothness > 1" holds with no
+        // exemption. One float is cheaper than a documented exemption.
         new Surface(LabMats + "Exterior/Ceiling_1.mat",               0.08f, -1f, "painted ceiling panel (was 2.60 = mirror; unused asset)"),
         new Surface(LabMats + "Exterior/Floor.mat",                   0.35f, -1f, "polished vinyl, not a mirror (was 2.51)"),
         new Surface(LabMats + "Interior/Cabinet.mat",                 0.35f, -1f, "painted steel (was 2.19 = mirror)"),

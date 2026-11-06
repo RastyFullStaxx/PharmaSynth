@@ -3,7 +3,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 /// Forwards an XR select on a locker PPE item (coat display / goggles / gloves) to
-/// `PPEController.Don(piece)` — each piece is donned individually (user 2026-07-10).
+/// `PPEController.Don(piece)` — each piece is donned individually.
 /// Attach next to an XRSimpleInteractable; `PPEWearablesBuilder` wires these.
 public class PPEDonOnSelect : MonoBehaviour
 {

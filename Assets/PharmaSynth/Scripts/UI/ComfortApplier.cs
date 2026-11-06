@@ -75,7 +75,7 @@ public class ComfortApplier : MonoBehaviour
         // guide materials are shared ASSETS, so writing _PulseMin into them at runtime
         // would dirty them on disk in the editor and persist into the next session.
         Shader.SetGlobalFloat(GuideSteadyProperty, ComfortSettings.SteadyGlobal(s.reduceFlashing));
-        // Full, uncircled view (user 2026-07-11: "like Meta's home"). The XRI
+        // Full, uncircled view (like Meta's home). The XRI
         // tunneling vignette was stuck as a permanent ~0.7-aperture circle in the
         // headset — a locomotion provider (move-under-gravity) reports "locomoting"
         // even while standing, so easing the idle aperture open didn't help. Turn

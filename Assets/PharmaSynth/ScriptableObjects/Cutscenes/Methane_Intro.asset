@@ -19,20 +19,69 @@ MonoBehaviour:
       with soda lime.
     seconds: 4.5
     face: 1
+    shot:
+      camera: Cam_PharmeeClose
+      moveTo: 
+      blend: 1
+      look: 1
+      lookMarker: 
+      fov: 45
+      pharmeePopIn: 1
   - subtitle: 'Here''s what you''ll be able to do by the end of this session:'
     seconds: 2.8
     face: 1
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: 'Objective 1: Synthesize methane gas by heating sodium acetate with
       soda lime.'
     seconds: 4.8125
     face: 0
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: 'Objective 2: Determine its identity through the flame test.'
     seconds: 3.6875
     face: 0
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: 'Your objective: assemble the apparatus, generate the gas, and confirm
       it burns with a clean blue flame.'
     seconds: 4.5
     face: 0
-  - subtitle: Follow the steps on your wrist panel. I'll be right here if you need me!
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
+  - subtitle: Follow the steps on your wrist panel. I'll be right here if you need
+      me!
     seconds: 3.5
     face: 1
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 1
+      look: 2
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0

@@ -2,10 +2,10 @@
 using UnityEditor;
 using UnityEngine;
 
-/// Wire the generated solid-material SFX into the SoundBank (user 2026-07-15:
-/// "scooping powder still sounds like liquid"). The scoop verb calls the "scoop"
+/// Wire the generated solid-material SFX into the SoundBank so scooping powder
+/// doesn't sound like liquid. The scoop verb calls the "scoop"
 /// and "powder-pour" keys via AudioService.TryPlayFirstAt, which deliberately has
-/// NO liquid fallback — so these clips are what make it audible. Clips generated
+/// NO liquid fallback, so these clips are what make it audible. Clips generated
 /// with elevenlabs-sound-effects-v2 into Audio/Generated/. Idempotent: updates the
 /// entries in place if they already exist.
 public static class ScoopSoundWiring

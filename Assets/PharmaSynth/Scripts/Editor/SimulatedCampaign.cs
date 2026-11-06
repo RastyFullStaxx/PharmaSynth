@@ -5,10 +5,9 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-/// Plays the WHOLE CAMPAIGN LOOP end-to-end in edit mode, Exp 2→9 (user
-/// 2026-07-19: "simulate all from exp 2 to 9 ... undergo the cutscenes for the
-/// quiz taking and submitting quiz to being teleported back outside, choosing
-/// the next experiments and all ... experiments-wide end to end"). Where
+/// Plays the WHOLE CAMPAIGN LOOP end-to-end in edit mode, Exp 2→9: every
+/// module, through the cutscenes, quiz taking and submitting, the teleport back
+/// outside and the choice of the next experiment. Where
 /// SimulatedRun proves ONE module's task graph, this drives the flow AROUND
 /// every module through the REAL wiring a clueless player relies on:
 ///   • the pure GatekeeperModel FSM (Fire returns false on any illegal move —
@@ -27,7 +26,7 @@ using UnityEngine;
 /// beat — so it can be read as a clueless player and critiqued.
 ///
 /// SAFETY: progression is recorded to a TEMP save file (Application.
-/// temporaryCachePath), never the user's real pharmasynth_progress.json.
+/// temporaryCachePath), never the real pharmasynth_progress.json.
 public static class SimulatedCampaign
 {
     public class Result
@@ -85,13 +84,12 @@ public static class SimulatedCampaign
         foreach (var p in new[] { save, save + ".bak" }) if (File.Exists(p)) File.Delete(p);
         var svc = new ProgressionService(save);
         svc.Load();
-        // PLAY the tutorial rather than assume it (W5.40). It used to be recorded as
-        // passed outright, purely so Exp 2 would unlock — which meant the first
-        // experiment any player ever touches was the one module no simulator covered.
+        // PLAY the tutorial rather than assume it: it is the first experiment any
+        // player touches, and recording it as passed would leave it uncovered.
         //
         // A failure here is reported but does NOT cascade: the tutorial is still recorded
         // as passed so the graded chain can be evaluated too. One broken module should
-        // cost you one finding, not the other eight.
+        // cost one finding, not the other eight.
         log.AppendLine("\n-- Tutorial: methane (ungraded, unlocks Exp 2) --");
         var methane = SimulatedRun.Run("tutorial-methane", log);
         if (methane == null || !methane.Clean)

@@ -31,7 +31,7 @@ public class MainMenuController : MonoBehaviour
     /// period unlocked and the HUD auto-complete controls armed.
     public void OnDemoLaboratory() => EnterLab(demo: true, tutorial: false);
 
-    /// Tutorial Mode (2026-08-07): all 9 experiments unlocked and heavily guided
+    /// Tutorial Mode: all 9 experiments unlocked and heavily guided
     /// — glow + waypoint on the next apparatus, hints on the watch, always-on
     /// labels, skippable steps — and completely ungraded.
     public void OnTutorialLaboratory() => EnterLab(demo: false, tutorial: true);

@@ -1,16 +1,13 @@
 using UnityEngine;
 
-/// Marker: a pour STREAM passes straight through this object (funnels). Without
-/// it, LiquidPourer.ResolveTarget treated the funnel's collider as the landing
-/// surface — no LiquidPhysics there, so the hydrolysate the manuscript says to
-/// filter was WASTED as a puddle on top of the funnel and the beaker below
-/// stayed empty, leaving the FeCl3 filtrate test nothing to react with
-/// (found by the 2026-07-17 player-path simulation). The ray continues to the
-/// receiving vessel underneath, which is what a funnel is for.
+/// Marker: a pour STREAM passes straight through this object (funnels). Otherwise
+/// LiquidPourer.ResolveTarget treats the funnel's collider as the landing surface
+/// (no LiquidPhysics there), so the hydrolysate the manuscript says to filter is
+/// wasted as a puddle on the funnel and the FeCl3 filtrate test below has nothing
+/// to react with. The ray continues to the receiving vessel underneath.
 ///
 /// It also OWNS the funnel's visual: the stream disappears into the cone and
-/// re-emerges as a thin trickle from the stem's hole (user 2026-07-27: "make
-/// the water flowing through it appear from its hole below"). Runtime-only and
+/// re-emerges as a thin trickle from the stem's hole. Runtime-only and
 /// self-building — no scene authoring beyond the component.
 public class LiquidPassthrough : MonoBehaviour
 {

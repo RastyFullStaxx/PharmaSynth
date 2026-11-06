@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// Wrist-flip progress tracker (user's headline feature). Flipping the wrist so
+/// Wrist-flip progress tracker (the headline feature). Flipping the wrist so
 /// the watch face turns up (supination) while glancing toward it shows a compact
 /// panel: current step, progress %, mastery %. A button/thumbstick fallback
 /// toggles it so the feature works without the gesture (and is testable pre-HMD).
@@ -44,9 +44,9 @@ public class WristWatchController : MonoBehaviour
     private bool _lastShow;
     private HoloScroller _scroller;
 
-    // Wrist-flip suppression window (user 2026-07-12: Pharmee dialogue kept
-    // firing when the panel was summoned — the twisting hand can select his
-    // interactable since he hovers close by). NPC poke handlers check this.
+    // Wrist-flip suppression window: the twisting hand can select Pharmee's interactable
+    // since he hovers close by, which would fire his dialogue as the panel is summoned.
+    // NPC poke handlers check this.
     private static float _npcPokeSuppressedUntil = -1f;
     public static bool SuppressNpcPokes => Application.isPlaying && Time.time < _npcPokeSuppressedUntil;
 
@@ -81,7 +81,7 @@ public class WristWatchController : MonoBehaviour
     /// wrist. Long enough to read a nine-step procedure, short enough not to trap them.
     public const float PreviewSeconds = 12f;
 
-    /// Tutorial Mode's sequence preview (W5.39): put the procedures board up before the
+    /// Tutorial Mode's sequence preview: put the procedures board up before the
     /// door opens, so the player walks in knowing the shape of the experiment.
     ///
     /// Deliberately just a forced SHOW of the board that already exists. The holo body is
@@ -98,7 +98,7 @@ public class WristWatchController : MonoBehaviour
         {
             // Trigger on the natural "check my watch" pose: the watch face (its
             // +up normal) aimed at the player's eyes — NOT palm-up toward the
-            // ceiling (the old Vector3.up reference fired on the wrong orientation).
+            // ceiling (a Vector3.up reference fires on the wrong orientation).
             Vector3 toHead = headTransform != null
                 ? (headTransform.position - watchAnchor.position).normalized
                 : Vector3.up;
@@ -118,8 +118,7 @@ public class WristWatchController : MonoBehaviour
         // While the panel is up (and shortly after), the gesture hand must not
         // trigger Pharmee's poke/talk interactions.
         if (show || _gestureVisible) _npcPokeSuppressedUntil = Time.time + 1.5f;
-        // The wrist mini-panel is retired (user 2026-07-10: one procedures
-        // display, centered) — the holo board below is the single panel now.
+        // One centered procedures display: the holo board below is the single panel.
         if (panel != null && panel.activeSelf) panel.SetActive(false);
 
         // Large holographic procedures board: appears in front of the player on
@@ -128,18 +127,16 @@ public class WristWatchController : MonoBehaviour
         if (show && !_lastShow)
         {
             PlaceHolo();
-            // The board keeps its SCROLL POSITION between opens (user 2026-07-17:
-            // "have it stay on where it is scrolled everytime we reopen it") —
-            // re-finding your place after every glance was the real cost of the old
-            // W5.12 snap-to-top. A fresh experiment still starts at the top because
-            // the text itself is rebuilt.
+            // The board keeps its SCROLL POSITION between opens so the player never has to
+            // re-find their place after a glance. A fresh experiment still starts at the top
+            // because the text itself is rebuilt.
             if (_scroller == null && holoPanel != null)
                 _scroller = holoPanel.GetComponentInChildren<HoloScroller>(true);
         }
         _lastShow = show;
-        // The wrist gesture is the most-used interaction in the game and it opened
-        // and closed in total silence (2026-07-29 audit) — nothing confirmed the
-        // flick registered, which in VR reads as an unresponsive control.
+        // The wrist gesture is the most-used interaction in the game, so open/close get a
+        // sound; without one, nothing confirms the flick registered, which in VR reads as an
+        // unresponsive control.
         if (holoPanel != null && holoPanel.activeSelf != show)
         {
             holoPanel.SetActive(show);
@@ -197,9 +194,9 @@ public class WristWatchController : MonoBehaviour
         return s;
     }
 
-    /// Per-tube lines for a step a whole SET of tubes has to satisfy (W5.55, user: "it is
-    /// hard to track which one I haven't done yet or done already, like now I am stuck").
-    /// Empty for an ordinary step, so the panel only grows where the detail was missing.
+    /// Per-tube lines for a step a whole SET of tubes has to satisfy, so the player can
+    /// see which tube is still outstanding. Empty for an ordinary step, so the panel only
+    /// grows where the detail is needed.
     private static string RackBreakdown(ExperimentRunner runner)
     {
         string guided = null;

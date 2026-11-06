@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// "What did my mix produce?" feedback on a vessel (W5.8): a registered
+/// "What did my mix produce?" feedback on a vessel: a registered
 /// reaction pops its authored observation text + a colour flash; a harmless
 /// no-rule mix reports the mixture story; an overflow says "Vessel full!" and
 /// wets the bench. Hazardous mixes stay SILENT here — HazardousMixReactor owns
@@ -18,8 +18,8 @@ public class MixFeedback : MonoBehaviour
         => outcome == HazardousMix.HazardOutcome.None;
 
     /// Pure (suite-pinned): the SAME rule re-firing within the window stays
-    /// quiet — Exp 4's five HCl squeezes each re-fired "white crystals
-    /// separate" (5 popups + 5 stings for one action burst, user 2026-07-18).
+    /// quiet, or Exp 4's five HCl squeezes each re-fire "white crystals
+    /// separate" (5 popups + 5 stings for one action burst).
     /// A different rule always announces.
     public static bool ShouldShowObservation(bool sameRule, float now, float lastAt, float window = 4f)
         => !sameRule || now - lastAt >= window;
@@ -43,7 +43,7 @@ public class MixFeedback : MonoBehaviour
     }
 
     /// The right recipe, cold: tell the player exactly what the procedure wants
-    /// next (2026-07-17 — reactions no longer fire before their heat step).
+    /// next (reactions do not fire before their heat step).
     private void OnPending(ReactionRule rule)
     {
         if (rule == null || Time.time < _quietUntil) return;
@@ -81,8 +81,8 @@ public class MixFeedback : MonoBehaviour
     {
         // An EXPECTED pour (a pending step of this vessel names the incoming
         // chemical) is the binding's moment — it shows the live "6 / 10 ml"
-        // count; an amber "Mixed — no reaction" on top read as an error message
-        // during every correct dilution (user playtest 2026-07-17).
+        // count; an amber "Mixed — no reaction" on top reads as an error message
+        // during every correct dilution.
         var binding = GetComponent<LiquidTaskBinding>();
         if (binding != null && binding.IsExpectedNow(incoming)) return;
 

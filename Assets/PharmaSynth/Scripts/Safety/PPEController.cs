@@ -4,7 +4,7 @@ using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
-/// PPE donning at the locker. Since 2026-07-10 the three pieces — lab coat, goggles,
+/// PPE donning at the locker. The three pieces — lab coat, goggles,
 /// gloves — are donned INDIVIDUALLY (click each locker item; `PPEDonOnSelect` forwards
 /// the clicks here) and ALL THREE are required before an experiment can start
 /// (`PPEWorn` == all worn — the gate checks it). Per-piece visuals: coat + goggles +

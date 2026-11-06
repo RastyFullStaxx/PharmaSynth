@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-/// Who has claimed which role inside ONE rack group (W5.52).
+/// Who has claimed which role inside ONE rack group.
 ///
 /// A rack group's tubes are interchangeable, so a role belongs to whichever tube the
 /// player actually poured it into. This is the shared ledger that keeps that exclusive:
@@ -25,17 +25,17 @@ public class RackRoles
     {
         if (who == null) return;
         _claims[who] = role;
-        // ⛔ A claim changes what every OTHER member may still become — and what it may
-        // ADVERTISE (W5.54). A member only recomputed its steps when something happened to
-        // IT, so a twin whose authored role had just been taken kept advertising it, and the
-        // vapor stream, the sim and the label all believed the stale promise (Exp 7's crude
-        // distillate: 32 ml scolded into a beaker that could no longer take it). Refresh the
-        // others now; a snapshot, because a refresh may itself claim by elimination.
+        // ⛔ A claim changes what every OTHER member may still become, and what it may
+        // ADVERTISE. If members only recompute when something happens to THEM, a twin whose
+        // authored role was just taken keeps advertising it, and the vapor stream, the sim
+        // and the label all trust the stale promise (Exp 7's crude distillate: 32 ml scolded
+        // into a beaker that could no longer take it). Refresh the others now; a snapshot,
+        // because a refresh may itself claim by elimination.
         foreach (var m in _members.ToArray())
             if (m != null && m != who) m.RefreshRoles();
     }
 
-    /// Give a role back (W5.55): the vessel was emptied, so whatever it had claimed is
+    /// Give a role back: the vessel was emptied, so whatever it had claimed is
     /// available again and every other member's candidate set just widened.
     public void Release(LiquidTaskBinding who)
     {

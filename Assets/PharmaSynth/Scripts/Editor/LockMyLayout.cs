@@ -3,8 +3,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// One-click self-service layout lock (user 2026-07-13: "after I move or
-/// duplicate assets I just want one button"). Does everything needed to make a
+/// One-click self-service layout lock: after moving or
+/// duplicating assets, one button does everything needed to make a
 /// hand-arranged workspace permanent — with NO rebuilding, so it can never
 /// reset placements:
 ///   1. Tidy duplicate names  — "Beaker (1)" → "Beaker_100mL_2", + full
@@ -12,8 +12,8 @@ using UnityEngine;
 ///   2. Re-home every item     — current transform becomes its respawn home
 ///      (moved originals AND duplicates), so nothing snaps back in Play.
 ///   3. Save the scene.
-/// Run this after ANY manual arrangement; then it's locked with no need to ping
-/// Claude. Purely additive — spawns/destroys nothing.
+/// Run this after ANY manual arrangement.
+/// Purely additive — spawns/destroys nothing.
 public static class LockMyLayout
 {
     [MenuItem("Tools/PharmaSynth/Lock My Layout")]

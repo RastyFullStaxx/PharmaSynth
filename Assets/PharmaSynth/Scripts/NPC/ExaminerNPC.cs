@@ -1,9 +1,9 @@
 using UnityEngine;
 
 /// Dr. Jimenez — the assessment-mode examiner (plan §3.4) plus his proctor VOICE
-/// (user 2026-07-10: "populate more messages... improve their behaviors"). In
-/// experiments flagged assessmentMode he observes and gives NO hints (Pharmee also
-/// stays quiet); the `State`/`IsObserving` machine still reflects that flag exactly.
+/// (a varied pool of remarks and behaviours). In experiments flagged assessmentMode
+/// he observes and gives NO hints (Pharmee also stays quiet); the `State`/`IsObserving`
+/// machine still reflects that flag exactly.
 /// Independently, whenever ANY run is active he proctors aloud: a stern greeting at
 /// the start, then occasional oversight remarks (never hints), each driving the
 /// rigged model's "Talking" bool for its duration and showing a subtitle if he has
@@ -88,7 +88,7 @@ public class ExaminerNPC : MonoBehaviour
     {
         if (_talking && Time.time >= _talkUntil) SetTalking(false);
         if (!_running || _talking) return;
-        // W5.9: no ambient remarks during the scripted review — they were
+        // No ambient remarks during the scripted review — they were
         // interrupting Jimenez's own quiz briefing / verdict mid-sentence.
         if (PharmeeGatekeeper.ReviewFlowActive) return;
         if (Time.time < _nextRemark) return;
@@ -113,7 +113,7 @@ public class ExaminerNPC : MonoBehaviour
         if (narration != null) narration.Say(line, lineSeconds);
         SetTalking(true);
         // Keep the talking animation up for the line's REAL duration, not the
-        // authored dwell — his mouth used to stop moving mid-sentence.
+        // authored dwell, or his mouth stops moving mid-sentence.
         _talkUntil = Time.time + SecondsFor(line);
     }
 

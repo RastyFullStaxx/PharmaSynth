@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// Collapses the HUD's Settings/Restart/Quit actions behind a single icon button —
 /// plus the demo verbs (Skip Step / Finish Experiment / Auto-Answer Quiz), which
-/// live in the same list and are shown only during a demo session (user 2026-07-15).
+/// live in the same list and are shown only during a demo session.
 /// The icon's onClick calls Toggle(); each action button's onClick also calls
 /// Close() so the list dismisses after a pick. Starts hidden. The action buttons
 /// keep their own LabMenuController / DemoHudController wiring untouched.

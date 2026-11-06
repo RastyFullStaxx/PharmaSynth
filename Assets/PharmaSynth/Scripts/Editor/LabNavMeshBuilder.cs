@@ -5,16 +5,15 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Bakes the walkable surface Tutorial Mode's ground path routes on (W5.44).
+/// Bakes the walkable surface Tutorial Mode's ground path routes on.
 ///
 /// Without this there is no NavMesh in the project at all, and `GuidePath` silently draws
-/// nothing — the floor arrows would look "not implemented" rather than "not baked", which
-/// is exactly the sort of silence this codebase has been bitten by before.
+/// nothing, so the floor arrows look "not implemented" rather than "not baked".
 ///
-/// ⚠ **The bake goes STALE when furniture moves**, precisely like the lightmap bake — the
-/// benches ARE the obstacles it routes around. Re-run this in the same breath as
+/// ⚠ **The bake goes STALE when furniture moves**, like the lightmap bake: the
+/// benches ARE the obstacles it routes around. Re-run this together with
 /// `Build Lab Probes` → `Run Lab Lighting Bake` after any `Select Movable Furniture`
-/// session, or the arrows will confidently route through a bench that has since moved.
+/// session, or the arrows route through a bench that has since moved.
 public static class LabNavMeshBuilder
 {
     /// The walkable band, in world Y. Low enough to exclude a ~0.9 m bench top and the
@@ -45,13 +44,11 @@ public static class LabNavMeshBuilder
         // because the lab's floor and furniture are ordinary meshes, and collecting by
         // collider would pull in the trigger volumes we must not walk on.
         //
-        // ⛔ The volume is the whole point, and CollectObjects.All is what broke
-        // midterm-acetone (found 2026-09-05). Baking the entire scene makes every upward
-        // face walkable — bench tops AND the ceiling panels. The mesh ran from y=0.10 to
-        // y=3.10, so `NavMesh.SamplePosition` for a beaker sitting at y=1.26 found the
-        // CEILING 1.6 m ABOVE it before the floor 1.2 m below, and GuidePath dutifully drew
-        // its chevrons across the ceiling. The module logged a route and a chevron count the
-        // whole time, which is why this read as "draws no path" rather than as a bad bake.
+        // ⛔ The volume is the whole point. CollectObjects.All bakes the entire scene and makes
+        // every upward face walkable, bench tops AND the ceiling panels (a mesh from y=0.10 to
+        // y=3.10), so `NavMesh.SamplePosition` for a beaker sitting at y=1.26 finds the
+        // CEILING 1.6 m ABOVE it before the floor 1.2 m below, and GuidePath draws its chevrons
+        // across the ceiling while still logging a route and a chevron count.
         //
         // Everything the player can walk on is within a knee-height band of the floor.
         // Furniture still BLOCKS, because its lower body is inside the band and carves.
@@ -83,8 +80,7 @@ public static class LabNavMeshBuilder
         // BuildNavMesh leaves NavMeshData as an in-memory object owned by the surface, so
         // saving the scene serialises it INTO the scene — and NavMeshData cannot be written
         // as YAML. Unity then silently ignores ForceText and rewrites SampleScene.unity as
-        // binary: 5.08 MB of readable YAML became 1.88 MB of bytes, git diffs became "Bin",
-        // and the vault's scene generator parsed 0 objects out of it. Nothing warns you.
+        // binary, which breaks git diffs and the scene-reference generator. Nothing warns you.
         System.IO.Directory.CreateDirectory(AssetDir);
         var existing = AssetDatabase.LoadAssetAtPath<NavMeshData>(AssetPath);
         if (existing == null)
@@ -104,7 +100,7 @@ public static class LabNavMeshBuilder
         EditorSceneManager.MarkAllScenesDirty();
         EditorSceneManager.SaveOpenScenes();
         // Report the vertical extent: a mesh reaching ceiling height means the volume is
-        // wrong again, and that failure is otherwise completely silent.
+        // wrong, and that failure is otherwise completely silent.
         var tri = NavMesh.CalculateTriangulation();
         float lo = float.MaxValue, hi = float.MinValue;
         foreach (var v in tri.vertices) { if (v.y < lo) lo = v.y; if (v.y > hi) hi = v.y; }

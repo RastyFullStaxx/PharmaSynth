@@ -3,7 +3,7 @@ using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractab
 using SelectInteractor = UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor;
 using XRSocket = UnityEngine.XR.Interaction.Toolkit.Interactors.XRSocketInteractor;
 
-/// Points-at-it inspector (user 2026-07-10): each frame it casts from the pointer
+/// Points-at-it inspector: each frame it casts from the pointer
 /// (right-hand ray, falling back to gaze) and, if it lands on a known reagent bottle,
 /// a piece of apparatus or an NPC, shows a smooth info card (HoverInfoPanel) naming
 /// it and explaining what it is / how to use it. A short linger stops the card from
@@ -28,14 +28,14 @@ public class HoverInspector : MonoBehaviour
     /// Second hand seam, so a rig with two controllers can point with either.
     public void BindAltAim(Transform alt) { aimSourceAlt = alt; }
 
-    /// ⭐ POINT WITH WHICHEVER HAND IS FREE (W5.55, user: "make it able to trigger
-    /// hover text appearance in the other hand pointer even if my other hand is already
-    /// holding something").
+    /// ⭐ POINT WITH WHICHEVER HAND IS FREE: the other hand's
+    /// pointer still triggers the hover text while one hand is
+    /// holding something.
     ///
-    /// The card used to be suppressed while EITHER hand held anything, which is the normal
+    /// One hand holding something is the normal
     /// working posture in this lab: a tube in one hand, pointing at a shelf with the other.
-    /// The original rule was aimed at a real problem — a card popping over the item you are
-    /// carrying — and that part is still enforced per-hit by IsHeld(hit.collider). Both hands
+    /// The card is still suppressed for the item being
+    /// carried, per hit, by IsHeld(hit.collider). Both hands
     /// full still means no card: there is nothing the player could pick up next anyway.
     private Transform Source()
     {
@@ -109,7 +109,7 @@ public class HoverInspector : MonoBehaviour
             return LabInfoDatabase.Person(false);
 
         // Reagent bottle / filled vessel — identify by the liquid it holds,
-        // with a LIVE contents line appended (W5.8: hover shows real state).
+        // with a LIVE contents line appended (hover shows real state).
         var lp = col.GetComponentInParent<LiquidPhysics>();
         if (lp != null && lp.currentChemical != null)
             return WithLiveLine(LabInfoDatabase.Reagent(lp.currentChemical.chemicalName), lp);
@@ -142,7 +142,7 @@ public class HoverInspector : MonoBehaviour
 
     /// True when the collider belongs to a grabbable that a hand is currently
     /// holding — the card is suppressed for it so it doesn't sit over the item
-    /// you're trying to use (user 2026-07-11).
+    /// you're trying to use.
     public static bool IsHeld(Collider col)
     {
         if (col == null) return false;

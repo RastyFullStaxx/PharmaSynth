@@ -4,8 +4,8 @@ using UnityEngine.Events;
 
 /// The balance's digital head. Drives the grams readout from a target mass, the
 /// way a bench balance does: the reading TYPES IN, wobbles while the load
-/// settles, then locks (user 2026-07-27: "add animation to the typing of the
-/// weight like how a real digital scale does"). All display maths is pure so the
+/// settles, then locks (like a real digital
+/// scale). All display maths is pure so the
 /// suite pins it without a scene.
 public class WeighingScaleController : MonoBehaviour
 {
@@ -34,7 +34,7 @@ public class WeighingScaleController : MonoBehaviour
     /// What the display shows right now (suite/dev visibility).
     public string DisplayText { get; private set; } = "";
 
-    /// Builder seam (W5.8): wire the display TMP at runtime.
+    /// Builder seam: wire the display TMP at runtime.
     public void Bind(TMP_Text display) { measurementText = display; }
 
     private void Update() => Tick(Time.deltaTime);

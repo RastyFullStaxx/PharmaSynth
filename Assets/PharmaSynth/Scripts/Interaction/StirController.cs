@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// The STIR verb (W5.8): circle the glass rod inside this vessel's mouth while
+/// The STIR verb: circle the glass rod inside this vessel's mouth while
 /// it holds liquid and the stir task completes — works with the vessel on the
 /// table OR held in a hand (everything is vessel-relative). Progress pops as
 /// floating text; the TaskGraph condition owns completion (Retry-safe via the
@@ -43,8 +43,8 @@ public class StirController : MonoBehaviour
 
     private void OnDestroy() => Detach();
 
-    // W5.9: also re-Register on enable — a station toggled off/on mid-run used
-    // to lose its condition on the current graph until the next start.
+    // Also re-Register on enable — a station toggled off/on mid-run would
+    // otherwise lose its condition on the current graph until the next start.
     private void OnEnable() { Resubscribe(); Register(); }
     private void OnDisable() { if (_runner != null) _runner.ExperimentStarted -= OnStarted; _subscribed = false; }
 
@@ -105,7 +105,7 @@ public class StirController : MonoBehaviour
     }
 
     /// ALL the lab's stirring rods (the bench carries Eq_GlassRod AND
-    /// GlassRod_2 — the user grabbed the second and it stirred nothing):
+    /// GlassRod_2 ; tracking only one leaves the other stirring nothing):
     /// whichever rod is nearest the vessel each poll is the tracked one, so
     /// EITHER works, wherever it currently lies. Mirrors AutoFindPestle.
     private readonly System.Collections.Generic.List<Transform> _rodCandidates

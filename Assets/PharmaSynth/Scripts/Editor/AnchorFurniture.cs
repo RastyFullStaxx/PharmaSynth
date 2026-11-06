@@ -3,11 +3,11 @@ using UnityEditor;
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// Furniture is scenery, not equipment (W5.56, user: "make the stools not grabbable").
+/// Furniture is scenery, not equipment: the stools must not be grabbable.
 ///
-/// The six lab stools shipped inside the Environment prefab with an `XRGrabInteractable`
-/// each, so a player could pick a stool up and carry it around the lab, or fling it across
-/// the bench mid-experiment. Nothing in the game asks them to move a stool, and every real
+/// The six lab stools in the Environment prefab carry an `XRGrabInteractable` each, so a
+/// player could pick a stool up and carry it around the lab, or fling it across the bench
+/// mid-experiment. Nothing in the game asks them to move a stool, and every real
 /// interaction the lab needs is with glassware and tools.
 ///
 /// ⛔ The GRAB goes, the COLLIDER stays. The stool still stops the player walking through it

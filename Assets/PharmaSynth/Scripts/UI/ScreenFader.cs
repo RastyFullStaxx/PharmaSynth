@@ -62,6 +62,10 @@ public class ScreenFader : MonoBehaviour
 
     public FadeState State => _state;
 
+    /// The black quad (built lazily under the XR camera). The cinema view moves it
+    /// onto its own layer while a cutscene culls everything else.
+    public Renderer FadeRenderer { get { EnsureQuad(); return quad; } }
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -171,10 +175,10 @@ public class ScreenFader : MonoBehaviour
         _pulsing = false;
     }
 
-    /// Compose pending fade callbacks instead of overwriting (W5.9): starting a
-    /// new fade while another was mid-flight used to silently DROP the earlier
-    /// callback — e.g. a HUD Restart during the Loading fade lost DoLoad and
-    /// wedged the single-exit Loading state. Both actions now run, in order.
+    /// Compose pending fade callbacks instead of overwriting: a new fade started while
+    /// another is mid-flight must not DROP the earlier callback (e.g. a HUD Restart
+    /// during the Loading fade would lose DoLoad and wedge the single-exit Loading state).
+    /// Both actions run, in order.
     public static Action Compose(Action first, Action second)
     {
         if (first == null) return second;

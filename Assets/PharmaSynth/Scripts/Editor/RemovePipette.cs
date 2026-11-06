@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// W5.12 (user 2026-07-13): drop the modern mechanical pipette — the Dropper
+/// Drop the modern mechanical pipette — the Dropper
 /// (drops) + graduated cylinder (ml) already cover its manuscript role. Removes
 /// the scene instance, the SceneAssetLibrary registration, and the generated
 /// prefab. The raw MechanicalPipette model pack is left on disk (harmless).

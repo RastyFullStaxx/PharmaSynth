@@ -2,9 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// Pure rules for keeping world-space name tags from sitting on top of each other
-/// (W5.55, user: "can you make it so that texts are not overlapping? like make push each
-/// other properly relative to the item they are naming? this way, players can read things
-/// better").
+/// (labels must not overlap: they push each other apart while staying next to the item
+/// they name, so players can read them).
 ///
 /// Every ProximityLabel billboards independently, so a rack of 19 identical tubes, a shelf
 /// of bottles or a cluster of glassware produced a stack of tags occupying the same few
@@ -63,7 +62,7 @@ public static class LabelDeclutterMath
     }
 }
 
-/// Drives LabelDeclutterMath over the live ProximityLabels (W5.55). Thin: it measures, calls
+/// Drives LabelDeclutterMath over the live ProximityLabels. Thin: it measures, calls
 /// the pure solver and hands each label a lift.
 ///
 /// Polls at the same 5 Hz TutorialHighlighter uses. Tags are read at a human pace, and a

@@ -10,14 +10,13 @@ using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractab
 using XRManager = UnityEngine.XR.Interaction.Toolkit.XRInteractionManager;
 using NearFar = UnityEngine.XR.Interaction.Toolkit.Interactors.NearFarInteractor;
 
-/// Plays the game in PLAY MODE, unattended, and reports what broke (W5.41).
+/// Plays the game in PLAY MODE, unattended, and reports what broke.
 ///
 /// ⭐ Why this exists on top of Simulate Everything: that battery runs in EDIT mode, where
 /// Update never ticks, coroutines never run, physics never steps, XRI never selects
-/// anything and no audio plays. Every bug that only exists in MOTION is invisible to it —
-/// which is precisely where the §13 playtest findings live (items vanishing, dialogue
-/// stomping mid-typing, the holo panel not scrolling, quiz buttons not clickable), and
-/// where W5.34's "711 errors/second from SpawnVFX" lived.
+/// anything and no audio plays. Every bug that only exists in MOTION is invisible to it:
+/// items vanishing, dialogue stomping mid-typing, the holo panel not scrolling, quiz
+/// buttons not clickable, an error spammed every frame.
 ///
 /// ⭐ No headset needed: PC Dev Mode leaves OpenXR auto-init OFF on Standalone and the
 /// scene's XR Device Simulator drives the rig.
@@ -53,18 +52,17 @@ public static class PlaytestAutopilot
     [MenuItem("Tools/PharmaSynth/Autopilot Playtest (plays the game in Play mode)")]
     public static void Launch() => Launch(false);
 
-    /// ⭐ Tutorial Mode had NEVER been played by the autopilot until W5.44b. The campaign
+    /// ⭐ Tutorial Mode needs its own pass. The campaign
     /// sweep enters via "Laboratory", so `TutorialSession.Active` stays false and every
-    /// guidance cue — glow, ghost, beacon, spotlight, verb demo, wrong-grab nudge, need
-    /// line, ping, ground path — correctly does nothing. The whole mode was untested in
-    /// motion, and the ground path reported "dist 0.0, no route" in all nine modules for
-    /// exactly that reason.
+    /// guidance cue (glow, ghost, beacon, spotlight, verb demo, wrong-grab nudge, need
+    /// line, ping, ground path) correctly does nothing; the ground path reports
+    /// "dist 0.0, no route" in all nine modules for exactly that reason.
     [MenuItem("Tools/PharmaSynth/Autopilot Playtest (TUTORIAL Mode — checks the guidance)")]
     public static void LaunchTutorial() => Launch(true);
 
     public static void Launch(bool tutorial) => Launch(tutorial ? "tutorial" : "campaign");
 
-    /// ⭐ VISUAL (W5.45): the campaign loop again, but every step is performed HONESTLY
+    /// ⭐ VISUAL: the campaign loop again, but every step is performed HONESTLY
     /// through SimulatedRun's verbs (real pours and scoop dips, the water bath, the ice
     /// bucket, the glass rod, a real litmus strip...) and then PHOTOGRAPHED — a close-up
     /// of the vessel the step happened in, plus the numbers behind the picture, judged
@@ -118,10 +116,10 @@ public static class PlaytestAutopilot
     static int s_grabsOk, s_grabsTested, s_uiOk, s_uiTested;
     static bool s_running, s_uiCheckedThisRun;
 
-    /// Pace + repeat control. The first version acted on EVERY EditorApplication.update
-    /// tick, so it re-pressed "Laboratory" hundreds of times a second, restarting the fade
-    /// and scene load forever — and because it set the beat twice per tick the stall
-    /// watchdog's timer reset continuously and never fired. A game needs FRAMES between
+    /// Pace + repeat control. Acting on EVERY EditorApplication.update tick re-presses
+    /// "Laboratory" hundreds of times a second, restarting the fade and scene load
+    /// forever, and setting the beat twice per tick resets the stall watchdog's timer
+    /// continuously so it never fires. A game needs FRAMES between
     /// inputs; a driver that does not wait is not driving, it is jamming the button.
     const float ActEverySeconds = 0.75f;
     const float RepeatAfterSeconds = 6f;
@@ -161,9 +159,9 @@ public static class PlaytestAutopilot
     /// the unlock chain itself is already proven 8/8 by the edit-mode campaign sim.
     static readonly List<string> s_pathLog = new List<string>();
     // ⛔ The path is sampled EVERY tick, not once at run start. A single sample on the
-    // first DriveRun tick reported "dist 0.0" for all 9 modules, which reads as "the path
-    // never drew" — but GuidePath.Update early-returns (no camera yet, no target yet, still
-    // time-skipping) WITHOUT resetting LastDistance, so 0.0 only ever meant "Update had not
+    // first DriveRun tick reads "dist 0.0" for all 9 modules, which looks like "the path
+    // never drew", but GuidePath.Update early-returns (no camera yet, no target yet, still
+    // time-skipping) WITHOUT resetting LastDistance, so 0.0 only means "Update had not
     // reached the distance line yet on that one frame". Watching the whole run tells the two
     // apart, and it is the difference between a real regression and a measurement artefact.
     static int s_pathBestChevrons, s_pathObservations, s_pathTicksShown;
@@ -189,7 +187,7 @@ public static class PlaytestAutopilot
         // Set AFTER the domain reload that entering Play mode causes — a static assigned
         // before it would be wiped on the way in.
         SimulatedRun.NeverForce = s_visual;
-        LiquidPhysics.DrainProbeName = s_visual ? "DistillingFlask" : null;   // W5.46 diagnostic
+        LiquidPhysics.DrainProbeName = s_visual ? "DistillingFlask" : null;   // diagnostic
         if (s_visual) VisualSweep.BeginRun();
         s_findings.Clear(); s_errors.Clear(); s_errorBeat.Clear(); s_trace.Clear();
         s_grabChecked.Clear(); s_shots.Clear();
@@ -216,7 +214,7 @@ public static class PlaytestAutopilot
 
     /// Every error/exception, DEDUPLICATED with a count and tagged with the beat it first
     /// happened in. Without the dedup, one misconfigured particle system writes 711
-    /// identical lines a second (W5.34) and buries everything else in the report.
+    /// identical lines a second and buries everything else in the report.
     static void OnLog(string msg, string stack, LogType type)
     {
         if (type != LogType.Error && type != LogType.Exception && type != LogType.Assert) return;
@@ -385,12 +383,10 @@ public static class PlaytestAutopilot
             if (menu != null)
             {
                 SetBeat("cube-room");
-                // ⚠ NOT on the first frame: ScreenFader.Start() sets alpha to 1 and fades
-                // in, so an immediate capture is a photograph of the boot fade — which is
-                // exactly how the first run "proved" the cube room was pitch black.
-                // Wait out the boot fade before doing ANYTHING: ScreenFader.Start() sets
-                // alpha to 1 and fades in, so both the screenshot and the button press
-                // would otherwise land on a black, not-yet-settled first frame.
+                // ⚠ NOT on the first frame. Wait out the boot fade before doing ANYTHING:
+                // ScreenFader.Start() sets alpha to 1 and fades in, so both the screenshot
+                // and the button press would otherwise land on a black, not-yet-settled
+                // first frame (a cube room that looks pitch black).
                 if (EditorApplication.timeSinceStartup - s_beatSince < 2.5f) return;
                 Shot("00-cube-room");
                 if (Act("press-laboratory"))
@@ -459,9 +455,9 @@ public static class PlaytestAutopilot
                 break;
 
             case GateState.SupplyPrompt:
-                // ⛔ The gate has a state the driver never handled, so it sat here in
-                // silence until the module cap fired — the sweep's real cause of death
-                // (user, 2026-09-02: "reagents were not enough, even when you restart").
+                // ⛔ A gate state the driver doesn't handle would sit here in silence until
+                // the module cap fires, hiding the real cause (reagents ran out, even after
+                // a restart).
                 // Report it as the blocker it is, then take the restart so the sweep can
                 // see whether a fresh stage fixes it.
                 Finding((CurrentModule ?? "?") + ": SUPPLY PROMPT at " + s_moduleTasks
@@ -658,8 +654,8 @@ public static class PlaytestAutopilot
         if (TaskTargetRegistry.TaskCount == 0) TutorialTargets.Build();
         // ⚠ Include INACTIVE. The Near-Far Interactors live under Left/Right Controller,
         // which are not necessarily active the moment a run starts with no real device
-        // attached — and the default FindAnyObjectByType skips inactive objects, so the
-        // first version concluded "nothing in this game can be picked up at all" about a
+        // attached, and the default FindAnyObjectByType skips inactive objects, so it would
+        // conclude "nothing in this game can be picked up at all" about a
         // scene that plainly has two of them. Prefer an active one; say so when there is
         // none, because that is a different (and also interesting) fact.
         var manager = Object.FindAnyObjectByType<XRManager>(FindObjectsInactive.Include);
@@ -698,14 +694,12 @@ public static class PlaytestAutopilot
             string name = t.transform.name;
 
             // ⛔ NOT XRInteractionManager.CanSelect. That also asks whether the interactable
-            // is a VALID TARGET right now — i.e. whether the hand is near it — so it
-            // returns false for every object across the room and reported all five
-            // methane props as unpickupable on the first run. The autopilot has no hands
+            // is a VALID TARGET right now (whether the hand is near it), so it
+            // returns false for every object across the room and would report every
+            // methane prop as unpickupable. The autopilot has no hands
             // to walk over; what it can honestly test is the grab MACHINERY.
             //
-            // Static capability first (this is the real "can never be grabbed" class),
-            // then a forced select, which bypasses proximity and proves the object
-            // actually enters the selected state.
+            // Static capability first (this is the real "can never be grabbed" class).
             if (!grab.enabled || !grab.gameObject.activeInHierarchy)
             {
                 Finding("'" + name + "' (needed by " + taskId + ") has its XRGrabInteractable "
@@ -729,24 +723,24 @@ public static class PlaytestAutopilot
                 continue;
             }
 
-            // ⛔ The forced SelectEnter/SelectExit pair was REMOVED (2026-09-02).
+            // ⛔ No forced SelectEnter/SelectExit pair.
             //
             // With no device attached the interactor is inactive, so SelectEnter silently
-            // did not take; SelectExit then asserted "An Interactor received a Select Exit
-            // event for an Interactable that it was not selecting" and threw, killing the
-            // whole sweep 13 s in. Worse, an earlier run reported 5/5 grabs "clean" from
-            // the same non-event — a pass that proved nothing.
+            // does not take; SelectExit then asserts "An Interactor received a Select Exit
+            // event for an Interactable that it was not selecting" and throws, killing the
+            // whole sweep. When it doesn't throw, the same non-event reports grabs "clean",
+            // a pass that proves nothing.
             //
-            // What survives is what is actually TRUE without hands: the capability checks
-            // above. They catch the real "can never be picked up" class — disabled
-            // interactable, no solid collider, non-overlapping interaction layers — and
+            // What survives is what is TRUE without hands: the capability checks
+            // above. They catch the real "can never be picked up" class (disabled
+            // interactable, no solid collider, non-overlapping interaction layers) and
             // they cannot lie about it. Whether a grab FEELS right, and whether an object
             // behaves on release, are headset questions and are honestly labelled as such.
             s_grabsOk++; s_moduleGrabsOk++;
         }
     }
 
-    // ---- VISUAL mode (W5.45) -------------------------------------------------------
+    // ---- VISUAL mode -------------------------------------------------------
 
     static bool s_visual;
     static SimulatedRun.Session s_session;
@@ -768,8 +762,8 @@ public static class PlaytestAutopilot
         public List<ReactionRule> rules = new List<ReactionRule>(); public float targetC;
         public int waits; public bool retried;
         /// Bugs the handlers logged while serving. Promoted to findings when the step
-        /// lands — except completion complaints from a serve the game then finished on its
-        /// own frames, which were the harness's single-tick impatience, not the game.
+        /// lands, except completion complaints from a serve the game then finished on its
+        /// own frames, which are the harness's single-tick impatience, not the game.
         public List<string> bugs = new List<string>();
     }
 
@@ -782,12 +776,12 @@ public static class PlaytestAutopilot
     static InFlight s_flight;
     static bool s_moduleStopped;
 
-    /// NO PROGRAMMATIC SHORTCUTS (user, 2026-09-02: "no programmatically cheating
-    /// through"). A step is served the way a hand would serve it and then the sweep WAITS
+    /// NO PROGRAMMATIC SHORTCUTS (never cheat a step through
+    /// in code). A step is served the way a hand would serve it and then the sweep WAITS
     /// for the game to finish it. The vapor stream, the fermentation, the bath and the ice
-    /// bucket all self-drive from Update; the first version fought them by hammering their
-    /// public seams inside a single tick and then called CompleteTask when that did not
-    /// take. Nothing is completed by fiat here: a step that never finishes is reported
+    /// bucket all self-drive from Update, so hammering their public seams inside a single
+    /// tick fights them, and calling CompleteTask when that does not take proves nothing.
+    /// Nothing is completed by fiat here: a step that never finishes is reported
     /// UNPLAYED and the module STOPS, because a forced step proves nothing about whether a
     /// player could have done it.
     static void DriveVisualStep(ExperimentRunner runner, ExperimentTask next)
@@ -973,15 +967,15 @@ public static class PlaytestAutopilot
 
     /// Can a player actually HANDLE what this step needs? The chemistry can be perfect
     /// while the bottle cannot be tipped. GrabTest already proves the grab machinery; this
-    /// adds the pour affordance (user, 2026-09-02: "spillable, grabbable, activatable").
+    /// adds the pour affordance (spillable, grabbable, activatable).
     static void AuditHandling(string taskId)
     {
         foreach (var t in TaskTargetRegistry.Targets(taskId))
         {
             if (t.transform == null || !s_handled.Add(t.transform)) continue;
             // Only what the player POURS FROM needs a pourer: the source bottle or vessel of a
-            // step. A destination — the mortar, the methane tube — is filled, never tipped,
-            // and flagging it was the sweep's last false positive (2026-09-05).
+            // step. A destination (the mortar, the methane tube) is filled, never tipped,
+            // so flagging it would be a false positive.
             if (t.role != TargetRole.Source) continue;
             var lp = t.transform.GetComponent<LiquidPhysics>();
             if (lp == null) continue;
@@ -1070,8 +1064,8 @@ public static class PlaytestAutopilot
 
     // ---- live-only checks ----------------------------------------------------------
 
-    /// Fire a real pointer event at every visible Button and confirm something is hit.
-    /// "The quiz was not clickable" is a bug this project has already shipped once.
+    /// Fire a real pointer event at every visible Button and confirm something is hit
+    /// (a world-space canvas without an XR raycaster leaves the quiz unclickable).
     static void CheckUiRaycasts()
     {
         var es = Object.FindAnyObjectByType<EventSystem>();
@@ -1170,11 +1164,10 @@ public static class PlaytestAutopilot
                       + " (" + s_tasksCompleted + " tasks completed)");
         sb.AppendLine();
 
-        // ⛔ COVERAGE IS PART OF THE VERDICT. The first run never left the cube room and
-        // still printed "0 findings — CLEAN", because nothing had happened yet. A false
+        // ⛔ COVERAGE IS PART OF THE VERDICT. A run that never leaves the cube room would
+        // still print "0 findings — CLEAN", because nothing has happened yet. A false
         // NEGATIVE is worse than a false positive: nobody goes looking for it.
-        // Coverage means every module actually played, not just the first one — the same
-        // rule that stopped v1 printing CLEAN from the cube room, applied to the sweep.
+        // Coverage means every module actually played, not just the first one.
         // A practice run never reaches quiz or grade, so coverage there means: every module
         // actually RAN. Holding tutorial to the campaign bar would report INCONCLUSIVE on a
         // perfectly good sweep.

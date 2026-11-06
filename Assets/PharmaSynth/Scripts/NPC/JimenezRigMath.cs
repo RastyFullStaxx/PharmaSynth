@@ -37,7 +37,7 @@ public static class JimenezRigMath
     /// has no segment, so its "distance to the bone" collapses to distance from the wrist
     /// joint, every fingertip measures as far away, and the whole hand is reclassified as
     /// coat and handed to the spine. That renders as fingers stretched into ribbons hanging
-    /// off the wrists (verified 2026-09-05). Nothing is lost by skipping it.
+    /// off the wrists (verified). Nothing is lost by skipping it.
     public static bool IsArmBone(string boneName)
     {
         if (string.IsNullOrEmpty(boneName)) return false;
@@ -48,7 +48,7 @@ public static class JimenezRigMath
     /// A twist bone is not a limb of its own — it is a sub-bone that spins WITHIN its parent
     /// limb, so it must be measured against the parent's segment, not its own.
     ///
-    /// ⛔ Measuring a twist bone against itself is what tore the sleeve off (2026-09-05).
+    /// ⛔ Measuring a twist bone against itself is what tore the sleeve off.
     /// `L_UpperarmTwist02` is a LEAF, so its "segment" is a single point at the elbow; sleeve
     /// vertices weighted to it all measured as far away, were called coat, and were handed to
     /// the spine — so the sleeve stayed behind while the arm rose, stretching it into ribbons
@@ -79,11 +79,9 @@ public static class JimenezRigMath
     /// The same question, but able to tell a SLEEVE from a COAT PANEL HANGING BESIDE THE ARM.
     ///
     /// ⛔ Distance alone cannot. In this model's A-pose bind, the forearm hangs beside the
-    /// hip, so the coat's lower front panel sits just as close to the forearm bone as the
-    /// actual cuff does — both well inside the 12 cm sleeve radius. The first pass therefore
-    /// kept that panel on the arm, and it still tore visibly when he raised his hands
-    /// (user screenshot, 2026-09-05): the coat body no longer swung, but a jagged flap
-    /// remained at the left hip.
+    /// hip, so the coat's lower front panel sits as close to the forearm bone as the cuff
+    /// does, both well inside the 12 cm sleeve radius. Left on the arm, that panel tears
+    /// into a jagged flap at the hip when he raises his hands.
     ///
     /// A cuff wraps the limb and is far from the body's centre line; a coat panel hangs off
     /// the torso and is near it. So "closer to the arm than to the spine" separates them,
@@ -101,13 +99,11 @@ public static class JimenezRigMath
     /// smoothly to 1 across a band, so neighbouring vertices are never handed to different
     /// bones outright.
     ///
-    /// ⛔ This is the whole correction, and skipping it is what made the first attempt
-    /// WORSE than the auto-rig it was fixing. A hard cut moved 100% of the weight on one
-    /// side of the radius and 0% on the other, so two adjacent vertices followed completely
-    /// different bones and the edge between them ripped: measured against the untouched
-    /// mesh, worst edge stretch went from x4.2 to x14.9 and torn edges from 32 to 174, which
-    /// is the jagged flap the user photographed (2026-09-05). An auto-rigger's weights are
-    /// crude but CONTINUOUS; any correction has to stay continuous too.
+    /// ⛔ The blend is required. A hard cut moves 100% of the weight on one side of the
+    /// radius and 0% on the other, so adjacent vertices follow different bones and the
+    /// edge between them rips: against the untouched mesh, worst edge stretch went from
+    /// x4.2 to x14.9 and torn edges from 32 to 174, worse than the auto-rig itself. An
+    /// auto-rigger's weights are crude but CONTINUOUS; any correction has to stay continuous too.
     public static float TransferFraction(float distanceToArm, float sleeveRadius, float blendBand)
     {
         if (distanceToArm <= sleeveRadius) return 0f;

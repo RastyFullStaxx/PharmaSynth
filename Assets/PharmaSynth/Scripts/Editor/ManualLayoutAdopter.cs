@@ -7,16 +7,16 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// W5.12: the user hand-placed the whole workspace (kits, duplicates, reagent
-/// shelf, spawn point) — this adopts that layout as canonical in ONE run:
+/// Adopts the hand-placed workspace (kits, duplicates, reagent shelf, spawn
+/// point) as the canonical layout in ONE run:
 ///   1. renames editor duplicates ("Beaker_100mL (1)") to clean unique names +
 ///      display names, and gives them the full interaction wiring;
 ///   2. re-points the teleport target (FrontDoorSpawn) at the rig's current
-///      pose — the user moved the avatar to the new spawn spot;
+///      pose;
 ///   3. re-homes every DropRespawn to its current transform;
-///   4. creates + registers the missing DistillingFlask (the model existed only
-///      as an unimported .glb — that's why it couldn't be found) and parks it
-///      beside a graduated cylinder;
+///   4. creates + registers the DistillingFlask if missing (its model is an
+///      unimported .glb, so no prefab exists) and parks it beside a graduated
+///      cylinder;
 ///   5. drops a ManualLayout_W512 marker that guards the shelf/kits builders
 ///      from clobbering the hand layout on a re-run.
 /// Idempotent; run from SampleScene in edit mode.
@@ -142,7 +142,7 @@ public static class ManualLayoutAdopter
     static string EnsureDistillingFlask()
     {
         // Remove any prior (possibly half-wired) instance so a re-run rebuilds it
-        // cleanly — it's a brand-new prop the user hasn't positioned yet.
+        // cleanly — it's a brand-new prop nobody has positioned yet.
         foreach (var it in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include))
             if (it.itemId == "kit-distillingflask") Object.DestroyImmediate(it.gameObject);
 
@@ -180,7 +180,7 @@ public static class ManualLayoutAdopter
             }
         }
 
-        // Park it beside a graduated cylinder (user: "place it near the
+        // Park it beside a graduated cylinder ("place it near the
         // graduated cylinder and I'll adjust manually").
         Transform anchor = null;
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))

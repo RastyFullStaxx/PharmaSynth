@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 
-/// States of the door-gated game loop (confirmed client workflow 2026-07-09,
-/// post-experiment review flow redesigned 2026-07-11 per the user's plan):
+/// States of the door-gated game loop (the confirmed client workflow,
+/// post-experiment review flow included):
 /// Pharmee blocks the lab door; the player picks Lab Tour or Campaign → episode →
 /// lab-coat → ready → the lab loads/resets → threshold warning → the period starts
 /// the moment they walk in → tests complete → Pharmee congratulates and fades the
@@ -17,18 +17,16 @@ public enum GateState
     ReadyPrompt, Loading, ThresholdWarn, DoorArmed, Running,
     SupplyPrompt, Debrief, Returning, UnlockAnnounce, LabTour,
     QuizIntro, ScoreReview, QuizTime,
-    /// Second level of the door picker: the chosen PERIOD's modules (user 2026-07-16:
-    /// "on prelims campaign mode, there is no selection of choices! … I thought we have
-    /// 2 experiments inside prelims?"). EpisodePick used to resolve a period straight
-    /// to FirstPlayableInPeriod and auto-start, so module names were never shown.
-    /// APPENDED deliberately — serialized ints of the states above stay valid.
+    /// Second level of the door picker: the chosen PERIOD's modules, so the player sees
+    /// every experiment in a period instead of auto-starting the first playable one.
+    /// APPENDED deliberately so the serialized ints of the states above stay valid.
     ModulePick
 }
 
 public enum GateEvent
 {
     Approach, PickLabTour, PickCampaign, ExplainDone, EpisodeChosen,
-    PeriodChosen,   // a period opens its module list (2026-07-16) — append-only
+    PeriodChosen,   // a period opens its module list — append-only
     Coated, Ready, Loaded, ProceedConfirmed, CrossedThreshold,
     ContinueAfterPass, DebriefDone, TeleportDone, AnnounceDone,
     SupplyExhausted, RestartConfirmed, Dismiss,
@@ -37,7 +35,7 @@ public enum GateEvent
     QuizBegin,      // Jimenez's briefing done → the tablet quiz opens
     Graded,         // runner.Finish landed (quiz submitted) → score review
     RetryRequested, // failed review → clean re-armed attempt at the door
-    AbandonRun      // failed review → back to the entrance to choose ANOTHER experiment (W5.9)
+    AbandonRun      // failed review → back to the entrance to choose ANOTHER experiment
 }
 
 /// Pure, table-driven state machine for the Pharmee door gate. No Unity types —
@@ -142,7 +140,7 @@ public class GatekeeperModel
             case GateState.ScoreReview:
                 if (e == GateEvent.ContinueAfterPass) return GateState.Returning;   // pass-gated by the grade screen
                 if (e == GateEvent.RetryRequested) return GateState.Loading;        // clean re-armed attempt
-                if (e == GateEvent.AbandonRun) return GateState.Blocked;            // fail → pick another experiment (W5.9)
+                if (e == GateEvent.AbandonRun) return GateState.Blocked;            // fail → pick another experiment
                 break;
             case GateState.SupplyPrompt:
                 if (e == GateEvent.RestartConfirmed) return GateState.Loading;
@@ -163,26 +161,25 @@ public class GatekeeperModel
 
     /// Whether the physical door blocker should be OFF in this state. (Debrief now
     /// happens back at the entrance after the Returning teleport → door closed.
-    /// CoatPrompt/ReadyPrompt are open since 2026-07-11: the PPE locker moved to
+    /// CoatPrompt/ReadyPrompt are open: the PPE locker is in
     /// the corner just INSIDE the lab, so gearing up happens through the door.)
     public static bool DoorOpen(GateState s)
-        // The door stays SHUT through all prep — mode pick, episode pick, PPE
-        // (CoatPrompt), and "I'm ready" (ReadyPrompt) — and only opens once the
-        // experiment is ARMED (user 2026-07-13: the door was opening the moment
-        // Pharmee said to wear PPE, before the player was ready). The PPE locker
+        // The door stays SHUT through all prep (mode pick, episode pick, PPE in
+        // CoatPrompt, "I'm ready" in ReadyPrompt) and opens only once the experiment
+        // is ARMED, so the player is never let in before they are ready. The PPE locker
         // is on the entrance side, so it's reachable with the door closed.
         => s == GateState.LabTour || s == GateState.DoorArmed || s == GateState.Running
         || s == GateState.SupplyPrompt
         || s == GateState.QuizIntro || s == GateState.QuizTime || s == GateState.ScoreReview;
 
     /// States where the door may only open once the player is FULLY dressed
-    /// (user 2026-07-14: "the door opens when I haven't worn all three needed").
+    /// (all three PPE pieces worn).
     /// The campaign in-lab states require PPE; the Lab Tour and the review-corner
     /// states do NOT (the tour is a walk-through and PPE is stripped for review).
     public static bool RequiresPPEToOpen(GateState s)
         => s == GateState.DoorArmed || s == GateState.Running || s == GateState.SupplyPrompt;
 
-    /// The scripted post-experiment review window (W5.9): ambient NPC chatter
+    /// The scripted post-experiment review window: ambient NPC chatter
     /// (Pharmee idle lines, Jimenez exam remarks) and the demo skip buttons are
     /// suppressed here so Jimenez's briefing/verdict and Pharmee's debrief are
     /// never interrupted mid-sentence.
@@ -193,12 +190,8 @@ public class GatekeeperModel
     /// The period whose module list is open (set by ChooseEpisode).
     public ExperimentPeriod PickedPeriod { get; private set; }
 
-    /// Pick the PERIOD → open its module list. Does NOT start anything any more.
-    ///
-    /// This used to resolve the period through FirstPlayableInPeriod and jump straight
-    /// to CoatPrompt, so choosing Prelim silently auto-started Exp 2 and the player
-    /// never saw that the period HAS two experiments (user 2026-07-16). It still
-    /// refuses a period with nothing playable in it.
+    /// Pick the PERIOD → open its module list. Starts nothing; the module pick does.
+    /// Refuses a period with nothing playable in it.
     public bool ChooseEpisode(ExperimentPeriod period, Func<string, bool> canSelect,
                               Func<ExperimentPeriod, string> firstPlayable)
     {
@@ -253,7 +246,7 @@ public class GatekeeperModel
         }
     }
 
-    /// MODULE rows for a chosen period — the picker's second level (2026-07-16).
+    /// MODULE rows for a chosen period — the picker's second level.
     /// Same shape as EpisodeOptions, one level down: catalog order, locked modules
     /// dimmed, PASSED ones marked but still selectable (a passed lab stays replayable
     /// for revision; the rubric/BKT already handle re-attempts and keep the best score).

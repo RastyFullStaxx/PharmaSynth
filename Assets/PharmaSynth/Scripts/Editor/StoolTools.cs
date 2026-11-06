@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-/// Edit-mode helper (user 2026-07-10: "let me select + reposition the stools in the
+/// Edit-mode helper ("let me select + reposition the stools in the
 /// editor, not in Play mode"). The stools sit tucked under the tables, so clicking
 /// them in a crowded Scene view is fiddly. This selects all of them in one go — then
 /// move them with the transform gizmo and run Re-Home Scene Items to make it stick.
@@ -21,9 +21,9 @@ public static class StoolTools
             if (n.Contains("stool") || n.Contains("chair")) list.Add(t.gameObject);
         }
 
-        // The stools had Scene-view PICKING disabled (the pointer toggle in the
-        // Hierarchy) — that's why clicking them in the Scene view did nothing. Turn
-        // picking back on and unhide them so they're directly click-selectable.
+        // Stools with Scene-view PICKING disabled (the pointer toggle in the
+        // Hierarchy) can't be clicked in the Scene view. Turn picking back on and
+        // unhide them so they're directly click-selectable.
         foreach (var go in list)
         {
             SceneVisibilityManager.instance.EnablePicking(go, true);

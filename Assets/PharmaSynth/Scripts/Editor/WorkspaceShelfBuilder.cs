@@ -4,10 +4,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// Builds the equipment-shelf platforms on the center-table overhead gantry.
-/// W5.10 built one row on the rail tops; W5.12 adds the SECOND, lower row the
-/// user hand-planked at y≈1.20 (four duplicated cabinet shelves — replaced here
-/// by clean full-width tiles + slim side posts so the lower row reads as built
-/// in, not floating). Idempotent + re-runnable. Geometry lives in the pure
+/// One row sits on the rail tops; this also adds the SECOND, lower row at
+/// y≈1.20 (clean full-width tiles + slim side posts, so the lower row reads as
+/// built in, not floating). Idempotent + re-runnable. Geometry lives in the pure
 /// WorkspaceShelfMath; the apparatus kits go on via Build Workspace Kits.
 public static class WorkspaceShelfBuilder
 {
@@ -25,8 +24,8 @@ public static class WorkspaceShelfBuilder
             return;
         }
 
-        // 1) Remove ad-hoc planks (duplicated cabinet shelves the user parked
-        // over the table — both the W5.10 single and the W5.12 lower-row four)
+        // 1) Remove ad-hoc planks (duplicated cabinet shelves parked
+        // over the table — both the original single and the lower-row four)
         // and any previous WorkspaceShelf.
         int removed = 0;
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -69,7 +68,7 @@ public static class WorkspaceShelfBuilder
         }
 
         // 4) Slim side posts hang the lower row from the top one (visual
-        // grounding — the user's planks floated in mid-air).
+        // grounding — the hand-laid planks floated in mid-air).
         float postTop = WorkspaceShelfMath.RowCenterY(0) - WorkspaceShelfMath.Thickness * 0.5f;
         float postBottom = WorkspaceShelfMath.RowCenterY(1) - WorkspaceShelfMath.Thickness * 0.5f;
         float postH = postTop - postBottom;

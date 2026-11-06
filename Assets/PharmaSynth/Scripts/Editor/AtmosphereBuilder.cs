@@ -2,8 +2,8 @@
 using UnityEditor;
 using UnityEngine;
 
-/// Places the ambient atmosphere emitters (user 2026-07-10): cool vapour sinking
-/// from the AC unit + a faint haze layer near the floor and ceiling. Low-density on
+/// Places the ambient atmosphere emitters: cool vapour sinking
+/// from the AC unit + a faint haze layer near the floor. Low-density on
 /// purpose (Quest overdraw). Door cold-air is code-hooked in DoorOpener, not here.
 ///
 /// Tools ▸ PharmaSynth ▸ Build Atmosphere VFX (SampleScene, edit mode, idempotent).
@@ -41,7 +41,7 @@ public static class AtmosphereBuilder
         else Debug.LogWarning("[Atmosphere] no AC unit found — vapour skipped");
 
         // Haze — a single faint, LOW ground mist that hugs the floor (kept out of the
-        // eye-line so it never obscures the view). The obscuring ceiling layer is gone.
+        // eye-line so it never obscures the view).
         made += Emitter(group.transform, "Haze_Floor", new Vector3(-0.5f, 0.2f, -3.5f),
                         AtmosphereVfx.Style.Haze, new Vector3(7f, 0.35f, 6f));
 

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// Subtle positional footsteps for a walking NPC (user 2026-07-10: Dr. Jimenez).
+/// Subtle positional footsteps for a walking NPC (Dr. Jimenez).
 /// Tracks its own transform's horizontal movement and plays a quiet 3D footstep at
 /// its feet once per stride — so his roaming reads audibly but stays background
 /// (distance rolloff keeps it soft across the room). Reuses the shared StrideMath +

@@ -1,7 +1,7 @@
 using UnityEngine;
 
-/// Pure pushback resolution (edit-mode testable). Both rules exist because the
-/// old inline version broke headset play (2026-08-24: player ended up under the
+/// Pure pushback resolution (edit-mode testable). Both rules are needed: without
+/// them the player can end up under the
 /// lab floor, unable to walk).
 public static class HeadPushbackMath
 {
@@ -77,7 +77,7 @@ public class HeadCollisionPushback : MonoBehaviour
         Vector3 dir = delta / dist;
         // Sweep a head-to-knee CAPSULE, not just the head sphere — a head-only
         // sweep let the player glide THROUGH waist-high tables and chairs
-        // (their tops sit below head height, user report 2026-07-10).
+        // (their tops sit below head height).
         Vector3 knee = new Vector3(_lastValid.x, rigT.position.y + 0.35f, _lastValid.z);
         if (knee.y > _lastValid.y - headRadius) knee = _lastValid;   // crouched below knee: degenerate to sphere
         int n = Physics.CapsuleCastNonAlloc(_lastValid, knee, headRadius, dir, Hits, dist, ~0, QueryTriggerInteraction.Ignore);

@@ -4,21 +4,19 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-/// Builds the corner music speaker in the lab (user 2026-07-10): a floor-standing
+/// Builds the corner music speaker in the lab: a floor-standing
 /// speaker cabinet in the empty back-right corner that plays the Background_Music/Lab
 /// playlist as a 3D positional source (louder as you approach) and fades in/out with
-/// the screen fade on menu<->lab transitions. Also disables the old 2D LabMusicPlayer
-/// bed and re-points the menu-room music to the user's supplied track.
+/// the screen fade on menu<->lab transitions. Also disables the legacy 2D LabMusicPlayer
+/// bed and re-points the menu-room music to the supplied track.
 ///
 /// Tools ▸ PharmaSynth ▸ Build Lab Music Speaker (SampleScene, edit mode, idempotent).
 public static class MusicSpeakerBuilder
 {
-    // ⛔ These paths were "Assets/Background_Music/..." — a folder that does not
-    // exist (the audio lives under Assets/PharmaSynth/Audio/). LoadClips silently
-    // returned ZERO clips, so the speaker was built with an EMPTY playlist and the
-    // lab has been SILENT ever since (user 2026-07-19: "ensure the background
-    // musics are working. currently, I dont hear them"). ResolveDir now also
-    // searches, so a future move can't re-break it the same way.
+    // ⛔ The audio lives under Assets/PharmaSynth/Audio/, not Assets/Background_Music/.
+    // A wrong folder makes LoadClips silently return ZERO clips and the speaker is
+    // built with an EMPTY playlist, so the lab is silent. ResolveDir also searches,
+    // so moving the folder doesn't break it the same way.
     const string LabDir = "Assets/PharmaSynth/Audio/Background_Music/Lab";
     const string MenuTrack = "Assets/PharmaSynth/Audio/Background_Music/MenuRoom/music_1.mp3";
     const string GroupName = "LabSpeaker";
@@ -54,11 +52,11 @@ public static class MusicSpeakerBuilder
         speaker.Configure(clips.ToArray(), 0.6f, 3.5f, 24f);
         EditorUtility.SetDirty(speaker);
 
-        // ---- retire the old 2D music bed (avoid double music) ---------------------
+        // ---- retire the legacy 2D music bed (avoid double music) ------------------
         var oldBed = GameObject.Find("LabMusicPlayer");
         if (oldBed != null) { oldBed.SetActive(false); EditorUtility.SetDirty(oldBed); }
 
-        // ---- re-point the menu-room music to the user's track ---------------------
+        // ---- re-point the menu-room music to the supplied track -----------------
         RepointMenuMusic();
 
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
@@ -113,9 +111,9 @@ public static class MusicSpeakerBuilder
             if (found.Count > 0) menu = found[0];
         }
         if (menu == null) { Debug.LogWarning("[MusicSpeaker] menu track not found: " + MenuTrack); return; }
-        // The lab's own SoundBank key was left with a NULL clip ("clip pending"),
-        // so anything routing music through the bank played nothing — point it at
-        // the first lab track alongside the positional speaker (2026-07-19).
+        // The lab's own SoundBank key may hold a NULL clip ("clip pending"), and
+        // anything routing music through the bank then plays nothing, so point it at
+        // the first lab track alongside the positional speaker.
         var labClips = LoadClips(ResolveDir(LabDir, "Lab"));
         foreach (var g in AssetDatabase.FindAssets("t:SoundBank"))
         {
@@ -155,7 +153,7 @@ public static class MusicSpeakerBuilder
         Driver(parent, "Tweeter", drvMat, new Vector3(0f, 0.34f, 0.152f), 0.075f);
 
         // Cyan power LED (emissive) — blinks like a machine's standby light rather
-        // than sitting flat-on (user 2026-07-19); driven via MPB off the shared mat.
+        // than sitting flat-on; driven via MPB off the shared mat.
         var led = GameObject.CreatePrimitive(PrimitiveType.Cube);
         led.name = "LED";
         Object.DestroyImmediate(led.GetComponent<Collider>());

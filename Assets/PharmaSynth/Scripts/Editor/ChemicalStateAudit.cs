@@ -3,8 +3,8 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-/// W5.12 reagent-nature audit (user: "double check the reagents if all by
-/// nature are really liquid and needed to be scooped"). Dumps every
+/// Reagent-nature audit: checks whether each reagent is really a liquid or
+/// a solid that has to be scooped. Dumps every
 /// ChemicalData's state/flags to Temp/chemical-state-audit.md and flags
 /// chemicals that are solids in their common lab form but are marked Liquid
 /// (manuscript solutions like "10% NaOH" are correctly liquid — only pure
@@ -19,7 +19,6 @@ public static class ChemicalStateAudit
         "Benzoic Acid", "Acetanilide", "Benzamide", "Aspirin",
         "Urea",   // NOT KMnO4 or Sodium Nitrite: the manuscript only ever uses their SOLUTIONS (0.1% / 10%, added by the ml)
         "Iodine Crystals", "Yeast",
-        // (Murexide + Caffeine purged 2026-07-16 with the dropped Caffeine module.)
     };
 
     [MenuItem("Tools/PharmaSynth/Audit Chemical States")]

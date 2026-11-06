@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Every editor Play starts in the CUBE SPAWN ROOM (user 2026-07-10: "ensure that
+/// Every editor Play starts in the CUBE SPAWN ROOM ("ensure that
 /// every start or play, I start at the cuberoom not at the lab right away") —
 /// exactly like the built game (MainMenu is build index 0). Uses the editor's
 /// play-mode start scene, so whatever scene is OPEN keeps its edits; Play simply

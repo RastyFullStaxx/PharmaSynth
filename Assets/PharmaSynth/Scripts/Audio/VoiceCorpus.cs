@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 
 /// Every code-authored NPC line, with its speaker — the voice-over corpus
-/// (user 2026-07-10: both NPCs must speak). The manifest exporter adds the
+/// (both NPCs speak). The manifest exporter adds the
 /// cutscene SO beats on top (assets aren't reachable from runtime code).
 /// Numbers were deliberately kept OUT of spoken lines (grade bands, finite
 /// unlock variants), so this enumeration is exhaustive and finite.
@@ -12,8 +12,8 @@ public static class VoiceCorpus
         public VoiceSpeaker speaker;
         public string text;
         /// Which pool the line came from. Carried into the manifest so voice
-        /// generation can be STAGED (user 2026-07-27: "generate Pharmee's
-        /// welcoming for a test... we'll replace the beeps one by one") — you can
+        /// generation can be STAGED (e.g. Pharmee's
+        /// welcome first, then the remaining beeps one scene at a time) — you can
         /// buy one coherent scene at a time instead of the whole corpus.
         public string group;
         public Line(VoiceSpeaker s, string t, string g = "Misc") { speaker = s; text = t; group = g; }
@@ -22,11 +22,9 @@ public static class VoiceCorpus
     /// Lines authored in DATA rather than in code: each task's `longProcessMessage`, the
     /// narration over a time skip ("One week later...").
     ///
-    /// ⛔ CodeLines() cannot see these, so they were never exported to the voice manifest
-    /// and never got clips — Dr. Jimenez spoke all six of them in BLIPS, which is the
-    /// "broken machine" sound the user reported hearing instead of dialogue (2026-09-05).
-    /// The existing `voice: every corpus line has a clip` pin ran over CodeLines() alone, so
-    /// it was green throughout. A corpus that only knows about code lines is not a corpus.
+    /// ⛔ CodeLines() cannot see these, so without this list they never reach the voice
+    /// manifest and play as BLIPS. The `voice: every corpus line has a clip` pin over
+    /// CodeLines() alone stays green while they are missing.
     public static List<Line> DataLines(ExperimentLibrary library)
     {
         var lines = new List<Line>();
@@ -60,11 +58,10 @@ public static class VoiceCorpus
         AddPool(lines, VoiceSpeaker.Pharmee, PharmeeLines.TourBeats, "Tour");
         AddPool(lines, VoiceSpeaker.Pharmee, PharmeeLines.TestsDoneLines, "Review");
         AddPool(lines, VoiceSpeaker.Pharmee, PharmeeLines.DebriefCongrats, "Review");
-        // The campaign-completion celebration — the climax of the whole game, and
-        // it was MISSING from the corpus, so the payoff line played as blips
-        // (found 2026-07-29 by auditing every pool for corpus membership).
+        // The campaign-completion celebration, the payoff line of the whole game; without
+        // it here it plays as blips.
         AddPool(lines, VoiceSpeaker.Pharmee, PharmeeLines.CampaignComplete, "Celebrate");
-        // Tutorial Mode's one-off orientation (2026-08-07). A single line, not a pool.
+        // Tutorial Mode's one-off orientation. A single line, not a pool.
         lines.Add(new Line(VoiceSpeaker.Pharmee, PharmeeLines.TutorialOrientation, "Tour"));
         lines.Add(new Line(VoiceSpeaker.Pharmee, PharmeeLines.TutorialPreview, "Tour"));
         lines.Add(new Line(VoiceSpeaker.Pharmee, PharmeeLines.PracticeComplete, "Tour"));
@@ -80,12 +77,12 @@ public static class VoiceCorpus
         lines.Add(new Line(VoiceSpeaker.Pharmee, PharmeeLines.DebriefRemark(98f), "Review"));
         lines.Add(new Line(VoiceSpeaker.Pharmee, PharmeeLines.DebriefRemark(94f), "Review"));
         lines.Add(new Line(VoiceSpeaker.Pharmee, PharmeeLines.DebriefRemark(90f), "Review"));
-        // ⛔ BOTH overloads. The campaign-complete flavour (W5.9) was never enumerated, so
-        // the very last thing Pharmee says in the whole campaign played as blips (2026-09-05).
+        // ⛔ BOTH overloads. The campaign-complete flavour was never enumerated, so
+        // the very last thing Pharmee says in the whole campaign played as blips.
         lines.Add(new Line(VoiceSpeaker.Pharmee, PharmeeLines.DebriefRemark(98f, true), "Celebrate"));
         lines.Add(new Line(VoiceSpeaker.Pharmee, PharmeeLines.DebriefRemark(90f, true), "Celebrate"));
 
-        // Door-gate lines (the scene uses the code defaults — verified 2026-07-27:
+        // Door-gate lines (the scene uses the code defaults — verified:
         // the RobotNPC instance carries no overrides, so what is voiced is what
         // plays). This is the whole front-of-game flow: welcome -> mode choice ->
         // experiment pick -> PPE -> threshold.
@@ -106,8 +103,8 @@ public static class VoiceCorpus
         // (IloBeatInjector), and Dr. Jimenez RECAPS the same text at QuizIntro
         // (PharmeeGatekeeper.SpeakJimenezBrief). VoiceBank is keyed by
         // speaker + text-hash, so a clip filed under one speaker is INVISIBLE to
-        // the other — Jimenez's whole recap played as blips while only Pharmee's
-        // copies existed (user-reported 2026-07-29).
+        // the other, so Jimenez's recap needs its own clips under his speaker or it plays
+        // as blips.
         lines.Add(new Line(VoiceSpeaker.Pharmee, IloCopy.LeadIn, "Objectives"));
         lines.Add(new Line(VoiceSpeaker.Jimenez, PharmeeLines.JimenezIloLeadIn, "Objectives"));
         foreach (var id in ModuleIds)

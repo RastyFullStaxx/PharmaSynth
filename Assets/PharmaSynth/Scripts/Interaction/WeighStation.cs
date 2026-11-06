@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// A functional balance (W5.8: "the weighing scale too"): whatever rests on the
+/// A functional balance: whatever rests on the
 /// pan drives the live grams display (auto-tared contents, 1 g/ml proxy), and a
 /// weigh-* task completes once the CORRECT load sits settled on the pan —
 /// either a vessel holding enough of the required chemical (Aspirin: flask with
@@ -23,21 +23,21 @@ public class WeighStation : MonoBehaviour
     private Rigidbody _occupantBody;
     private int _occupants;
     private float _onPanSince = -1f;
-    // Explicit vacancy flag: the old "-1 = vacant" timestamp sentinel misread a
+    // Explicit vacancy flag: a "-1 = vacant" timestamp sentinel misreads a
     // legitimately NEGATIVE backdated timestamp (Time.time ≈ 0 in a fresh
-    // batchmode editor) as an empty pan — the headless suite failed on it (W5.12).
+    // batchmode editor) as an empty pan (breaks the headless suite).
     private bool _panTimed;
 
     public LabItem OccupantItem => _occupantItem;
     public LiquidPhysics OccupantVessel => _occupantVessel;
     /// The graph task this scale satisfies. Held privately for the condition
     /// registration; exposed so the tutorial target sweep can locate the balance
-    /// for its step (2026-08-07). No behaviour change.
+    /// for its step.
     public string TaskId => _taskId;
     public float SecondsOnPan => _occupants > 0 && _panTimed ? Time.time - _onPanSince : 0f;
 
     /// True while THIS vessel rests settled on the pan — the zone-free weigh
-    /// condition (VesselWeighTask, Exp 6's bench balance; 2026-07-18).
+    /// condition (VesselWeighTask, Exp 6's bench balance).
     public bool SettledWith(LiquidPhysics lp)
         => lp != null && _occupantVessel == lp && WeighMath.PanSettled(SecondsOnPan);
 
@@ -51,7 +51,7 @@ public class WeighStation : MonoBehaviour
         Register();
     }
 
-    // W5.9: also re-Register on enable (see StirController note).
+    // Also re-Register on enable (see StirController note).
     private void OnEnable() { Resubscribe(); Register(); }
     private void OnDisable() { if (_runner != null) _runner.ExperimentStarted -= OnStarted; _subscribed = false; }
 
@@ -101,8 +101,13 @@ public class WeighStation : MonoBehaviour
         if (lp != null) _occupantVessel = lp;
         var rb = other.attachedRigidbody;
         if (rb != null) _occupantBody = rb;
-        if (_occupants == 1) { _onPanSince = Time.time; _panTimed = true; }
+        // A bump that lifts the load off the pan for a moment keeps the settle timer —
+        // an imprecise hand nudging the balance would otherwise restart the 0.75 s hold each time.
+        if (_occupants == 1 && !(_panTimed && WeighMath.WithinBumpGrace(Time.time - _leftAt)))
+        { _onPanSince = Time.time; _panTimed = true; }
     }
+
+    private float _leftAt = float.NegativeInfinity;
 
     private void OnTriggerExit(Collider other)
     {
@@ -112,14 +117,14 @@ public class WeighStation : MonoBehaviour
         _occupants = Mathf.Max(0, _occupants - 1);
         if (item != null && _occupantItem == item) _occupantItem = null;
         if (lp != null && _occupantVessel == lp) _occupantVessel = null;
-        if (_occupants == 0) { _onPanSince = -1f; _panTimed = false; _occupantBody = null; }
+        if (_occupants == 0) { _leftAt = Time.time; _occupantBody = null; }   // timer kept for the bump grace
     }
 
     /// The permanent bench balance is wired ONCE at edit time
     /// (`W533Fixes.FixBalanceCore` → `Bind(null,…,scale)`), but `_scale` is a plain
-    /// private field — NOT serialized — so it came back NULL after every domain
-    /// reload and the readout silently stopped updating for the rest of the
-    /// session (user 2026-07-29: "the scale doesnt work"). Same class as the
+    /// private field — NOT serialized — so it comes back NULL after every domain
+    /// reload and the readout silently stops updating for the rest of the
+    /// session. Same class as the
     /// `_pestle` / `_runner` bug: re-find at runtime instead of trusting the bind.
     /// The pan is a child of the balance, so the controller is straight up the
     /// parent chain.

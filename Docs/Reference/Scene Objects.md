@@ -18,7 +18,7 @@ Up: [[Home]] - [[The Lab Scene]] - [[Gotchas]]
 ## SampleScene (the lab)
 <sub>`Assets/Scenes/SampleScene.unity`</sub>
 
-### Root objects (47)
+### Root objects (48)
 
 | Object | local Y |
 |---|---|
@@ -26,6 +26,7 @@ Up: [[Home]] - [[The Lab Scene]] - [[Gotchas]]
 | `AtmosphereVfx` | 0.000 |
 | `BeginButton` | 0.990 |
 | `BenchApparatus` | 0.000 |
+| `CutsceneMarkers` | 0.000 |
 | `Directional Light` | 3.000 |
 | `DistillingFlask` | 1.665 |
 | `DistillingFlask_2` | 1.665 |
@@ -112,7 +113,7 @@ Up: [[Home]] - [[The Lab Scene]] - [[Gotchas]]
 | `GraduatedCylinder_50mL_2` | x=-0.85150015, y=1.2207, z=-3.8539 |
 | `HandVisual_L` | x=0, y=-0.03, z=-0.06 |
 | `HandVisual_R` | x=0, y=-0.03, z=-0.06 |
-| `JimenezModel` | x=-0.010523621, y=0.88733363, z=-0.0013455013 |
+| `JimenezModel` | x=-0.010523621, y=0.851, z=-0.0013455013 |
 | `LabCoatDisplay` | x=4.2400007, y=0.584, z=0.7020546 |
 | `Matchstick` | x=1.9600025, y=9.800999, z=14.05 |
 | `PlayerAvatar` | x=0, y=0.8539318, z=0 |

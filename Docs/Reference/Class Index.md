@@ -88,11 +88,11 @@ event Action<TaskPhase> PhaseCompleted
 event Action<float> ProgressChanged
 event Action<LabErrorType, string> MistakeRecorded
 event Action<ExperimentResult> ExperimentFinished
+event Action Aborted
 bool IsRunning
 bool IsArmed
 float ElapsedSeconds
 float Progress01
-int MistakeCount
 ```
 
 ### `LabErrorType` <sub>enum</sub>
@@ -113,6 +113,7 @@ int CountOf(LabErrorType type)
 int CountOfAny(params LabErrorType[] types)
 void Clear()
 static RubricCategory CategoryFor(LabErrorType type)
+static bool AffectsMastery(LabErrorType type)
 static LabSkill SkillFor(LabErrorType type)
 ```
 
@@ -376,6 +377,17 @@ ChemicalData currentChemical
 ChemicalData currentPptChemical
 ```
 
+### `PourMath` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Chemistry/LiquidPourer.cs`</sub>
+
+Pure pour rules (W5.59).
+
+```csharp
+static bool CanPour(ChemicalData chem)
+const float HeldSpillTrickle
+static float SpillAmount(float amount, bool held, bool hasTarget)
+```
+
 ### `LiquidPourer` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/LiquidPourer.cs`</sub>
 
@@ -417,8 +429,8 @@ string ClaimedRoleTagFor(string taskId)
 List<string> CandidateTasks()
 void SetRoles(List<List<ReagentStep>> roles, int authoredRole, RackRoles shared)
 void RefreshRoles()
+IEnumerable<ChemicalData> AllRoleReagents()
 void ResetRole()
-bool IsListening
 ```
 
 ### `OverheatEffects` <sub>class</sub>
@@ -708,6 +720,15 @@ void Bind(ExperimentRunner runner, DropRespawn respawn, Rigidbody rb, string lab
 void Break()
 ```
 
+### `BrushController` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/BrushController.cs`</sub>
+
+The test-tube brush: while held and touching a dirty vessel, its travel accumulates — every SwipeDistance of scrubbing motion knocks one swipe off the dirtiness (the user's "repeated brushing" feel).
+
+```csharp
+void Bind(XRGrab grab)
+```
+
 ### `BurnerController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/BurnerController.cs`</sub>
 
@@ -760,17 +781,10 @@ Residue state on a vessel: emptying it after use makes it DIRTY (label prefix vi
 float Dirtiness
 bool EverDirty
 void Bind(LiquidPhysics lp)
+void Soil()
+void ResetResidue()
 float Scrub()
 string NamePrefix()
-```
-
-### `BrushController` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/CleanableVessel.cs`</sub>
-
-The test-tube brush: while held and touching a dirty vessel, its travel accumulates — every SwipeDistance of scrubbing motion knocks one swipe off the dirtiness (the user's "repeated brushing" feel).
-
-```csharp
-void Bind(XRGrab grab)
 ```
 
 ### `DispenserMath` <sub>class</sub>
@@ -792,11 +806,6 @@ Turns a consumable box into an endless single-piece dispenser. The box stays fix
 void Bind(GameObject template, Transform restAnchor, Transform spawnParent, GameObject seed, int readyCount)
 ```
 
-### `DispensedConsumable` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/ConsumableDispenser.cs`</sub>
-
-A single piece that came out of a dispenser: once it's been picked up and then set down and left alone (or falls out of the world), it removes itself so used consumables don't accumulate. The dispenser handles refills; this handles the far end of the piece's life.
-
 ### `DevExperimentDriver` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/DevExperimentDriver.cs`</sub>
 
@@ -805,6 +814,11 @@ Keyboard driver for in-editor testing of the experiment loop without needing ful
 ```csharp
 void Setup(ExperimentRunner r, ExperimentStarter s)
 ```
+
+### `DispensedConsumable` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/DispensedConsumable.cs`</sub>
+
+A single piece that came out of a dispenser: once it's been picked up and then set down and left alone (or falls out of the world), it removes itself so used consumables don't accumulate. The dispenser handles refills; this handles the far end of the piece's life.
 
 ### `DoorOpener` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/DoorOpener.cs`</sub>
@@ -826,6 +840,7 @@ Pure rules for when a loose prop goes back to its shelf spot (§2: kill-Z + idle
 ```csharp
 static bool ShouldRespawn(float y, float killZ)
 const float FloorY
+const float FloorReturnSeconds
 static bool ShouldReturnHome(float distanceFromHome, float speed, bool held, float idleSeconds,
 static bool ShouldSettleFreeze(bool held, bool kinematic, float speed, float settledSeconds,
 ```
@@ -875,70 +890,6 @@ Dropper/pipette verb: touch a liquid reagent's bottle to draw a charge, hold the
 bool Loaded
 int SqueezesLeft
 void Bind(XRGrab grab)
-```
-
-### `FlameMath` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/DryDistill.cs`</sub>
-
-Pure rules for NAKED-FLAME heating (Exp 6's dry distillation — the ONE step in any experiment that heats over an open flame; everything else is a ≤100 °C water bath). A vessel held over a LIT burner climbs toward a red-glow temperature the bath can never reach.
-
-```csharp
-const float Reach
-const float MaxC
-const float RatePerSecond
-static bool Heats(float distance)
-static float NextTemp(float current, float dt)
-```
-
-### `NakedFlameHeat` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/DryDistill.cs`</sub>
-
-Zone-free open-flame heat on every Bunsen burner (wired by Apply W5.8): while LIT, any vessel within reach of the flame anchor heats toward 400 °C. This is what the hard-glass tubes exist for — the water bath owns every gentler step.
-
-```csharp
-void Bind(BurnerController burner)
-void HeatVessel(LiquidPhysics vessel, float dt)
-```
-
-### `VaporMath` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/DryDistill.cs`</sub>
-
-Pure rules for VAPOR COLLECTION (Exp 6: distill the acetone off the glowing acetates at 56 °C into a receiver tube).
-
-```csharp
-const float DeliveryRadius
-const float MlPerTick
-static bool Fires(float sourceTempC, float requiredC, float sourceMl)
-static bool MayReceive(bool advertises, bool candidate, bool held)
-static bool Prefer(bool held, float d, bool bestHeld, float best)
-```
-
-### `VaporCollectController` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/DryDistill.cs`</sub>
-
-The dry-distillation product stream, zone-free (the fermentation pattern): once the collect task is AVAILABLE and the source tube is at temperature, it converts its charge into the module's product, condensing into the nearest nearby vessel whose binding EXPECTS the product — targeted, so the stream can never pollute the water bath or a bystander tube.
-
-```csharp
-string VaporTaskId
-LiquidPhysics Source
-float RequiredC
-void Bind(ExperimentRunner runner, LiquidPhysics source, string taskId,
-void Detach()
-bool Advertises(LiquidTaskBinding b)
-bool IsCandidate(LiquidTaskBinding b)
-bool EmitTick(LiquidPhysics receiver)
-```
-
-### `VesselWeighTask` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/DryDistill.cs`</sub>
-
-Completes a WEIGH step ZONE-FREE on the bench balance (Exp 6's "weigh 7 g of each acetate"): the task is done when the vessel has been served its solids AND is resting SETTLED on the balance pan — the balance narrates the grams live the whole time.
-
-```csharp
-string TaskId
-static bool ShouldComplete(bool allReagentsIn, bool settledOnPan)
-void Bind(ExperimentRunner runner, string taskId, LiquidPhysics lp, LiquidTaskBinding binding)
-void Detach()
 ```
 
 ### `EffectVfx` <sub>class</sub>
@@ -1094,29 +1045,6 @@ float DeliveryRadius
 void EmitCO2()
 ```
 
-### `FlameTestMath` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/FlameTest.cs`</sub>
-
-Pure rules for the FLAME (non-)flammability confirmation (Exp 7: "Try to ignite the chloroform. Light a match and place the flame near the vapors. Observe." — the NEGATIVE is the observation). Zone-free per the client rule: any lit flame brought to the served sample, anywhere in the lab.
-
-```csharp
-const float Reach
-static bool Confirms(bool served, bool flameLit, float distance)
-static Vector3 FlamePos(Component burner)
-```
-
-### `VesselFlameTask` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/FlameTest.cs`</sub>
-
-Completes a flammability-test step ZONE-FREE: once the sample vessel is served, holding any LIT match or burner flame to it confirms the result ("does not ignite") and completes the task. Wired by the scene builder from ExperimentLayout.Vessel.flameTaskId.
-
-```csharp
-string TaskId
-void Bind(ExperimentRunner runner, string taskId, LiquidTaskBinding binding, LiquidPhysics lp)
-void Detach()
-bool PollFlames()
-```
-
 ### `FloatingText` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/FloatingText.cs`</sub>
 
@@ -1127,7 +1055,7 @@ static void Show(string text, Vector3 pos, Color? color
 ```
 
 ### `FloatingTextFx` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/FloatingText.cs`</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/FloatingTextFx.cs`</sub>
 
 Rise + fade driver for FloatingText (component so it survives the frame).
 
@@ -1365,20 +1293,6 @@ void Bind(ProximityLabel label)
 void ChillVessel(LiquidPhysics vessel)
 ```
 
-### `VesselChillTask` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/IceBathController.cs`</sub>
-
-Completes a chill step ZONE-FREE: the task is done when this vessel actually HOLDS something and has been brought down to the required temperature — however and wherever the player cooled it. The cold twin of VesselHeatTask (Exp 4's "cool in an ice bath; crystallise"). Ambient is 25 °C, so a vessel can never satisfy a chill threshold by simply standing on the bench.
-
-```csharp
-string TaskId
-float RequiredC
-bool Relevant
-static bool ShouldComplete(bool allReagentsIn, bool hasContents, float tempC, float requiredC)
-void Bind(ExperimentRunner runner, string taskId, float requiredC, LiquidPhysics lp,
-void Detach()
-```
-
 ### `ImpactSound` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/ImpactSound.cs`</sub>
 
@@ -1412,6 +1326,18 @@ string itemId
 string displayName
 void SetItemId(string id)
 static LabItem Resolve(Collider other)
+```
+
+### `LabReset` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/LabReset.cs`</sub>
+
+⛔ Apparatus is a vessel the builders marked as USED — one carrying a `CleanableVessel`, which every stage, kit and adopter builder adds to glassware the player fills and never to a source. The first cut used the naming rule instead ("not `Raw_`/`Reagent_`") and swept up nine sources with it: the wash bottles and the methane tutorial's charge jar and glass tube, so the tutorial's setup step starved. Simulate Everything caught it; the suite's fixture could not, because a fixture vessel is whatever the pin says it is. Each used vessel is taken back to empty, cool, unlabelled and unclaimed; `LiquidPhysics.ClearContents` raises `Emptied`, so a pooled vessel gives its role back through the same seam a rinse uses. The bottles then refill through the supply monitor, and a solid jar gets its mound back at full. Positions, flames and consumables stay with `DropRespawn.ResetAllHome`; task wiring wi
+
+```csharp
+static bool IsUsedVessel(LiquidPhysics lp)
+static bool RefusesTransfer(LiquidPhysics target, ChemicalData incoming)
+static bool IsReagent(string objectName)
+static int ResetApparatus()
 ```
 
 ### `LayoutTidyMath` <sub>class</sub>
@@ -1463,19 +1389,6 @@ void TouchVessel(LiquidPhysics lp)
 void Apply(float pH)
 ```
 
-### `VesselLitmusTask` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/LitmusStrip.cs`</sub>
-
-Completes a litmus-confirmation step ZONE-FREE (Exp 4's "blue litmus turns red"; Exp 8's "red litmus turns blue"): the task is done when this vessel has been served its reagents AND a litmus strip actually touched it while the mixture read a DEFINITIVE pH — red on acid, blue on base — wherever the player does it. A neutral read (water first, nothing dissolved yet) marks nothing; touch again with a fresh strip once the product is in.
-
-```csharp
-string TaskId
-static bool ShouldComplete(bool allReagentsIn, bool stripReadDefinitive)
-void NotifyRead(float pH)
-void Bind(ExperimentRunner runner, string taskId, LiquidTaskBinding binding, LiquidPhysics lp)
-void Detach()
-```
-
 ### `MatchStrikerSurface` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/MatchStrikerSurface.cs`</sub>
 
@@ -1494,8 +1407,11 @@ bool IsLit
 bool IsSpent
 static bool ShouldIgnite(float distance, float tempC, bool alreadyLit, bool spent)
 static bool ShouldStrike(bool held, bool lit, bool spent, float relSpeed, bool strikerSurface, float minSpeed
+const float WeakStrikeMinSpeed
+static bool IsWeakStrike(bool held, bool lit, bool spent, float relSpeed, bool strikerSurface)
 void Ignite()
 void Extinguish(bool spent)
+Vector3 HeadPosition
 static Vector3 LongestLocalAxis(Transform t, Bounds b, out float halfExtent)
 ```
 
@@ -1562,6 +1478,29 @@ static string Prettify(string codeName)
 static bool ShouldAnnounceWrongMix(HazardousMix.HazardOutcome outcome)
 static bool ShouldShowObservation(bool sameRule, float now, float lastAt, float window
 void Bind(LiquidPhysics lp)
+```
+
+### `FlameMath` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/NakedFlameHeat.cs`</sub>
+
+Pure rules for NAKED-FLAME heating (Exp 6's dry distillation — the ONE step in any experiment that heats over an open flame; everything else is a ≤100 °C water bath). A vessel held over a LIT burner climbs toward a red-glow temperature the bath can never reach.
+
+```csharp
+const float Reach
+const float MaxC
+const float RatePerSecond
+static bool Heats(float distance)
+static float NextTemp(float current, float dt)
+```
+
+### `NakedFlameHeat` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/NakedFlameHeat.cs`</sub>
+
+Zone-free open-flame heat on every Bunsen burner (wired by Apply W5.8): while LIT, any vessel within reach of the flame anchor heats toward 400 °C. This is what the hard-glass tubes exist for — the water bath owns every gentler step.
+
+```csharp
+void Bind(BurnerController burner)
+void HeatVessel(LiquidPhysics vessel, float dt)
 ```
 
 ### `OrbitMath` <sub>class</sub>
@@ -1691,6 +1630,7 @@ const float GramsPerSpatula
 static bool CanPickUp(bool carrying, PhysicalState state, float availableMl)
 static float ScoopCharge(float availableMl, float perScoop
 static bool CanDeposit(bool carrying, bool sameContainer)
+static bool DepositsOnTouch(bool vesselIsBound, bool expectsChemical)
 static string DepositLabel(string chem, float addedG, float totalG)
 ```
 
@@ -1904,16 +1844,30 @@ static bool Visible(Component c)
 static void AuditAgainst(IEnumerable<ExperimentTask> tasks)
 ```
 
+### `TimelapseMath` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/TimeSkipController.cs`</sub>
+
+Pure timelapse maths (suite-pinned): day/night tint and the on-screen counter.
+
+```csharp
+static readonly Color Night
+static int Cycles(float hours)
+static Color Tint(float k, float hours)
+static bool IsNight(float k, float hours)
+static string Counter(float k, float hours)
+```
+
 ### `TimeSkipController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/TimeSkipController.cs`</sub>
 
-Compresses a real-world wait the player can't sit through (user 2026-07-17: "after the mixture requirement is set, the screen fades black for 2 s, and when it returns a success text says the time has passed and it's done. Set this for all procedures across all experiments that need lengthy time"). A task authored longProcess=true fades the screen to black on completion, holds, then fades back in with a "time has passed" message. Zone-free and experiment-agnostic: it keys off the task flag, so any module's week-long fermentation / overnight dry / hour-long crystallisation reuses it for free.
+Compresses a real-world wait the player can't sit through (user 2026-07-17: "after the mixture requirement is set, the screen fades black for 2 s, and when it returns a success text says the time has passed and it's done. Set this for all procedures across all experiments that need lengthy time"). A task authored longProcess=true plays a TIMELAPSE on completion: fade black, a security-camera view of the lab from its top corner (Cam_Timelapse) running through days and nights with a counter, fade black, then back to play with a "time has passed" message. Without the cinema rig it falls back to a plain black hold. Zone-free and experiment-agnostic: it keys off the task flag, so any module's week-long fermentation / overnight dry / hour-long crystallisation reuses it for free.
 
 ```csharp
 static bool IsTimeSkip(ExperimentTask t)
 static string MessageFor(ExperimentTask t)
 void Bind(ExperimentRunner r)
 static bool IsSkipping
+void PlayTimelapse(ExperimentTask t)
 ```
 
 ### `TubeSlotMath` <sub>class</sub>
@@ -1950,6 +1904,35 @@ static bool ShouldLight(TaskTarget target, bool held, bool taskAvailable)
 static bool GuidanceAllowed(bool running, bool skipping)
 static bool IsHeld(Transform t)
 void SetGlowMaterials(Material source, Material target)
+```
+
+### `VaporMath` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/VaporCollectController.cs`</sub>
+
+Pure rules for VAPOR COLLECTION (Exp 6: distill the acetone off the glowing acetates at 56 °C into a receiver tube).
+
+```csharp
+const float DeliveryRadius
+const float MlPerTick
+static bool Fires(float sourceTempC, float requiredC, float sourceMl)
+static bool MayReceive(bool advertises, bool candidate, bool held)
+static bool Prefer(bool held, float d, bool bestHeld, float best)
+```
+
+### `VaporCollectController` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/VaporCollectController.cs`</sub>
+
+The dry-distillation product stream, zone-free (the fermentation pattern): once the collect task is AVAILABLE and the source tube is at temperature, it converts its charge into the module's product, condensing into the nearest nearby vessel whose binding EXPECTS the product — targeted, so the stream can never pollute the water bath or a bystander tube.
+
+```csharp
+string VaporTaskId
+LiquidPhysics Source
+float RequiredC
+void Bind(ExperimentRunner runner, LiquidPhysics source, string taskId,
+void Detach()
+bool Advertises(LiquidTaskBinding b)
+bool IsCandidate(LiquidTaskBinding b)
+bool EmitTick(LiquidPhysics receiver)
 ```
 
 ### `VerbKind` <sub>enum</sub>
@@ -2004,6 +1987,70 @@ void ShowCurrent()
 void Stop()
 ```
 
+### `VesselChillTask` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/VesselChillTask.cs`</sub>
+
+Completes a chill step ZONE-FREE: the task is done when this vessel actually HOLDS something and has been brought down to the required temperature — however and wherever the player cooled it. The cold twin of VesselHeatTask (Exp 4's "cool in an ice bath; crystallise"). Ambient is 25 °C, so a vessel can never satisfy a chill threshold by simply standing on the bench.
+
+```csharp
+string TaskId
+float RequiredC
+bool Relevant
+static bool ShouldComplete(bool allReagentsIn, bool hasContents, float tempC, float requiredC)
+void Bind(ExperimentRunner runner, string taskId, float requiredC, LiquidPhysics lp,
+void Detach()
+```
+
+### `FlameTestMath` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/VesselFlameTask.cs`</sub>
+
+Pure rules for the FLAME (non-)flammability confirmation (Exp 7: "Try to ignite the chloroform. Light a match and place the flame near the vapors. Observe." — the NEGATIVE is the observation). Zone-free per the client rule: any lit flame brought to the served sample, anywhere in the lab.
+
+```csharp
+const float Reach
+static bool Confirms(bool served, bool flameLit, float distance)
+static Vector3 FlamePos(Component burner)
+```
+
+### `VesselFlameTask` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/VesselFlameTask.cs`</sub>
+
+Completes a flammability-test step ZONE-FREE: once the sample vessel is served, holding any LIT match or burner flame to it confirms the result ("does not ignite") and completes the task. Wired by the scene builder from ExperimentLayout.Vessel.flameTaskId.
+
+```csharp
+string TaskId
+void Bind(ExperimentRunner runner, string taskId, LiquidTaskBinding binding, LiquidPhysics lp)
+void Detach()
+bool PollFlames()
+```
+
+### `VesselHeatTask` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/VesselHeatTask.cs`</sub>
+
+Completes a heat step ZONE-FREE: the task is done when this vessel has been served all its reagents AND actually reached the required temperature — however and wherever the player heated it. Replaces the old fixed Station_prep-hydrolysis (deleted with its pad/label/teleport anchor).
+
+```csharp
+string TaskId
+float RequiredC
+bool Relevant
+static bool ShouldComplete(bool allReagentsIn, float tempC, float requiredC)
+void Bind(ExperimentRunner runner, string taskId, float requiredC,
+void Detach()
+```
+
+### `VesselLitmusTask` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/VesselLitmusTask.cs`</sub>
+
+Completes a litmus-confirmation step ZONE-FREE (Exp 4's "blue litmus turns red"; Exp 8's "red litmus turns blue"): the task is done when this vessel has been served its reagents AND a litmus strip actually touched it while the mixture read a DEFINITIVE pH — red on acid, blue on base — wherever the player does it. A neutral read (water first, nothing dissolved yet) marks nothing; touch again with a fresh strip once the product is in.
+
+```csharp
+string TaskId
+static bool ShouldComplete(bool allReagentsIn, bool stripReadDefinitive)
+void NotifyRead(float pH)
+void Bind(ExperimentRunner runner, string taskId, LiquidTaskBinding binding, LiquidPhysics lp)
+void Detach()
+```
+
 ### `VesselStatus` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/VesselStatus.cs`</sub>
 
@@ -2013,6 +2060,18 @@ Live contents readout on a vessel's existing ProximityLabel (W5.8: "track the co
 void SetRoleSuffix(string suffix)
 void Bind(LiquidPhysics lp, ProximityLabel label, string displayName, float showDist
 void Refresh()
+```
+
+### `VesselWeighTask` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/VesselWeighTask.cs`</sub>
+
+Completes a WEIGH step ZONE-FREE on the bench balance (Exp 6's "weigh 7 g of each acetate"): the task is done when the vessel has been served its solids AND is resting SETTLED on the balance pan — the balance narrates the grams live the whole time.
+
+```csharp
+string TaskId
+static bool ShouldComplete(bool allReagentsIn, bool settledOnPan)
+void Bind(ExperimentRunner runner, string taskId, LiquidPhysics lp, LiquidTaskBinding binding)
+void Detach()
 ```
 
 ### `WalkBob` <sub>class</sub>
@@ -2080,20 +2139,6 @@ void HeatVessel(LiquidPhysics vessel)
 void DriveForTest(float dt)
 ```
 
-### `VesselHeatTask` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/WaterBathController.cs`</sub>
-
-Completes a heat step ZONE-FREE: the task is done when this vessel has been served all its reagents AND actually reached the required temperature — however and wherever the player heated it. Replaces the old fixed Station_prep-hydrolysis (deleted with its pad/label/teleport anchor).
-
-```csharp
-string TaskId
-float RequiredC
-bool Relevant
-static bool ShouldComplete(bool allReagentsIn, float tempC, float requiredC)
-void Bind(ExperimentRunner runner, string taskId, float requiredC,
-void Detach()
-```
-
 ### `WaypointBeacon` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/WaypointBeacon.cs`</sub>
 
@@ -2126,6 +2171,8 @@ Pure weighing rules (W5.8): the balance pan auto-tares the vessel, so the displa
 static float MassOf(float liquidMl, float solidG
 static float PanMass(float contentsMlOrG, float rbMassKg)
 static bool WithinTolerance(float massG, float targetG, float tolFrac
+const float BumpGraceSeconds
+static bool WithinBumpGrace(float secondsOff)
 static bool PanSettled(float secondsOnPan, float minSeconds
 ```
 
@@ -2314,6 +2361,7 @@ Turns per-criterion sub-scores (each 0..1) into a weight-normalized grade %. Spl
 ```csharp
 ScoreCalculator(RubricWeights weights)
 GradeBreakdown Compute(IDictionary<RubricCategory, float> subScores)
+const float GraceFactor
 static float TimeSubScore(float elapsedSeconds, float parSeconds)
 ```
 
@@ -2573,10 +2621,67 @@ static Vector3 RigPositionFor(Vector3 markerPos, float deltaYawDeg, Vector3 rigP
 
 `Assets/PharmaSynth/Scripts/NPC/`
 
+### `CinemaLook` <sub>enum</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/CinemaShots.cs`</sub>
+
+What a cinematic shot keeps its eye on. Resolved at play time by CinemaTargets.
+
+### `CinemaShot` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/CinemaShots.cs`</sub>
+
+One camera shot, attached to a cutscene beat; it lasts the beat's seconds. Positions are NAMES of empty transforms under the scene's `CutsceneMarkers` root, so shots are hand-tunable in the scene and the cutscene assets stay data.
+
+```csharp
+string camera
+string moveTo
+bool blend
+CinemaLook look
+string lookMarker
+bool pharmeePopIn
+bool HasCamera
+```
+
+### `ShotMath` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/CinemaShots.cs`</sub>
+
+Pure camera math for cinematic cutscenes (suite-pinned). Eased position, level horizon (never a roll), and a look-at that is re-aimed every frame so a pan stays locked on a moving or distant target.
+
+### `Pose` <sub>struct</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/CinemaShots.cs`</sub>
+
+```csharp
+static float Ease(float t)
+static Quaternion LookAt(Vector3 eye, Vector3 target, Quaternion fallback)
+static void Ends(bool blend, Pose current, Pose? cameraMarker, Pose? moveTo,
+static Pose Evaluate(Pose start, Pose end, bool blend, Vector3? look, float t01)
+```
+
+### `CinemaView` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/CinemaView.cs`</sub>
+
+The cinematic cutscene "theatre". A separate, non-XR ShotCamera films the live lab into a letterboxed RenderTexture; while active, the player's XR camera renders ONLY the `Cinema` layer — a black void holding a wide screen showing that texture, plus the subtitle and the fade quad. The XR camera is never moved or rotated (head tracking stays the player's), the shot camera owns every frame of the picture, and the screen is world-fixed where the player was looking, so nothing can be missed and nothing swims. Hands, HUD and the lab vanish with the culling swap. Enter/Exit record exactly what they changed and restore exactly that.
+
+```csharp
+const string LayerName
+const string MarkersRoot
+bool Active
+static bool AnyActive
+Camera ShotCamera
+RenderTexture Texture
+static int Layer
+const float PharmeeAimLift
+bool ShotCameraIsFlat
+static int ShotMask()
+static void ScreenPose(Vector3 head, Vector3 headForward, float distance,
+void Enter(Camera xr)
+void Exit()
+void SetSubtitle(string text)
+```
+
 ### `CutsceneData` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/CutsceneData.cs`</sub>
 
-A VR-safe, data-driven cutscene: a sequence of subtitle "beats" with a Pharmee expression and duration. No XR-camera animation (comfort) — narrative is carried by subtitles + Pharmee staging + optional fades. Client-reviewable copy.
+A data-driven cutscene: a sequence of subtitle "beats" with a Pharmee expression and duration. A beat may carry a camera SHOT; a cutscene with any shot plays as a cinematic (CinemaView: a separate camera films the lab onto a screen in a dark room — the XR camera itself is never animated). No shots = subtitles only.
 
 ### `Kind` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/CutsceneData.cs`</sub>
@@ -2587,13 +2692,14 @@ A VR-safe, data-driven cutscene: a sequence of subtitle "beats" with a Pharmee e
 ```csharp
 Kind kind
 List<Beat> beats
+bool IsCinematic
 float TotalDuration()
 ```
 
 ### `CutsceneDirector` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/CutsceneDirector.cs`</sub>
 
-Plays data-driven cutscenes at the right narrative moments by subscribing to the ExperimentRunner: Intro when the experiment starts, ReagentPrep when that phase completes, and Success/Failure when it finishes. Beats are delivered as Pharmee subtitles + face expressions (VR-safe; no camera animation). The end-cutscene ALWAYS plays (success OR failure variant) — a user requirement.
+Plays data-driven cutscenes at the right narrative moments by subscribing to the ExperimentRunner: Intro when the experiment starts, ReagentPrep when that phase completes, and Success/Failure when it finishes. Beats are delivered as Pharmee subtitles + face expressions. A cutscene whose beats carry shots plays as a CINEMATIC: fade black -> CinemaView (shot camera onto a screen in a dark room, clock paused, locomotion locked) -> fade black -> back in control. The XR camera is never animated. The end-cutscene ALWAYS plays (success OR failure variant) — a user requirement.
 
 ```csharp
 CutsceneData Intro
@@ -2604,12 +2710,12 @@ void SetLibrary(CutsceneLibrary lib)
 UnityEvent onCutsceneStarted
 UnityEvent onCutsceneFinished
 bool IsPlaying
+bool PlayingCinematic
+static (string title, string line) CardFor(CutsceneData.Kind kind, string experimentTitle
 void SetRunner(ExperimentRunner r)
 bool LoadForModule(string moduleId)
 void SkipNextOutro()
 CutsceneData SelectOutro(ExperimentResult r)
-void Play(CutsceneData data)
-void Skip()
 ```
 
 ### `CutsceneLibrary` <sub>class</sub>
@@ -2623,6 +2729,16 @@ moduleId → the four cutscenes for that experiment (Intro, ReagentPrep, Success
 ```csharp
 List<Entry> entries
 Entry GetSet(string moduleId)
+```
+
+### `CutsceneReelRunner` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/CutsceneReelRunner.cs`</sub>
+
+Play-mode half of CutsceneReelRecorder (Editor/): plays each clip and pipes frames to ffmpeg. Editor-only — a component must live in the runtime assembly to be added, and the UNITY_EDITOR guard keeps it (and its UnityEditor calls) out of every build.
+
+```csharp
+string ffmpeg
+const string OutDir
 ```
 
 ### `ExaminerNPC` <sub>class</sub>
@@ -2818,6 +2934,8 @@ PharmeeState State
 string LastLine
 PharmeeFaceExpression LastExpression
 void SetRunner(ExperimentRunner r)
+const float RepeatWarnSeconds
+static bool WarnAgain(LabErrorType type, LabErrorType? lastType, float secondsSinceLast)
 void InstructCurrent()
 static string InstructionFor(ExperimentTask task)
 ```
@@ -3176,6 +3294,7 @@ bool yAxisOnly
 float yawOffset
 bool faceTowardCamera
 bool preserveInitialTilt
+static Transform Override
 ```
 
 ### `GlyphSafe` <sub>class</sub>
@@ -3208,6 +3327,7 @@ UnityEvent onContinue
 UnityEvent onBackToEntrance
 void SetRunner(ExperimentRunner r)
 void Show(ExperimentResult r)
+void ShowNow(ExperimentResult r)
 void ShowPractice(int stepsDone, int corrections, System.Action onDone)
 void Hide()
 void OnRetryPressed()
@@ -3460,6 +3580,7 @@ string Compose()
 Shows a small floating name tag above an object only when the player's camera is within range — so apparatus and reagents identify themselves as you approach, without cluttering the lab with permanent labels. Builds its own world-space TMP child on first enable; billboards to the camera.
 
 ```csharp
+string CurrentText
 GameObject Tag
 void SetDeclutterLift(float metres)
 float ScreenHalfHeight(Camera cam)
@@ -3504,6 +3625,7 @@ VR-safe screen fade: a black quad floating just in front of the camera (a screen
 ```csharp
 static ScreenFader Instance
 FadeState State
+Renderer FadeRenderer
 void PulseWarning(Color tint, float seconds
 static Action Compose(Action first, Action second)
 void FadeOut(float seconds
@@ -3661,18 +3783,8 @@ ParticleSystem smokeParticles
 Transform warningUI
 ```
 
-### `FumeHoodZone` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Safety/HazardZones.cs`</sub>
-
-A fume-hood working volume. Tracks whether the player's hand / active work is inside it, so toxic/volatile reagents can require the hood (plan §3.7).
-
-```csharp
-bool IsOccupied
-bool Contains(Vector3 worldPos)
-```
-
 ### `FumeHoodStatusLabel` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Safety/HazardZones.cs`</sub>
+<sub>`Assets/PharmaSynth/Scripts/Safety/FumeHoodStatusLabel.cs`</sub>
 
 Narrating label for the fume hood (2026-07-18, user: "how do we use the fumehood? does it open?"): the hood is an OPEN alcove — nothing to open or switch on; protection is purely WHERE the vessel is. The invisible WorkVolume made "am I in far enough?" a guess, so the label says what belongs inside and flips to a ✓ while a vessel is actually protected.
 
@@ -3681,8 +3793,18 @@ void Bind(FumeHoodZone zone, ProximityLabel label)
 static string StatusLine(string vesselInside)
 ```
 
+### `FumeHoodZone` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Safety/FumeHoodZone.cs`</sub>
+
+A fume-hood working volume. Tracks whether the player's hand / active work is inside it, so toxic/volatile reagents can require the hood (plan §3.7).
+
+```csharp
+bool IsOccupied
+bool Contains(Vector3 worldPos)
+```
+
 ### `HazardZone` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Safety/HazardZones.cs`</sub>
+<sub>`Assets/PharmaSynth/Scripts/Safety/HazardZone.cs`</sub>
 
 A hazard volume (spill, hot surface, corrosive) — contact reports a mistake to the runner and can trigger a visual/audio warning. Debounced so a dwell reports once.
 
@@ -4078,6 +4200,27 @@ W5.12 reagent-nature audit (user: "double check the reagents if all by nature ar
 static void Run()
 ```
 
+### `CinemaCutsceneTools` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/CinemaCutsceneTools.cs`</sub>
+
+Builder + review menus for cinematic cutscenes (CinemaView / CinemaShot). - Build Cutscene Markers: idempotent; creates the `CutsceneMarkers` root (with the CinemaView) and any MISSING marker at a default pose. Never moves an existing marker — hand-tuned framing survives a re-run. - Render Test Sequence Shots: edit mode; writes the start/middle/end frame of every shot to Logs/cutscene-shots/test/ so framing is reviewable without Play mode. - Preview Test Sequence: Play mode; plays it for real (fades, subtitles, return).
+
+```csharp
+const string Menu
+static readonly (string name, Vector3 pos, Vector3 look)[] DefaultMarkers
+static void BuildMarkers()
+static CutsceneData TestSequence()
+const string LibraryPath
+static CinemaShot TemplateShot(CutsceneData.Kind kind, int beat, int beatCount
+static IEnumerable<CutsceneData> TemplatedCutscenes(CutsceneLibrary lib)
+static int ApplyShots()
+static void RenderLibrary()
+static void PreviewTimelapse()
+static void PreviewTest()
+static void RenderTest()
+static int RenderShots(CutsceneData data, string folder)
+```
+
 ### `CompactHudBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/CompactHudBuilder.cs`</sub>
 
@@ -4085,6 +4228,16 @@ Compact VR HUD layout (user 2026-07-11): the timer + title move OUT of the centr
 
 ```csharp
 static void Rebuild()
+```
+
+### `CutsceneReelRecorder` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/CutsceneReelRecorder.cs`</sub>
+
+Records every cinematic cutscene and timelapse to video, as the player sees it (the dark room, the screen, the title card and subtitles), for client review. `Cutscenes ▸ Record Cutscene Reel` enters Play mode; the runner plays the 27 prep/success/failure cinematics and the 6 timelapses back to back at a locked 30 fps (Time.captureFramerate, so slow capture never changes timing) and pipes raw frames into ffmpeg — one silent MP4 per clip under Logs/cutscene-reel/. Voice lines are logged with their frame offsets in manifest.txt so the audio can be laid back on offline (Tools/cutscene-reel.py), since captureFramerate decouples game time from the audio clock.
+
+```csharp
+const string OutDir
+static void Record()
 ```
 
 ### `DemoModeBuilder` <sub>class</sub>
@@ -4203,6 +4356,15 @@ W5.9: the fail path used to trap the player in a Retry-only loop — this wires 
 
 ```csharp
 static void Wire()
+```
+
+### `GradeCardStyler` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/GradeCardStyler.cs`</sub>
+
+Restyles the grade screen into the client slides' "Mission Complete" card: a row of three white tiles (Time · Mistakes · Grade) with large blue figures, the verdict under them, the rubric breakdown below in a smaller type, buttons unchanged. Idempotent: tiles are found-or-created and every rect is SET, never nudged. The controller's text references are untouched (it still fills the same objects).
+
+```csharp
+static void Style()
 ```
 
 ### `HandVisualsBuilder` <sub>class</sub>
@@ -4332,6 +4494,7 @@ static void Build()
 Wires the 2026-07-10 NPC/audio polish batch into SampleScene: 1. Pharmee expressions — PharmeeFace re-pointed at the robot's EYES + MOUTH meshes (was Ears_Black_Matt_0), default-happy; PharmeeMood resets the face after every line; the gatekeeper's faceBehaviour drives gate moods. 2. Dr. Jimenez proctor roaming — ProctorRoamer + observation points at the reagent shelf, equipment shelf, dynamic stage and fume hood. 3. AC proximity hum — ProximityHum on the air-con / vent assets (falls back to the fume hood if no AC mesh exists). Tools ▸ PharmaSynth ▸ Wire NPC Polish (SampleScene, edit mode, idempotent).
 
 ```csharp
+const float JimenezIdleLift
 static void Build()
 ```
 
@@ -4868,6 +5031,17 @@ static float LastTargetC
 <sub>`Assets/PharmaSynth/Scripts/Editor/SimulatedRun.cs`</sub>
 
 One honest run's working state: the mechanisms the build produced, the reaction watchers, the supply/visibility tallies. Run() drives it to the end in edit mode; the VISUAL autopilot performs one step per frame in Play mode and photographs each.
+
+### `SolidJarFitter` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/SolidJarFitter.cs`</sub>
+
+Gives every solid reagent jar on the shelf its powder mound (W5.59, user: "brown sugar is liquid in its beaker, but it can be scooped when I try the scoopula on it"). Both halves of that report are true and explain each other. `Build Reagent Cabinets` stocks a PowderJar row from the `Beaker_100mL_WithLiquid` prefab, which carries a `Liquid` surface and nothing else, so 150 units of a SOLID were drawn as a column of brown liquid — `LiquidPhysics.DrawsLiquidColumn` had no mound to show instead. The scoopula never looked: `ScoopMath.CanPickUp` keys on the chemical's `state`, so it dipped into "liquid" sugar and came up with 2 g of solid. Six jars were in this state. The mound itself is `ExperimentSceneBuilder.EnsurePowderVisual`, the same helper the stage builder and the scoop already use; this only points it at the shelf. Idempotent: a jar that already has its mound is left alone. Called b
+
+```csharp
+static bool IsHeap(ChemicalData chem)
+static void Run()
+static int FitAll(out string names)
+```
 
 ### `SpatulaPorcelain` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SpatulaPorcelain.cs`</sub>

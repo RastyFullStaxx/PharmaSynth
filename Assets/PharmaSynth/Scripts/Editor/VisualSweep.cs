@@ -5,16 +5,16 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-/// The photographer behind the VISUAL autopilot (W5.45): after each honestly-performed
+/// The photographer behind the VISUAL autopilot: after each honestly-performed
 /// step it frames the vessel the step happened in, renders a close-up, reads the numbers
 /// behind the picture (fill, colour, precipitate, boil, temperature, live particles,
 /// popups) and judges them against what the fired ReactionRule / the verb promised. One
 /// manifest row per step feeds Tools/visual-sheet.py (a captioned contact sheet per module).
 ///
 /// ⭐ Why numbers as well as pixels: a screenshot cannot say "the flask is at 3% fill" or
-/// "no particle system is alive within 60 cm" — and a reviewer skimming seventy thumbnails
+/// "no particle system is alive within 60 cm", and a reviewer skimming seventy thumbnails
 /// misses both. Every verdict names the exact quantity it judged, so a FAIL is actionable
-/// on its own (the W5.40 lesson: make the failure message print the state it judged).
+/// on its own.
 public static class VisualSweep
 {
     public const string Dir = "Logs/visual-sweep";
@@ -95,19 +95,17 @@ public static class VisualSweep
             case "pour": case "stir": case "vapor": case "weigh": case "litmus": case "ferment": case "rack":
                 return Expect.Fill;
         }
-        // \u26d4 These four used to fall through to Expect.None, so the sweep photographed
-        // them and judged NOTHING: 4 of 63 steps reported SKIP "the photo is the evidence",
-        // which is a picture nobody looks at rather than a check. Their evidence simply is
-        // not inside a vessel \u2014 it is a flame, a gas column and an assembled rig.
+        // ⛔ These four must not fall through to Expect.None: the sweep would photograph
+        // them and judge NOTHING, a SKIP "the photo is the evidence" that nobody looks at.
+        // Their evidence is not inside a vessel — it is a flame, a gas column and an
+        // assembled rig.
         switch (kind)
         {
             case "flame": return Expect.Flame;
-            // — NOT an apparatus-assembly contract. The first cut counted ApparatusSnap
-            // attachments because the VAULT said this step was "Clamp the tube, fit the cork +
-            // delivery tube" — a hint the asset stopped carrying in July. The live asset says
-            // "Scoop the ground mixture from the mortar into the Hard-glass tube": a SOLID
-            // DELIVERY. MethaneApparatusRig never uses ApparatusSnap, so the count was 0 forever
-            // and the sweep reported a FAIL no player could see. Judge what the step DOES.
+            // — NOT an apparatus-assembly contract. The step is a SOLID DELIVERY ("Scoop the
+            // ground mixture from the mortar into the Hard-glass tube"), and MethaneApparatusRig
+            // never uses ApparatusSnap, so counting snap attachments would read 0 forever and
+            // report a FAIL no player could see. Judge what the step DOES.
             case "methane:setup-apparatus": return Expect.Powder;
             case "methane:heat-mixture": return Expect.Heat;
             case "methane:collect-gas": return Expect.GasFill;
@@ -207,10 +205,9 @@ public static class VisualSweep
     /// The evidence that is NOT inside a vessel: a lit flame, a filling gas tube and an
     /// assembled apparatus. Scanned scene-wide because that is what these steps promise \u2014
     /// the methane rig's whole point is that the parts are joined and the gas goes somewhere.
-    // ⛔ A flame is TRANSIENT evidence. The flame contract's first run sampled it once, at the
-    // final capture — after the step had completed and DropRespawn had extinguished the match
-    // — and reported "NO lit flame anywhere in the scene" on a step the game had just judged
-    // correctly ("Won't ignite — NON-FLAMMABLE"). Same mistake as the ground-path telemetry:
+    // ⛔ A flame is TRANSIENT evidence. Sampled once at the final capture, after the step has
+    // completed and DropRespawn has extinguished the match, it reads "NO lit flame anywhere
+    // in the scene" on a step the game judged correctly ("Won't ignite — NON-FLAMMABLE"):
     // one sample of a sometimes-true fact measures its default. So the flame is LATCHED at the
     // mid-verb moment, when the match is provably at the sample, and the latch clears once the
     // step has been judged.

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-/// Re-seats every experiment layout onto the LayoutTidyMath zoning grid (W5.8:
+/// Re-seats every experiment layout onto the LayoutTidyMath zoning grid (a
 /// clean center table — stations across the back, vessels center-front,
 /// reagents right, tools left; the front strip stays free for the rack and
 /// spares). Deterministic + idempotent; also structurally removes the two
-/// historical clamped overlaps at (1.38, −3.88) in Acetone and Benzamide.
+/// clamped overlaps at (1.38, −3.88) in Acetone and Benzamide.
 /// Run AFTER `Apply W5.8 Verb Data` so new stations/props get slots too.
 public static class LayoutTidy
 {

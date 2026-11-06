@@ -6,15 +6,14 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// W5.33 playtest batch (user 2026-07-27) — the SCENE half of the fixes whose
+/// The SCENE half of a set of fixes whose
 /// code half lives in the runtime scripts. One idempotent menu per symptom so a
 /// single broken area can be re-run alone; "Fix Everything" runs them in order.
 ///
-/// Why a new pass instead of re-running the old builders: three apparatus were
-/// dropped into the scene as RAW model prefabs that never went through any
-/// wiring (no collider, no rigidbody, no XRGrabInteractable — literally
-/// ungrabbable), the wash bottle was never given contents, and the balance was
-/// pure set dressing. None of the existing menus own those.
+/// These are separate from the existing builders because none of them own these
+/// objects: three apparatus sit in the scene as RAW model prefabs with no
+/// wiring (no collider, no rigidbody, no XRGrabInteractable, so ungrabbable),
+/// the wash bottle has no contents, and the balance is pure set dressing.
 public static class W533Fixes
 {
     const string MenuRoot = "Tools/PharmaSynth/Playtest Fixes (W5.33)/";
@@ -22,7 +21,7 @@ public static class W533Fixes
     const string GlassOuterGuid = "5fa2d54e0de4b1844bd36402333542fe";
     const string GlassInnerGuid = "ff04f2be4ce6d934a8624dfa3c34aa4b";
 
-    /// The apparatus the 2026-07-27 playtest could not pick up. All five sit under
+    /// The apparatus that need grab wiring. All five sit under
     /// DistillationApparatus; the two DistillingFlasks are wired but share the row.
     public static readonly string[] UngrabbableReport =
     {
@@ -30,8 +29,8 @@ public static class W533Fixes
         "FlorenceFlask", "DistillingFlask", "DistillingFlask_2",
     };
 
-    /// Prefab assets that shipped as bare imported models — no collider, no
-    /// rigidbody, no grab. Fixing the ASSET fixes every instance, present and future.
+    /// Prefab assets that are bare imported models (no collider, no
+    /// rigidbody, no grab). Fixing the ASSET fixes every instance, present and future.
     static readonly string[] RawPrefabs =
     {
         "Assets/PharmaSynth/Art/Generated/Refs/WaterBath.prefab",
@@ -64,7 +63,7 @@ public static class W533Fixes
 
     // ---- 0. FIXED FURNITURE: racks must never be pickable --------------------
 
-    /// The tube racks. Two roles, both FIXED (user 2026-07-29): the STORAGE racks
+    /// The tube racks. Two roles, both FIXED: the STORAGE racks
     /// where tubes live and home, and the WORKSPACE holders that start empty and
     /// receive tubes mid-experiment. Neither is a hand tool — picking one up
     /// carries every seated tube with it and wrecks the bench.
@@ -116,12 +115,11 @@ public static class W533Fixes
 
     // ---- 0b. the yield stepper is GONE --------------------------------------
 
-    /// The data sheet's yield control. Removed 2026-07-29 (user: "delete it"):
-    /// `PostLabController.Yield` was read by nothing but the self-tests, so the
-    /// player set a number that was silently discarded — and could not have
-    /// derived it anyway, since the game never states the theoretical mass to
-    /// divide by. The client had already ruled yield never affects the grade, so
-    /// the control was pure decoration that misrepresented itself.
+    /// Removes the data sheet's yield control.
+    /// `PostLabController.Yield` is read by nothing but the self-tests, so the
+    /// player's number would be silently discarded, and the game never states the
+    /// theoretical mass to divide by anyway. Yield never affects the grade (client
+    /// ruling), so the control would only misrepresent itself.
     public static readonly string[] YieldWidgets = { "YieldPlus", "YieldMinus", "YieldValue" };
 
     [MenuItem(MenuRoot + "Remove Yield Stepper")]
@@ -142,8 +140,8 @@ public static class W533Fixes
     }
 
     /// GameObject.Find only sees ACTIVE objects, and the data sheet / quiz panel is
-    /// disabled until the review — so a plain Find silently reported "nothing to
-    /// do" for every widget on it (2026-07-29). Search inactive too.
+    /// disabled until the review, so a plain Find silently reports "nothing to
+    /// do" for every widget on it. Search inactive too.
     public static GameObject FindAnyByName(string n)
     {
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -191,8 +189,8 @@ public static class W533Fixes
 
     /// Every hand-placed apparatus that a player is meant to be able to pick up:
     /// the prop groups plus anything already carrying a LabItem / LiquidPhysics.
-    /// DistillationApparatus is the group the 2026-07-27 report was entirely about
-    /// and the one PhysicsAudit.SceneItems never listed.
+    /// DistillationApparatus is included explicitly because PhysicsAudit.SceneItems
+    /// does not list it.
     static IEnumerable<GameObject> ApparatusInScene()
     {
         var seen = new HashSet<GameObject>();
@@ -214,7 +212,7 @@ public static class W533Fixes
 
     /// A grabbable needs SOMETHING for the ray to hit. Adds a BoxCollider fitted to
     /// the object's own solid meshes when there is no non-trigger collider that
-    /// actually covers them — the raw Tripo prefabs had none at all.
+    /// covers them (raw Tripo prefabs have none at all).
     static bool EnsureCollider(GameObject go)
     {
         DedupeColliders(go);
@@ -275,7 +273,7 @@ public static class W533Fixes
     public static void FixWashBottle() { if (!EditorGuard()) return; int n = FixWashBottleCore(); Save(); Debug.Log($"[W5.33] wash bottle: {n} change(s)."); }
 
     /// A wash bottle with no LiquidPhysics at all is why "nothing comes out when I
-    /// pour it" (user 2026-07-27). It is the lab's distilled-water dispenser, so it
+    /// pour it". It is the lab's distilled-water dispenser, so it
     /// is stocked generously and is never a graded reagent source.
     static int FixWashBottleCore()
     {
@@ -316,10 +314,10 @@ public static class W533Fixes
     [MenuItem(MenuRoot + "Glass the Florence Flask")]
     public static void FixFlorenceFlask() { if (!EditorGuard()) return; int n = FixFlorenceFlaskCore(); Save(); Debug.Log($"[W5.33] Florence flask: {n} renderer(s)."); }
 
-    /// Solid white + a cylinder of liquid in a ROUND-BOTTOM flask (user
-    /// 2026-07-27). Swap in the same borosilicate glass the beakers use, then
+    /// A ROUND-BOTTOM flask must not render as solid white with a cylinder of liquid.
+    /// Swap in the same borosilicate glass the beakers use, then
     /// throw away the cylindrical fill child so EnsureLiquidVisual rebuilds it as
-    /// the sphere IsRoundBottom now asks for.
+    /// the sphere IsRoundBottom asks for.
     static int FixFlorenceFlaskCore()
     {
         var outer = LoadMat(GlassOuterGuid);
@@ -391,10 +389,10 @@ public static class W533Fixes
     [MenuItem(MenuRoot + "Make the Balance Live")]
     public static void FixBalance() { if (!EditorGuard()) return; int n = FixBalanceCore(); Save(); Debug.Log($"[W5.33] balance: {n} change(s)."); }
 
-    /// The balance was set dressing: a digital canvas with no controller and no pan
-    /// sensor, so "the text dont update" whatever you rested on it (user
-    /// 2026-07-27). Give it a permanent pan trigger + readout, independent of any
-    /// experiment — the ZONE-FREE TOOL RULE applied to the scale.
+    /// The balance's digital canvas has no controller and no pan sensor of its own,
+    /// so the readout would never update whatever rests on it.
+    /// Give it a permanent pan trigger + readout, independent of any
+    /// experiment: the ZONE-FREE TOOL RULE applied to the scale.
     static int FixBalanceCore()
     {
         int changed = 0;
@@ -467,11 +465,11 @@ public static class W533Fixes
     [MenuItem(MenuRoot + "Fix Quiz + Result Panel Overlaps")]
     public static void FixResultPanels() { if (!EditorGuard()) return; int n = FixResultPanelsCore(); Save(); Debug.Log($"[W5.33] {n} panel element(s) re-laid out."); }
 
-    /// Two separate overlaps (user 2026-07-27):
-    ///   • the quiz row — Back and Next sat 73 units ON TOP of Submit; fixed by
-    ///     QuizNavButtonsBuilder now shrinking all three to a fitting width;
-    ///   • the grade card — the ten-line Breakdown is authored at 26 pt in a
-    ///     240-tall box with Overflow, so it spilled ~70 units down over the
+    /// Two separate overlaps:
+    ///   • the quiz row (Back and Next 73 units ON TOP of Submit), handled by
+    ///     QuizNavButtonsBuilder shrinking all three to a fitting width;
+    ///   • the grade card: the ten-line Breakdown is authored at 26 pt in a
+    ///     240-tall box with Overflow, so it spills ~70 units down over the
     ///     Retry / Continue buttons. Auto-sizing keeps it inside its band.
     static int FixResultPanelsCore()
     {
@@ -512,11 +510,11 @@ public static class W533Fixes
     [MenuItem(MenuRoot + "Give Every Vessel a Live Contents Tag")]
     public static void FixVesselTags() { if (!EditorGuard()) return; int n = FixVesselTagsCore(); Save(); Debug.Log($"[W5.33] {n} vessel(s) given a live contents tag."); }
 
-    /// "Sometimes the ml text is not showing at all in some test tubes" (user
-    /// 2026-07-27). Half the vessels in the lab never got a VesselStatus at all —
-    /// only the ones a module's builder staged did — so they had no way to report
-    /// their contents. VesselStatus now self-binds at Awake, so simply adding the
-    /// pair (label + status) to every liquid container is enough.
+    /// Gives every liquid container its ml readout.
+    /// Only the vessels a module's builder stages get a VesselStatus, so the rest
+    /// of the lab has no way to report its contents. VesselStatus self-binds at
+    /// Awake, so adding the pair (label + status) to every liquid container is
+    /// enough.
     static int FixVesselTagsCore()
     {
         int added = 0;

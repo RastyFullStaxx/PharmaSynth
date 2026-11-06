@@ -5,7 +5,7 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-/// Exports the full voice-over manifest (user 2026-07-10: NPCs speak): every
+/// Exports the full voice-over manifest (NPCs speak): every
 /// code-authored line (VoiceCorpus) plus every cutscene beat, one row per
 /// unique (speaker, text) with its stable id. Tools/voice/generate-voice.ps1
 /// consumes the manifest; changed lines re-key and regenerate individually.
@@ -16,8 +16,8 @@ public static class VoiceManifestExporter
     [System.Serializable]
     public class ManifestLine { public string id; public string speaker; public string text; public int chars; public string group; }
 
-    /// Generation ORDER (user 2026-07-27: "prioritize dr jimenez before we generate
-    /// pharmee. stop only when we ran out of tokens"). The PowerShell generator
+    /// Generation ORDER: Dr. Jimenez before Pharmee, stopping only when the credits
+    /// run out. The PowerShell generator
     /// walks the manifest top-to-bottom and skips what already exists, so writing
     /// Jimenez's rows first means a run that dies on an exhausted quota has spent
     /// every credit on him — no ordering logic needed in the script itself.
@@ -51,9 +51,8 @@ public static class VoiceManifestExporter
 
         foreach (var l in VoiceCorpus.CodeLines()) Add(l.speaker, l.text, l.group);
         // ⛔ DATA-authored lines too. Task time-skip narration ("One week later...") lives
-        // in the module assets, so exporting CodeLines() alone left six of Jimenez's lines
-        // out of every manifest, unbought and speaking in blips — the "broken machine"
-        // sound the user reported (2026-09-05).
+        // in the module assets, so exporting CodeLines() alone leaves six of Jimenez's lines
+        // out of every manifest, unbought and speaking in blips.
         foreach (var l in VoiceCorpus.DataLines(
                      AssetDatabase.LoadAssetAtPath<ExperimentLibrary>(
                          "Assets/PharmaSynth/ScriptableObjects/ExperimentLibrary.asset")))
@@ -69,12 +68,11 @@ public static class VoiceManifestExporter
                 if (b != null) { Add(VoiceSpeaker.Pharmee, b.subtitle, "Cutscene"); beats++; }
         }
 
-        // STEP INSTRUCTIONS — the lines Pharmee says constantly DURING an experiment,
+        // STEP INSTRUCTIONS: the lines Pharmee says constantly DURING an experiment,
         // and by far the most-heard dialogue in the game. They live on the module
-        // assets (graphTasks[].hint), so runtime code cannot enumerate them and they
-        // were missing from the corpus entirely — every one of them played as a
-        // placeholder blip (user 2026-07-28: "there are still dialogues that use the
-        // robot voices"). PharmeeBrain.InstructionFor is the exact transform the game
+        // assets (graphTasks[].hint), so runtime code cannot enumerate them; left out
+        // of the corpus, every one of them plays as a placeholder blip.
+        // PharmeeBrain.InstructionFor is the exact transform the game
         // applies, so exporting through it guarantees the hashes match at runtime.
         int steps = 0;
         foreach (string guid in AssetDatabase.FindAssets("t:ExperimentModuleDefinition"))

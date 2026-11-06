@@ -6,9 +6,8 @@ using UnityEngine;
 using XRGrabInteractable = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
 /// Swap the sodium-acetate/soda-lime SOURCE from a sealed amber vial to an OPEN
-/// beaker (user 2026-07-14: "since this is scooped not poured, use an open
-/// beaker-looking container"). Solids belong in a wide-mouth vessel you can dip a
-/// scoop into. Preserves each jar's position + contents + wiring: instantiates
+/// beaker. The charge is scooped, not poured, so it belongs in a wide-mouth
+/// vessel you can dip a scoop into. Preserves each jar's position + contents + wiring: instantiates
 /// Beaker_100mL in place, re-tags it "reagent-jar", refills it with the solid,
 /// rebuilds the powder mound (open top → the scoop reaches it), re-labels it, and
 /// destroys the old vial. Idempotent (skips jars that are already beakers).

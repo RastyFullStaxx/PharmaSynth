@@ -13,6 +13,11 @@ public class HazardousMixReactor : MonoBehaviour
     private LiquidPhysics _liquid;
     private ExperimentRunner _runner;
     private float _nextOk;
+    // Mistake latch: one per incoming chemical until the vessel is emptied. The 2 s
+    // cooldown alone recorded a fresh mistake every 2 s of a continuing wrong pour.
+    // The smoke / alarm still play on the cooldown — the warning stays loud.
+    private readonly System.Collections.Generic.HashSet<ChemicalData> _scolded = new System.Collections.Generic.HashSet<ChemicalData>();
+    private void OnEmptied() => _scolded.Clear();
 
     private void Awake()
     {
@@ -23,22 +28,21 @@ public class HazardousMixReactor : MonoBehaviour
     /// Edit-mode / builder seam.
     public void Bind(LiquidPhysics liquid, ExperimentRunner runner)
     {
-        if (_liquid != null) _liquid.WrongReagentMixed -= OnWrongMix;
+        if (_liquid != null) { _liquid.WrongReagentMixed -= OnWrongMix; _liquid.Emptied -= OnEmptied; }
         _liquid = liquid; _runner = runner;
-        if (_liquid != null) _liquid.WrongReagentMixed += OnWrongMix;
+        if (_liquid != null) { _liquid.WrongReagentMixed += OnWrongMix; _liquid.Emptied += OnEmptied; }
     }
 
     private void OnDestroy()
     {
-        if (_liquid != null) _liquid.WrongReagentMixed -= OnWrongMix;
+        if (_liquid != null) { _liquid.WrongReagentMixed -= OnWrongMix; _liquid.Emptied -= OnEmptied; }
     }
 
     private void OnWrongMix(ChemicalData current, ChemicalData incoming)
     {
-        // Procedure-sanctioned mix: a pending step of THIS vessel expects the
-        // incoming chemical ("add 10 ml of distilled water" onto the sample has
-        // no ReactionRule, so it landed here and was graded "not in the
-        // procedure" — on every correct dilution; user playtest 2026-07-17).
+        // Procedure-sanctioned mix: a pending step of THIS vessel expects the incoming
+        // chemical. "Add 10 ml of distilled water" onto the sample has no ReactionRule,
+        // so without this check every correct dilution is graded "not in the procedure".
         // The binding shows the pour progress; this layer stays out of it.
         var binding = GetComponent<LiquidTaskBinding>();
         if (binding != null && binding.IsExpectedNow(incoming)) return;
@@ -79,7 +83,7 @@ public class HazardousMixReactor : MonoBehaviour
                 break;
         }
 
-        if (_runner != null)
+        if (_runner != null && (incoming == null || _scolded.Add(incoming)))
             _runner.RecordMistake(HazardousMix.ErrorTypeFor(outcome), HazardousMix.WarnLineFor(outcome));
     }
 }

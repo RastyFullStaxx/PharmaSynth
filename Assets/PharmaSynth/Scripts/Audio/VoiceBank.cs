@@ -4,7 +4,7 @@ using UnityEngine;
 
 public enum VoiceSpeaker { Pharmee, Jimenez }
 
-/// Voice-over clip lookup (user 2026-07-10: Pharmee + Dr. Jimenez must SPEAK
+/// Voice-over clip lookup (Pharmee + Dr. Jimenez SPEAK
 /// their lines). Keyed by speaker + the normalised-text hash (VoiceLineId), so
 /// no line/SO schema changes anywhere — a missing clip simply falls back to the
 /// existing blip + typewriter. Rebuilt from Audio/Voice/<speaker>/<id>.mp3 by
@@ -25,10 +25,10 @@ public class VoiceBank : ScriptableObject
     private Dictionary<string, AudioClip> _map;
     /// How many entries the map was built from — NOT how many it contains.
     ///
-    /// ⛔ The staleness check used to be `_map.Count != entries.Count`, but Rebuild skips
+    /// ⛔ The staleness check must not be `_map.Count != entries.Count`: Rebuild skips
     /// entries with a null clip or a blank id, so those two numbers differ permanently as
-    /// soon as ONE entry is incomplete — and every single Get() then rebuilt the whole
-    /// dictionary, on every spoken character of every line.
+    /// soon as ONE entry is incomplete, and every Get() would rebuild the whole
+    /// dictionary on every spoken character of every line.
     private int _builtFrom = -1;
 
     public AudioClip Get(VoiceSpeaker speaker, string id)

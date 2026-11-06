@@ -1,7 +1,7 @@
 using UnityEngine;
 
-/// Pure classification of chemically-BAD mixes (user 2026-07-10: wrong mixtures
-/// showed nothing — no smoke, fire, colour, or penalty). Runs on the existing
+/// Pure classification of chemically-BAD mixes, so a wrong mixture produces smoke,
+/// fire, colour and a penalty. Runs on the existing
 /// LiquidPhysics.WrongReagentMixed seam, i.e. only for A+B pairs with NO
 /// registered ReactionRule (real chemistry always wins). Direction-aware:
 /// `current` is what's in the vessel, `incoming` is what got poured in.

@@ -6,11 +6,10 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// W5.9: the fail path used to trap the player in a Retry-only loop — this
-/// wires a "Complete Experiment" button onto the grade screen (shown only on FAIL,
-/// where Continue is hidden — they share the slot) that ends the attempt and
+/// Wires a "Complete Experiment" button onto the grade screen (shown only on FAIL,
+/// where Continue is hidden; they share the slot) that ends the attempt and
 /// returns the player to the entrance, where any unlocked experiment can be
-/// picked. Label renamed from "Choose Another" (user 2026-07-15). Idempotent.
+/// picked, so a failed attempt is never a Retry-only loop. Idempotent.
 public static class GradeBackButtonBuilder
 {
     [MenuItem("Tools/PharmaSynth/Wire Grade Back Button (W5.9)")]

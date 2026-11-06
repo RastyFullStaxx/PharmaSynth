@@ -1,9 +1,9 @@
-/// Intended Learning Outcomes per experiment (user 2026-07-10: Pharmee states
+/// Intended Learning Outcomes per experiment (Pharmee states
 /// the session's objectives in the opening dialogue). The 8 manuscript modules
 /// use the VERBATIM Appendix C "Objectives" text (transcribed in
 /// Docs/manuscript-reconciliation.md §2 — the chemistry authority); Methane is
-/// game-authored in the same voice and is client-CONFIRMED (2026-07-16) as the
-/// tutorial. (Aspirin + Caffeine were dropped 2026-07-16 with their modules.)
+/// game-authored in the same voice and is client-CONFIRMED as the
+/// tutorial. (Aspirin + Caffeine were dropped with their modules.)
 public static class IloCopy
 {
     /// Pharmee's lead-in beat — also the injector's idempotence marker.

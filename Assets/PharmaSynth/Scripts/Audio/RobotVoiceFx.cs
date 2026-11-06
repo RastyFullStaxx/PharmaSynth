@@ -5,13 +5,12 @@ using UnityEngine;
 /// into the 182 clips, so retuning stays free.
 ///
 /// ⭐ THE CHOSEN CHARACTER is LOW-FREQUENCY RING MODULATION blended with dry
-/// signal — what the user calls "speaking against an electric fan" and settled on
-/// after auditioning everything else (2026-07-28). `ringMix` is the fan's strength.
+/// signal — like "speaking against an electric fan", settled on
+/// after auditioning everything else. `ringMix` is the fan's strength.
 ///
-/// This file also contains a vocoder, sample-and-hold decimation and a comb
-/// resonator, all currently SWITCHED OFF in the profile. They are kept because
-/// each was built to answer a real complaint, and the history is worth preserving
-/// so nobody re-derives it:
+/// This file also contains a vocoder, sample-and-hold decimation and a comb resonator,
+/// all currently SWITCHED OFF in the profile. Each was auditioned and rejected; they
+/// are kept so nobody rebuilds them:
 ///   • Heavy band-limiting -> "muffled". Fixed by opening the low-pass to 11 kHz
 ///     and adding the presence lift; those two ARE still in use.
 ///   • Decimation + comb   -> technically more machine-like, but the verdict was

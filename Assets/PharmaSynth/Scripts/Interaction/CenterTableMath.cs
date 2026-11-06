@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// Pure geometry for the center-table merge (user 2026-07-10: remove the second
-/// island, one wide LANDSCAPE table centered in the lab). The experiment layouts
+/// Pure geometry for the center-table merge (one wide
+/// LANDSCAPE table centered in the lab replaces the two islands). The experiment layouts
 /// bake world positions on the old left island, so the merge is a rigid remap —
 /// rotate 90° about the old island centre, translate to the new centre — applied
 /// identically to the island object AND every baked position on it, keeping every

@@ -36,7 +36,7 @@ public class PostLabController : MonoBehaviour
     [SerializeField] private Button nextButton;
     /// Tint of the option you already picked. Unpicked options are restored to their
     /// AUTHORED colour — never hard-set to white, which erased the dark panel styling
-    /// and made the white label text unreadable (user 2026-07-15).
+    /// and made the white label text unreadable.
     private static readonly Color SelectedTint = new Color(0.24f, 0.62f, 0.92f);
     private Color[] _optionBaseColors;
 
@@ -73,9 +73,9 @@ public class PostLabController : MonoBehaviour
         var bank = library != null ? library.GetBank(moduleId) : null;
         if (bank == null && !string.IsNullOrEmpty(moduleId))
             Debug.LogWarning("[PostLab] no quiz bank for '" + moduleId + "' — Documentation defaults to full credit.");
-        // W5.9: freeze the clock on EVERY quiz path (the gatekeeper used to be
-        // the only freezer, so auto-open/dev flows let quiz time bleed into the
-        // Time-Management score). Idempotent; the next attempt unfreezes.
+        // Freeze the clock on EVERY quiz path, not just the gatekeeper's, so auto-open/dev
+        // flows never let quiz time bleed into the Time-Management score. Idempotent; the
+        // next attempt unfreezes.
         if (runner != null) runner.FreezeClock();
         OpenFor(bank);
     }
@@ -92,10 +92,9 @@ public class PostLabController : MonoBehaviour
         if (root != null) root.SetActive(true);
         if (titleText != null) titleText.text = "Data Sheet & Documentation";
         Render();
-        // The tablet used to appear in SILENCE (user 2026-07-19: "add sound sfx
-        // for when the tablet for quiz appears to its direction"). Played 3D AT
-        // the tablet so it also tells the player WHERE to look — the review
-        // teleport drops them facing it, but it is easy to miss appearing.
+        // Cue the tablet's appearance, played 3D AT the tablet so it also tells the player
+        // WHERE to look: the review teleport drops them facing it, but it is easy to miss
+        // appearing.
         AudioService.TryPlayFirstAt(TabletPosition(), 1f, "ui-confirm", "socket-snap", "ui-click");
     }
 
@@ -117,12 +116,12 @@ public class PostLabController : MonoBehaviour
         }
         // First pass: auto-advance so answering flows. REVIEWING an already-answered
         // question: stay put so the choice can be compared/changed without the page
-        // jumping away (user 2026-07-15: review answers before submitting).
+        // jumping away (so answers can be reviewed before submitting).
         if (wasUnanswered && _current < _bank.Count - 1) _current++;
         Render();
     }
 
-    // ---- review navigation (user 2026-07-15) --------------------------------
+    // ---- review navigation --------------------------------
 
     /// Pure (suite): is there a previous / next question from here?
     public static bool CanGoBack(int index) => index > 0;
@@ -164,11 +163,11 @@ public class PostLabController : MonoBehaviour
     }
 
     /// Fraction correct (0..1) — drives the grader's Documentation sub-score.
-    /// W5.9: a present-but-EMPTY bank counts like a missing one (full credit) —
-    /// it used to grade Documentation 0 while a missing bank graded 1.
+    /// A present-but-EMPTY bank counts like a missing one (full credit), not as a
+    /// Documentation 0.
     public float ScoreFraction() => _bank != null && _bank.Count > 0 ? _bank.Score(_answers) : 1f;
 
-    /// Close without submitting (W5.9: HUD Restart / fail-abandon mid-quiz used
+    /// Close without submitting (HUD Restart / fail-abandon mid-quiz used
     /// to leave the tablet floating). The attempt is NOT finished here.
     public void Close()
     {
@@ -200,7 +199,7 @@ public class PostLabController : MonoBehaviour
 
     /// Submit button. NEVER score-gated (client rule): any score submits and is
     /// shown plainly on the grade screen, where the player chooses Retry (to
-    /// perfect it) or Complete Experiment (user 2026-07-15).
+    /// perfect it) or Complete Experiment.
     public void Submit()
     {
         // A refused submit sounded EXACTLY like an accepted one (the button's own
@@ -271,7 +270,7 @@ public class PostLabController : MonoBehaviour
             if (optionButtons[i] != null) optionButtons[i].gameObject.SetActive(on);
             if (i < optionLabels.Length && optionLabels[i] != null && on) optionLabels[i].text = q.options[i];
             // Show the answer already chosen for THIS question, so stepping back to
-            // review makes your previous pick obvious (user 2026-07-15). Unpicked
+            // review makes your previous pick obvious. Unpicked
             // options go back to their AUTHORED colour, captured once.
             if (on && optionButtons[i] != null)
             {

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// THE manuscript materials table (user 2026-07-10: the shelf stocked mostly
-/// end-products; Appendix C names ~54 distinct materials — raw precursors,
-/// prepared solutions and small consumables — that must exist in the lab).
+/// THE manuscript materials table: Appendix C names ~54 distinct materials (raw
+/// precursors, prepared solutions and small consumables) that must exist in the lab,
+/// not just end-products.
 /// One row per manuscript material, each mapped to nature-appropriate labware.
 /// Source of truth for: ChemicalData generation (RawReagentForge), the cabinet
 /// stocking pass (ReagentCabinetBuilder), hover-info blurbs (LabInfoDatabase
@@ -89,12 +89,11 @@ public static class RawReagentCatalog
               "6N sulfuric acid working solution for acidifying test mixtures.", "Exp 2"),
             R("Hydrochloric Acid 6N", PhysicalState.Liquid, C(0.95f,0.95f,0.88f), 0.5f, HazardType.Corrosive, false, LabwareKind.ReagentBottle, GroupAcids,
               "6N hydrochloric acid — strong mineral acid for hydrolysis and acidification.", "Exp 2, 4"),
-            // ⭐ FUME-HOOD RULE (manuscript audit 2026-07-17): the manuscript demands the
-            // hood in exactly ONE place — Exp 5 §A a-c, aniline + acetyl chloride into the
-            // flask "in the fume hood". ONLY those two carry hood=true. Every other flag
-            // was over-authored realism that made CORRECT bench play (Exp 2's phenol /
-            // acetaldehyde / conc-HCl pours, Exp 5's own §B conc-HCl + bromine-water
-            // tests) log FumeHoodViolation mistakes — SimulatedRun caught 4 per run.
+            // ⭐ FUME-HOOD RULE: the manuscript demands the hood in exactly ONE place, Exp 5
+            // §A a-c, aniline + acetyl chloride into the flask "in the fume hood". ONLY those
+            // two carry hood=true. Flagging anything else makes CORRECT bench play (Exp 2's
+            // phenol / acetaldehyde / conc-HCl pours, Exp 5's own §B conc-HCl + bromine-water
+            // tests) log FumeHoodViolation mistakes.
             R("Concentrated Hydrochloric Acid", PhysicalState.Liquid, C(0.96f,0.96f,0.9f), 0.1f, HazardType.Corrosive, false, LabwareKind.ReagentBottle, GroupAcids,
               "Fuming concentrated HCl — corrosive vapour; keep it capped and at arm's length.", "Exp 2, 5"),
             R("Hydrochloric Acid 0.1N", PhysicalState.Liquid, C(0.97f,0.97f,0.94f), 1.3f, HazardType.None, false, LabwareKind.ReagentBottle, GroupAcids,
@@ -131,8 +130,8 @@ public static class RawReagentCatalog
               "5-6% hypochlorite (laboratory bleach). Keep it far from every acid — chlorine gas.", "Exp 3, 6"),
             R("Ferric Chloride 10%", PhysicalState.Liquid, C(0.85f,0.65f,0.25f), 2f, HazardType.None, false, LabwareKind.ReagentBottle, GroupTests,
               "Yellow-brown FeCl3 — phenols flash violet on contact: the classic enol test.", "Exp 2"),
-            // Renamed from bare "Potassium Permanganate" + Chem asset flipped Solid -> Liquid
-            // (2026-07-16). The manuscript ONLY ever uses the 0.1% SOLUTION at the bench —
+            // Named with its strength and authored Liquid: the manuscript ONLY ever uses the
+            // 0.1% SOLUTION at the bench —
             // its single solid mention is the prep step ("dissolve 0.1 g in 100 ml"), which
             // the game doesn't simulate. Solid broke Exp 2's "2 ml of 0.1% KMnO4" pour, and
             // it was the one solution on the shelf without its strength in the name.
@@ -143,7 +142,7 @@ public static class RawReagentCatalog
             // Named to MATCH the procedures verbatim ("add 10 ml of distilled water" —
             // it was "Purified Water", so the hover on this bottle AND the wash bottle
             // both read "distilled water" and the player couldn't tell which one a
-            // step meant; user 2026-07-17). The wash bottle is rinse-only.
+            // step meant). The wash bottle is rinse-only.
             R("Distilled Water", PhysicalState.Liquid, C(0.85f,0.92f,0.98f, 0.6f), 7f, HazardType.None, false, LabwareKind.ReagentBottle, GroupAcids,
               "The universal solvent. Every 'add distilled water' step in the procedures pours from THIS bottle — the wash bottle is only for rinsing glassware.", "all experiments"),
 
@@ -174,16 +173,14 @@ public static class RawReagentCatalog
               "Sucrose feedstock — dissolved to a 12% solution, it feeds the fermentation.", "Exp 3, 4"),
             R("Yeast", PhysicalState.Powder, C(0.85f,0.78f,0.6f), 6f, HazardType.None, false, LabwareKind.PowderJar, GroupOrganics,
               "Dry baker's yeast — the living catalyst that turns sugar into ethanol and CO2.", "Exp 3, 9"),
-            // Missed on the first catalog pass (found by the Exp 9 polish sim: the
-            // fermentation jar START-filled with juice, so no bench bottle existed
-            // and the player couldn't pour their own must — the Exp 3 hidden-
-            // shorthand class). The manuscript's non-grape fruit of the student's
-            // choice — added by the ml into the jar.
+            // A bench bottle must exist so the player pours their own must into the jar
+            // (a jar pre-filled with juice hides the step). The manuscript's non-grape fruit
+            // of the student's choice, added by the ml into the jar.
             R("Mixed Fruit Juice", PhysicalState.Liquid, C(0.62f,0.18f,0.32f, 0.85f), 4f, HazardType.None, false, LabwareKind.ReagentBottle, GroupOrganics,
               "The fermentable base — any fruit juice EXCEPT grapes (manuscript exclusion). Its sugars become wine.", "Exp 9"),
             R("Salicylic Acid", PhysicalState.Powder, C(0.95f,0.95f,0.93f), 2.4f, HazardType.None, false, LabwareKind.PowderJar, GroupOrganics,
               "White crystalline phenol-acid — aspirin's parent compound; FeCl3 turns it violet.", "Exp 2"),
-            // Aspirin became a RAW reagent 2026-07-16 when the game-authored Aspirin
+            // Aspirin is a RAW reagent even though the game-authored Aspirin
             // module was dropped: Exp 2 §D hydrolyses it back to salicylic acid, so it
             // must sit on the bench in normal play, not just in demo.
             R("Aspirin", PhysicalState.Powder, C(0.97f,0.97f,0.95f), 2.5f, HazardType.None, false, LabwareKind.PowderJar, GroupOrganics,
@@ -198,10 +195,9 @@ public static class RawReagentCatalog
               "The acylating agent — fumes violently with water. Hood, gloves, and slow additions.", "Exp 5"),
             R("Benzoyl Chloride", PhysicalState.Liquid, C(0.93f,0.91f,0.84f, 0.7f), 1f, HazardType.Corrosive, false, LabwareKind.AmberBottle, GroupOrganics,
               "Lachrymator acyl chloride — benzamide's precursor. Eyes water; pour and recap fast.", "Exp 8"),
-            // Missed on the first catalog pass (found by the Exp 8 polish sim:
-            // no bench source held it). The manuscript's "10% Sodium NITRATE
-            // solution" is the documented nitrite typo — added by the ml, so a
-            // liquid solution like the KMnO4 0.1%.
+            // Exp 8 needs a bench source. The manuscript's "10% Sodium NITRATE solution" is
+            // the documented nitrite typo; added by the ml, so a liquid solution like the
+            // KMnO4 0.1%.
             R("Sodium Nitrite", PhysicalState.Liquid, C(0.94f,0.93f,0.88f), 9f, HazardType.None, false, LabwareKind.ReagentBottle, GroupTests,
               "10% sodium nitrite solution — with dilute HCl it makes nitrous acid in situ (the manual's 'nitrate' is a typo).", "Exp 8"),
             R("Glacial Acetic Acid", PhysicalState.Liquid, C(0.95f,0.95f,0.9f, 0.6f), 2.4f, HazardType.Corrosive, false, LabwareKind.ReagentBottle, GroupOrganics,

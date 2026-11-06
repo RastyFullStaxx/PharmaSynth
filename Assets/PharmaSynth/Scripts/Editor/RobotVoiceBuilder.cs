@@ -4,7 +4,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// Wires Pharmee's robot voice colouring onto HIS narration channel only
-/// (2026-07-27). Dr. Jimenez is a human examiner and must stay untouched — the
+/// Dr. Jimenez is a human examiner and must stay untouched — the
 /// whole point of the two-NPC contrast is that one is a machine and one is not.
 ///
 /// Ring modulation does the robot work (RobotVoiceFx); Unity's stock filters do
@@ -23,9 +23,9 @@ public static class RobotVoiceBuilder
     /// operators use the CLR's reference null, which bypasses UnityEngine.Object's
     /// overloaded `==`. A destroyed-or-broken component comes back as a "fake null"
     /// that is not reference-null, so `??` happily hands it back and the very next
-    /// property write throws a NullReferenceException — which is exactly what this
-    /// builder did on RobotNPC, a GameObject carrying missing-script references
-    /// (2026-07-27). An explicit `== null` check uses Unity's operator and is correct.
+    /// property write throws a NullReferenceException (it does on RobotNPC, a
+    /// GameObject carrying missing-script references).
+    /// An explicit `== null` check uses Unity's operator and is correct.
     static T Ensure<T>(GameObject go) where T : Component
     {
         var existing = go.GetComponent<T>();
@@ -38,7 +38,7 @@ public static class RobotVoiceBuilder
     }
 
     /// Load-or-create the ONE shared tuning asset every Pharmee channel reads.
-    /// An EXISTING asset is returned untouched — its values are the user's tuning,
+    /// An EXISTING asset is returned untouched — its values are hand tuning,
     /// and this builder must never overwrite them. Only a brand-new asset gets the
     /// class defaults (which are the chosen ring-mod character).
     static RobotVoiceProfile EnsureProfile()
@@ -66,26 +66,23 @@ public static class RobotVoiceBuilder
             var fx = Ensure<RobotVoiceFx>(src.gameObject);
             if (fx != null) fx.profile = profile;   // every channel reads the SAME asset
 
-            // ⛔ DO NOT re-tune an existing profile here. An earlier version of this
-            // builder "helpfully" overwrote the shared asset whenever its values did
-            // not match the latest defaults — which meant every run silently threw
-            // away the tuning the user had settled on. Defaults belong at CREATION
-            // only (see EnsureProfile); after that the asset is the user's.
+            // ⛔ DO NOT re-tune an existing profile here. Overwriting the shared asset
+            // whenever its values differ from the latest defaults throws away the hand
+            // tuning on every run. Defaults belong at CREATION
+            // only (see EnsureProfile); after that the asset is hand-owned.
 
-            // ⚠ THE MUFFLING CULPRIT (user 2026-07-27: "sounds a bit muffled").
-            // The band was 260 Hz - 5 kHz. Consonants — s, t, f, th — live between
-            // 5 and 10 kHz, so a 5 kHz ceiling removes exactly the detail that makes
-            // speech sound crisp, and what is left reads as "talking through a
-            // blanket". Opened the top right up to 11 kHz (still suggests a speaker
-            // grille without eating sibilance) and dropped the bottom to 180 Hz so
-            // he has some body instead of sounding thin as well as dull.
+            // ⚠ Band limits decide how muffled the voice sounds.
+            // Consonants (s, t, f, th) live between 5 and 10 kHz, so a 5 kHz ceiling
+            // removes exactly the detail that makes speech sound crisp. The top is open
+            // to 11 kHz (still suggests a speaker grille without eating sibilance) and the
+            // bottom sits at 180 Hz so he has some body instead of sounding thin.
             var hp = Ensure<AudioHighPassFilter>(src.gameObject);
             if (hp != null) hp.cutoffFrequency = 180f;
             var lp = Ensure<AudioLowPassFilter>(src.gameObject);
             if (lp != null) lp.cutoffFrequency = 11000f;
 
-            // Chorus SMEARS transients — it was the second thing dulling him. Kept
-            // only as a hint of metal, much drier and shorter than before.
+            // Chorus SMEARS transients and dulls the voice, so it is kept
+            // only as a hint of metal: dry and short.
             var ch = Ensure<AudioChorusFilter>(src.gameObject);
             if (ch != null)
             {
@@ -93,9 +90,9 @@ public static class RobotVoiceBuilder
                 ch.dryMix = 0.85f; ch.wetMix1 = 0.15f; ch.wetMix2 = 0.05f; ch.wetMix3 = 0f;
             }
 
-            // Distortion DULLS. Its job is now done by the bit-crush in RobotVoiceFx,
-            // which adds grit by BRIGHTENING instead. Remove any earlier one so a
-            // re-run actually undoes the muffled build rather than layering on it.
+            // Distortion DULLS. Grit comes from the bit-crush in RobotVoiceFx instead,
+            // which adds it by BRIGHTENING. Remove any existing one so a re-run undoes a
+            // muffled build rather than layering on it.
             var stale = src.GetComponent<AudioDistortionFilter>();
             if (stale != null) Object.DestroyImmediate(stale);
 

@@ -6,17 +6,14 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// Names the bench's test tubes into ONE clean sequence, and gives the WORKSPACE
-/// HOLDERS draggable SLOT anchors with a ghost-tube preview (user 2026-07-16:
-/// "can you set anchors so I could help you manually fix the rackings locations
-/// within the kit?").
+/// HOLDERS draggable SLOT anchors with a ghost-tube preview, so the rack
+/// positions inside each kit can be fixed by hand.
 ///
-/// ⛔ STORAGE RACKS GET NO SLOTS (user 2026-07-16: "the blue ones? they already
-/// have test tubes here already fitting perfectly"). The tubes were duplicated
-/// TOGETHER WITH their kit holders, so every copy arrived already seated correctly
-/// relative to its rack. A first pass here also shipped a "Seat Tubes In Slots"
-/// menu that would have MOVED all 19 perfectly-placed tubes onto bounds-GUESSED
-/// slots and destroyed that placement — it is deleted. Never re-derive rack
-/// positions the scene already has right.
+///
+/// ⛔ STORAGE RACKS GET NO SLOTS. The tubes were duplicated
+/// TOGETHER WITH their kit holders, so every copy is already seated correctly
+/// relative to its rack. Moving them onto bounds-GUESSED slots would destroy that
+/// placement. Never re-derive rack positions the scene already has right.
 ///
 /// Only the workspace holders need anchors, because they are the only racks that
 /// start EMPTY (the player drags tubes in mid-experiment), so there is no seated
@@ -43,9 +40,9 @@ public static class TubeRackSlotBuilder
     ///     slots are the tubes' resting/home positions, so a broken tube respawns
     ///     there (BreakableGlassware -> DropRespawn). Tubes ARE seated into these.
     ///
-    ///   WORKSPACE HOLDER (Experiment_Tube_Table_Kit_Holder_*) — the user's bench
+    ///   WORKSPACE HOLDER (Experiment_Tube_Table_Kit_Holder_*) — the bench
     ///     holders "players can use to hold their test tubes so they won't just
-    ///     carelessly lay it out to the table" (2026-07-16). These START EMPTY: the
+    ///     carelessly lay it out to the table". These START EMPTY: the
     ///     player drags a tube in mid-experiment. Seating tubes here at startup
     ///     would defeat the entire point of them.
     ///
@@ -111,7 +108,7 @@ public static class TubeRackSlotBuilder
                     Undo.RegisterCreatedObjectUndo(go, "add slot");
                     go.transform.SetParent(h.transform, false);
                     slot = go.transform;
-                    // First guess only — the user drags these. Spread along the
+                    // First guess only — these get dragged by hand. Spread along the
                     // holder's LONGEST horizontal axis, sitting on its top face.
                     bool alongX = b.size.x >= b.size.z;
                     float t01 = SlotsPerHolder == 1 ? 0.5f : i / (float)(SlotsPerHolder - 1);
@@ -130,8 +127,8 @@ public static class TubeRackSlotBuilder
                 pa.gizmoColor = new Color(0.45f, 1f, 0.55f, 0.9f);   // green = drag me
                 EditorUtility.SetDirty(slot.gameObject);
             }
-            // Runtime half (2026-07-16): without this the anchors were editor ghosts
-            // only — "it doesn't automatically get and rack the tubes". Release any
+            // Runtime half: without this the anchors are editor ghosts
+            // only and nothing racks the tubes. Release any
             // tube near a free slot and TubeRackSlots seats it.
             var rackSlots = h.GetComponent<TubeRackSlots>();
             if (rackSlots == null) rackSlots = h.gameObject.AddComponent<TubeRackSlots>();
@@ -149,10 +146,9 @@ public static class TubeRackSlotBuilder
                   + "then Re-Home Scene Items (Adopt Current).</color>");
     }
 
-    /// Remove slots from STORAGE racks. A first pass added them there before the
-    /// user pointed out those racks "already have test tubes fitting perfectly" —
-    /// they were noise, and the companion "Seat Tubes In Slots" menu would have
-    /// moved 19 correctly-placed tubes onto bounds-guessed positions.
+    /// Remove slots from STORAGE racks. Those racks already hold correctly seated
+    /// tubes, so slots there are noise, and seating tubes into them would move 19
+    /// correctly-placed tubes onto bounds-guessed positions.
     static int PurgeStorageSlots()
     {
         int killed = 0;

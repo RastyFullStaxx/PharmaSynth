@@ -6,10 +6,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 
-/// One procedures display (user 2026-07-10): the entrance LabTablet duplicated
-/// the wrist holo board, and the wrist mini-panel duplicated the holo header —
-/// three surfaces fighting over the same content, with the tablet's fixed rect
-/// overflowing into its reaction footer. This menu retires the LabTablet
+/// One procedures display. The entrance LabTablet duplicates the wrist holo
+/// board and the wrist mini-panel duplicates the holo header: three surfaces
+/// for the same content, with the tablet's fixed rect overflowing into its
+/// reaction footer. This menu retires the LabTablet
 /// (deactivated, not deleted) and the MiniPanel, and upgrades the holo board to
 /// the single panel: status header (ex mini-panel) + focused checklist + the
 /// balanced-reaction footer (ex tablet). Idempotent.
@@ -59,8 +59,8 @@ public static class PanelConsolidationBuilder
             return;
         }
 
-        // Keep the procedures board readable as the player turns (user 2026-07-11:
-        // "results/procedures panels must face the avatar"). PlaceHolo aims it on
+        // Keep the procedures board readable as the player turns (the
+        // results/procedures panels must face the avatar). PlaceHolo aims it on
         // summon; FaceCamera holds it facing the head every frame after.
         if (holo.GetComponent<FaceCamera>() == null)
         {
@@ -101,8 +101,8 @@ public static class PanelConsolidationBuilder
                   + (guide == null ? ", NO tour guide found" : ", tour re-seeded") + ".");
     }
 
-    /// W5.12 (user: "instruction step is one continuous row — wrap the texts and
-    /// make the panel scrollable"): every holo text wraps, and the checklist body
+    /// Every holo text wraps (an instruction step would otherwise run as one
+    /// continuous row), and the checklist body
     /// moves inside a masked, scrollable viewport with big ^ / v page buttons
     /// (poke/ray-friendly) driven by HoloScroller. Idempotent.
     [MenuItem("Tools/PharmaSynth/Fix Holo Board Scroll")]
@@ -211,9 +211,8 @@ public static class PanelConsolidationBuilder
         colors.highlightedColor = new Color(0.25f, 0.55f, 0.85f, 1f);
         colors.pressedColor = new Color(0.15f, 0.35f, 0.6f, 1f);
         btn.colors = colors;
-        // These two were the ONLY buttons in the game with no hover/click cue —
-        // this builder never added UiButtonSounds, unlike every other button
-        // factory (2026-07-29 audit).
+        // Every other button factory adds UiButtonSounds; these two need it too,
+        // or they are the only buttons with no hover/click cue.
         if (go.GetComponent<UiButtonSounds>() == null) go.AddComponent<UiButtonSounds>();
 
         var labelT = go.transform.Find("Label");

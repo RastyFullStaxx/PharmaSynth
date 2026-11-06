@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// Scroll driver for the holo procedures board (user 2026-07-12: the instruction
+/// Scroll driver for the holo procedures board (the instruction
 /// text rendered as one continuous row and couldn't be read — the body now wraps
 /// inside a masked viewport and this scrolls it). Big ▲/▼ page buttons are the
 /// primary VR affordance (poke/ray-friendly); the ScrollRect still accepts direct

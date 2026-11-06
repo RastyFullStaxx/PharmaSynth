@@ -2,8 +2,8 @@ using TMPro;
 using UnityEngine;
 
 /// A live world-space readout floating over a vessel — an in-game instrument panel
-/// (user 2026-07-15: "add texts that reflect the temperature… other experiments
-/// that require heating will use these texts for monitoring"). Shows
+/// (text that reflects the temperature; other experiments
+/// that require heating use it for monitoring). Shows
 /// "Hard-glass tube / 62 C -> 120 C" while heating, or "Gas collection tube /
 /// Collecting 45%" while a gas fills, and tints from cool blue to hot orange.
 ///

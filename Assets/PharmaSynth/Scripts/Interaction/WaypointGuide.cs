@@ -112,8 +112,8 @@ public class WaypointGuide : MonoBehaviour
     /// Pure placement rule (suite-pinned).
     ///
     /// Anchored to the target's SOLID BOUNDS, never its transform origin: a shelf
-    /// bottle's origin sits at its base, so "origin + up" buried the marker in the
-    /// bottle itself (user headset capture, 2026-08-07).
+    /// bottle's origin sits at its base, so "origin + up" buries the marker in the
+    /// bottle itself.
     ///
     /// When something is directly overhead — the shelf plank above, in a cabinet —
     /// going up hides the marker inside it. Caged targets get the marker pulled OUT
@@ -135,9 +135,8 @@ public class WaypointGuide : MonoBehaviour
 
     private void Update()
     {
-        // Guidance runs in EVERY mode (W5.55) — see GuidePath for why the Tutorial-only
-        // rule was dropped. The beacon still stands down whenever the floor path can do the
-        // job; that division of labour is unchanged.
+        // Guidance runs in EVERY mode (see GuidePath). The beacon still stands down whenever
+        // the floor path can do the job.
         if (marker == null || TimeSkipController.IsSkipping) { Hide(); return; }
         bool running = runner != null && runner.Graph != null && runner.IsRunning;
 
@@ -147,15 +146,15 @@ public class WaypointGuide : MonoBehaviour
 
         // ONE arrow, never two — pick the SOURCE first ("go fetch that"), and hop to
         // the destination once it is in hand ("now put it here"). Two simultaneous
-        // arrows would just ask the player which one to follow. The rule now lives in
-        // TaskTargetRegistry.PickTarget so the floor path picks the SAME object (W5.44);
+        // arrows would just ask the player which one to follow. The rule lives in
+        // TaskTargetRegistry.PickTarget so the floor path picks the SAME object;
         // two navigation cues disagreeing is worse than either alone.
         var camNow = Camera.main;
         Transform station = running
             ? TaskTargetRegistry.PickTarget(id,
-                camNow != null ? camNow.transform.position : Vector3.zero)   // pool → held-or-nearest (W5.53)
+                camNow != null ? camNow.transform.position : Vector3.zero)   // pool → held-or-nearest
             : null;
-        // Gear up, then the door: the gate's own destination before any run exists (W5.55).
+        // Gear up, then the door: the gate's own destination before any run exists.
         if (station == null)
         {
             if (_gate == null) _gate = FindAnyObjectByType<PharmeeGatekeeper>();
@@ -166,7 +165,7 @@ public class WaypointGuide : MonoBehaviour
         // ⭐ Stand down while the ground path is showing. The path routes around the
         // benches and owns the far case; the beacon reads through a cabinet door and owns
         // the near one. Drawing both spends attention twice to answer one question, and
-        // Tutorial Mode has little of it left to spend (W5.44 design rule).
+        // Tutorial Mode has little of it left to spend (design rule).
         if (station != null && GuidePath.Instance != null && GuidePath.Instance.PathShown)
         { Hide(); return; }
 

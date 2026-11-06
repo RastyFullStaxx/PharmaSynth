@@ -5,9 +5,8 @@ using UnityEditor;
 using UnityEngine;
 
 /// Plays a module END-TO-END in edit mode, driving the REAL wiring the player
-/// would (user 2026-07-17: "I want you to see the bugs yourselves when you play
-/// the game before I test it manually"). Not a replacement for the headset pass —
-/// it can't feel a grab or see a misplaced visual — but it catches the
+/// would. Not a replacement for the headset pass (it can't feel a grab or see a
+/// misplaced visual), but it catches the
 /// dead-on-arrival class before a human wastes VR time on it:
 ///   • a step no mechanism can complete (missing binding/station/rack wiring)
 ///   • thresholds that complete early or never (the accumulation contract)
@@ -16,19 +15,17 @@ using UnityEngine;
 ///   • pours that land invisibly small in their vessel
 ///   • correct play being flagged as a mistake (mis-authored bindings)
 ///
-/// HOW it simulates — the PLAYER PATH, not the plumbing (user 2026-07-17: "do
-/// not cheat by programmatically connecting things; you wouldn't see issues"):
+/// HOW it simulates: the PLAYER PATH, not the plumbing.
 /// builder.Build() wires the real scene, runner.StartExperiment() opens the real
-/// graph, and every reagent is then TRANSFERRED the way a hand would — drawn out
+/// graph, and every reagent is then TRANSFERRED the way a hand would: drawn out
 /// of the actual bench source bottle (PourOut) and landed through
 /// LiquidPhysics.AddLiquid in VERB-CONTRACT increments (1 ml a squeeze, 0.1 g a
 /// spatula dip, 0.5 ml tilt-pour ticks WITH human overshoot). Completion may
 /// only arrive through the real event chain: AddLiquid → LiquidAdded → binding →
-/// CompleteTask, rack-group polls, ZoneSimStation sims. The first version drove
-/// binding.HandleReagent directly and reported Exp 2 CLEAN while a real player
-/// was hard-stuck — the binding had never subscribed to its vessel's events, a
-/// bug the direct call bypassed entirely. Never again: pours go through the
-/// bottle or they don't count.
+/// CompleteTask, rack-group polls, ZoneSimStation sims. Calling
+/// binding.HandleReagent directly bypasses the binding's subscription to its
+/// vessel's events, so a binding that never subscribed (a hard-stuck player)
+/// would still report CLEAN. Pours go through the bottle or they don't count.
 public static class SimulatedRun
 {
     public class Result
@@ -100,7 +97,7 @@ public static class SimulatedRun
         runner.SetModule(module);
         runner.StartExperiment();
 
-        // ⛔ EDIT-MODE SEAM (W5.40). MethaneApparatusRig wires itself to
+        // ⛔ EDIT-MODE SEAM. MethaneApparatusRig wires itself to
         // ExperimentStarted from OnEnable — which does not fire in edit mode, so the
         // event passes it by and NONE of its five completion conditions register. The
         // symptom is brutal to read: the verb is performed perfectly (the grind measured
@@ -118,7 +115,7 @@ public static class SimulatedRun
         log.AppendLine("=== Simulated run: " + moduleId + " (" + res.totalTasks + " tasks) ===");
 
         // Everything a step needs (indexes, reaction watchers, audits) lives in the Session
-        // so the PLAY-MODE visual sweep (W5.45) can perform ONE honest step per frame and
+        // so the PLAY-MODE visual sweep can perform ONE honest step per frame and
         // photograph it; this edit-mode walk just drives the same session to the end.
         var session = new Session();
         session.Begin(runner, moduleId, res, log);
@@ -166,11 +163,10 @@ public static class SimulatedRun
 
         // TEAR DOWN, don't leave a revealed stage: Build("tutorial-methane") is a
         // pure clear (stage children incl. TeleAnchor_* pads, DynLabel_* billboards,
-        // bench bindings) that spawns nothing — methane's stage is hand-built. The
-        // sim used to end on Build(moduleId), which left the guidance litter in the
-        // scene after every suite run; the user kept hand-deleting DynLabels and
-        // TeleAnchors that the next run resurrected (2026-07-17). Use Reveal Stage
-        // when you WANT the built stage to inspect.
+        // bench bindings) that spawns nothing, because methane's stage is hand-built.
+        // Ending on Build(moduleId) would leave the guidance litter in the scene after
+        // every suite run, bringing back hand-deleted DynLabels and TeleAnchors. Use
+        // Reveal Stage when you WANT the built stage to inspect.
         session.End();
         builder.Build("tutorial-methane");
 
@@ -186,8 +182,8 @@ public static class SimulatedRun
         return res;
     }
 
-    /// ⛔ NEVER complete a task by fiat while the VISUAL sweep is playing (user,
-    /// 2026-09-02: "no programmatically cheating through"). In edit mode a handler that
+    /// ⛔ NEVER complete a task by fiat while the VISUAL sweep is playing (no
+    /// cheating a step through in code). In edit mode a handler that
     /// cannot finish a step forces past it so the walk can report what ELSE breaks — that
     /// is the right trade for a static audit. In Play mode it would silently mark a step
     /// done that no player could have done, which is the one thing the sweep exists to
@@ -200,7 +196,7 @@ public static class SimulatedRun
         runner.CompleteTask(id);
     }
 
-    // ---- play-mode visual sweep seams (W5.45) ----------------------------------
+    // ---- play-mode visual sweep seams ----------------------------------
     /// What the last Perform acted ON, so a photographer can point a camera at it
     /// without re-deriving the handler's choice: the vessel the step happened in, the
     /// verb kind, the temperature goal of a heat/chill step, and every reaction rule
@@ -211,8 +207,8 @@ public static class SimulatedRun
     public static readonly List<ReactionRule> LastReactions = new List<ReactionRule>();
     /// The vessel the last reaction actually fired IN. A rack step serves five tubes and
     /// the observation belongs to whichever one reacted, not to whichever the handler
-    /// happened to note last — judging the wrong tube reported the permanganate as
-    /// unchanged when the reaction had fired one tube over (W5.45).
+    /// happened to note last; judging the wrong tube reads the permanganate as
+    /// unchanged when the reaction fired one tube over.
     public static LiquidPhysics LastReactionVessel;
     /// Mid-verb hook: photograph a verb IN FLIGHT — the loaded scoop over the jar, the
     /// dish at the flame, the vessel on the balance. Null outside the visual sweep.
@@ -222,7 +218,7 @@ public static class SimulatedRun
     { LastKind = kind; if (lp != null) LastVessel = lp; if (targetC > 0f) LastTargetC = targetC; }
 
     /// What a vessel actually holds, for a transcript line. Print this beside any failure
-    /// rather than describing the failure alone (the W5.40 harness lesson).
+    /// rather than describing the failure alone.
     public static string StateOf(LiquidPhysics lp)
     {
         if (lp == null) return "(no vessel)";
@@ -274,9 +270,9 @@ public static class SimulatedRun
             Runner = runner; Res = res; Log = log;
 
             // The module's own END PRODUCT is hidden from the bench during its run
-            // ("the player must craft it") — a shelf bottle of it therefore CANNOT
-            // be a source, however the edit-mode scene looks. Round one poured the
-            // litmus sample straight from the (play-mode-hidden) Raw_BenzoicAcid.
+            // (the player must craft it), so a shelf bottle of it CANNOT
+            // be a source, however the edit-mode scene looks (e.g. the litmus sample
+            // must not come from the play-mode-hidden Raw_BenzoicAcid).
             s_hiddenProduct = EndProductVisibility.HiddenProductFor(moduleId, false);
             // The product IDENTITY (independent of whether a shelf bottle exists to
             // hide): a bound vessel holding ONLY this substance is the player's own
@@ -288,10 +284,10 @@ public static class SimulatedRun
             _onMistake = (type, msg) => log.AppendLine("  ⚠ MISTAKE [" + type + "] " + msg);
             runner.Mistakes.MistakeRecorded += _onMistake;
 
-            // Heat-gate watchdog (user 2026-07-17: "achieve the needed in the
-            // procedure first, before these reactions come"): any temperature-gated
+            // Heat-gate watchdog: the procedure's heating must be achieved before its
+            // reactions come, so any temperature-gated
             // rule that fires while its vessel is still COLD is a broken gate.
-            // ALSO the reaction TRANSCRIPT (strict pass 2026-07-18): every fire is
+            // ALSO the reaction TRANSCRIPT: every fire is
             // logged with its observation, so "did the violet discharge / did the
             // buff precipitate drop" is read straight off the log instead of being
             // proven only transitively by the next step's source lookup.
@@ -318,9 +314,9 @@ public static class SimulatedRun
                 _watchers.Add((cap, h));
             }
 
-            // FUNNEL audit (strict pass 2026-07-18): a funnel WITHOUT the
+            // FUNNEL audit: a funnel WITHOUT the
             // LiquidPassthrough marker EATS any pour aimed through it (the stream
-            // lands on its collider as a puddle — the W5.15 headset bug). The hints
+            // lands on its collider as a puddle). The hints
             // tell the player to pour through the funnel, so a bad funnel breaks
             // the filter step even though a direct pour would work.
             foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -478,10 +474,10 @@ public static class SimulatedRun
                 continue;   // supply audit details it; keep walking
             }
             // Pouring FROM another vessel (the filtrate through the funnel) is a
-            // tilt-pour of the solution — never spatula dips, whatever the
-            // chemical's dry state says (round one dipped the hydrolysate 50×).
-            // EXCEPT dry crystals (user 2026-07-18: "if it's solid, shouldn't we
-            // use porcelain spatula or scoopula?"): a solid product drawn from
+            // tilt-pour of the solution, never spatula dips, whatever the
+            // chemical's dry state says (dipping a hydrolysate 50× is wrong).
+            // EXCEPT dry crystals, which take a porcelain spatula or scoopula:
+            // a solid product drawn from
             // the PURE-PRODUCT vessel (crystallised flask / dried-crystal
             // beaker) is a scoop dip — a crude chill flask still holding mother
             // liquor is decanted (the filter pour), and heat vessels hold
@@ -533,7 +529,7 @@ public static class SimulatedRun
 
             float before = b.AccumulatedFor(id, s.reagent);
             int poured = 0;
-            // PLAY MODE (W5.45): solids go through the REAL scoop verb — the bench
+            // PLAY MODE: solids go through the REAL scoop verb — the bench
             // scoopula/spatula dips the jar (the heap rides its blade), is carried to
             // the vessel and tipped in. Edit mode keeps the direct path below: Dip
             // builds runtime objects, and the suite's simrun pins must not move.
@@ -583,8 +579,8 @@ public static class SimulatedRun
                 }
             }
             if (scoop != null) scoop.transform.position = scoopHome;
-            // The pour happened; did the BINDING hear it? Silent-unsubscribed is
-            // exactly the bug that hard-stuck the 2026-07-17 headset run.
+            // The pour happened; did the BINDING hear it? A binding silently
+            // unsubscribed from its vessel leaves a real player hard-stuck.
             if (s.requiredMl > 0f && b.AccumulatedFor(id, s.reagent) <= before + 0.001f
                 && !runner.Graph.IsComplete(id))
             {
@@ -872,7 +868,7 @@ public static class SimulatedRun
         if (!stripWired)
             res.bugs.Add(id + ": no litmus strip in the scene carries a Collider — a physical touch can never register in play");
 
-        // PLAY MODE (W5.45): use a REAL bench strip when one is out, so the strip's own
+        // PLAY MODE: use a REAL bench strip when one is out, so the strip's own
         // colour (LitmusMath.ColorForPH) is what gets photographed. Edit mode keeps the
         // renderer-less stand-in.
         LitmusStrip real = null;
@@ -949,10 +945,8 @@ public static class SimulatedRun
         return true;
     }
 
-    /// Circle the pestle in the mortar. Same shape as the stir verb — GrindController
-    /// carries its own OrbitMath and the same Tick(x, z, inside) seam — and it had no
-    /// simulator at all until W5.40, which is part of why the methane tutorial went
-    /// unplayed by every automated check.
+    /// Circle the pestle in the mortar. Same shape as the stir verb: GrindController
+    /// carries its own OrbitMath and the same Tick(x, z, inside) seam.
     static bool SimulateGrind(ExperimentRunner runner, string id, Result res, StringBuilder log)
     {
         GrindController grind = null;
@@ -988,8 +982,8 @@ public static class SimulatedRun
     }
 
     /// The methane tutorial's four rig steps. Everything here is driven by the rig's own
-    /// per-frame logic — which is why no simulator covered it before W5.40: Update and
-    /// Time do not exist in edit mode. MethaneApparatusRig.Step(dt) is that same frame
+    /// per-frame logic, and Update and Time do not exist in edit mode.
+    /// MethaneApparatusRig.Step(dt) is that same frame
     /// with the timestep injected, so this plays the REAL rig rather than a copy of it.
     ///
     /// Props are carried into position and put back afterwards, exactly as SimulateFlame
@@ -1031,12 +1025,10 @@ public static class SimulatedRun
                 else
                 {
                     // ⛔ Through the REAL scoopula in Play mode, exactly like every other solid
-                    // step (W5.45): Dip builds the heap on the blade, Deposit builds the mound in
-                    // the tube via EnsurePowderVisual. This branch predated that rule and moved
-                    // the volume with a bare AddLiquid, so the tube held 4 g of solid and drew
-                    // NOTHING — the VISUAL sweep's only FAIL once setup-apparatus had a real
-                    // contract (2026-09-05). A player scooping by hand always got the mound; the
-                    // harness was the one skipping the verb. Edit mode keeps the direct path so
+                    // step: Dip builds the heap on the blade, Deposit builds the mound in
+                    // the tube via EnsurePowderVisual. A bare AddLiquid moves the volume but
+                    // draws NOTHING (4 g of solid, no mound), which the VISUAL sweep fails and a
+                    // player scooping by hand never sees. Edit mode keeps the direct path so
                     // the simrun pins do not move, but mirrors what Deposit would have drawn.
                     ScoopController scoop = Application.isPlaying && src != null
                                             && src.currentChemical != null
@@ -1201,9 +1193,9 @@ public static class SimulatedRun
         if (vapor == null) return false;
 
         // The step map was built when the session began; a pool member may have claimed the
-        // receiver role since (W5.54), and the authored twin then advertises nothing. Condense
-        // into a vessel that STILL advertises the step, never into a stale first entry — the
-        // visual sweep ran 32 ml into a twin that scolded every drop.
+        // receiver role since, and the authored twin then advertises nothing. Condense
+        // into a vessel that STILL advertises the step, never into a stale first entry
+        // (a twin that no longer wants it scolds every drop).
         LiquidTaskBinding recvBind = null;
         foreach (var (b, _) in steps)
         {
@@ -1415,9 +1407,9 @@ public static class SimulatedRun
             else
             {
                 // A shelf bottle of the module's own END PRODUCT is hidden in
-                // play — the player cannot pour from it, so neither may the sim.
-                // (This exclusion is what exposed Exp 3's unplayable "wash =
-                // bench Ethanol" shorthand: that bottle is hidden during Exp 3.)
+                // play: the player cannot pour from it, so neither may the sim
+                // (e.g. bench Ethanol is hidden during Exp 3, so it cannot stand in
+                // for the wash).
                 if (chem != null && chem.chemicalName == s_hiddenProduct) continue;
                 if (shelf == null || lp.currentLiquidVolume > shelf.currentLiquidVolume) shelf = lp;
             }
@@ -1440,10 +1432,9 @@ public static class SimulatedRun
             if (st == null || st.TaskId != id) continue;
             // FILTER stations: the player POURS the previous step's vessel
             // through the funnel into the receiver below (LiquidPassthrough lets
-            // the stream through). Model that pour for real — the receiving
+            // the stream through). Model that pour for real: the receiving
             // vessel must actually hold the filtrate or the follow-up chemical
-            // test has nothing to react with (the FeCl3 violet stayed invisible
-            // until this was simulated honestly, 2026-07-17).
+            // test has nothing to react with (e.g. the FeCl3 violet).
             if (st.Kind == StationSim.Filter)
                 SimulateFunnelPour(runner, id, log);
             // Heat stations gate on a LIT burner (ignition gate) — the player's
@@ -1553,8 +1544,8 @@ public static class SimulatedRun
         }
     }
 
-    /// A correct delivery the player cannot SEE reads as a bug in VR (the 0.5%
-    /// bucket-fill lesson) — flag any task vessel that ENDS the run under 4% of
+    /// A correct delivery the player cannot SEE reads as a bug in VR (e.g. a 0.5%
+    /// fill), so flag any task vessel that ENDS the run under 4% of
     /// its capacity. Reads the LIVE vessel (funnel pours and reactions included),
     /// not the scripted-delivery tally, which under-counted the filtrate beaker.
     static void AuditVisibility(Dictionary<LiquidTaskBinding, float> pouredInto,
@@ -1592,4 +1583,4 @@ public static class SimulatedRun
 }
 #endif
 
-// touch 2026-07-18 suite-autorun trigger
+// touch: suite-autorun trigger

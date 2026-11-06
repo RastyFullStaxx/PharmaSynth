@@ -1,8 +1,8 @@
 using UnityEngine;
 
 /// Makes the lab speaker cabinet's power LED blink like a real machine's standby
-/// light (user 2026-07-19): a crisp bright pulse with a long dark gap, rather than
-/// the flat always-on emissive it used to be. Driven through a MaterialPropertyBlock
+/// light: a crisp bright pulse with a long dark gap, rather than a flat always-on
+/// emissive. Driven through a MaterialPropertyBlock
 /// so the shared SpeakerLED material is never instanced (edit-mode safe).
 ///
 /// Thin MonoBehaviour: the envelope is a pure static function; the renderer is bound

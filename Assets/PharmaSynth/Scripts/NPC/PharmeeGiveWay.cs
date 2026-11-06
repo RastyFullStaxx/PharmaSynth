@@ -1,7 +1,7 @@
 using UnityEngine;
 
-/// Pharmee steps aside when the player walks into him (user 2026-07-10: "give way
-/// when I bump into him — I'm trying to go that way but he's blocking it"). While
+/// Pharmee steps aside when the player walks into him (so he never
+/// blocks the way the player is trying to go). While
 /// the player is inside his personal-space bubble, he drifts laterally out of their
 /// path (to whichever side he's already on, so he clears their forward direction),
 /// then eases back once they pass. Additive on top of FloatBob's home + bob, so it

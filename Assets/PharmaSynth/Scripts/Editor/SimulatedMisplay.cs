@@ -72,12 +72,12 @@ public static class SimulatedMisplay
                 // ⚠ A fresh STAGE per probe, not merely a fresh attempt.
                 //
                 // StartExperiment rebuilds the task graph but NOT the scene, and a
-                // LiquidTaskBinding's accumulator lives on the component — so probe 2
-                // inherited everything probe 1 poured. The starvation probe then drained
-                // the bench, found the step already delivered, and blamed the supply
-                // monitor for correctly reporting no shortfall. Eight modules, all
-                // phantom. A real Retry rebuilds the stage (ExperimentLauncher), so this
-                // matches the game rather than working around it.
+                // LiquidTaskBinding's accumulator lives on the component, so a reused
+                // stage hands probe 2 everything probe 1 poured. The starvation probe
+                // would then drain the bench, find the step already delivered, and blame
+                // the supply monitor for correctly reporting no shortfall. A real Retry
+                // rebuilds the stage (ExperimentLauncher), so this matches the game rather
+                // than working around it.
                 void Fresh() { builder.Build(def.moduleId); runner.StartExperiment(); }
 
                 Fresh(); WrongReagentProbe(runner, def.moduleId, findings, log); runner.Abort();
@@ -119,8 +119,8 @@ public static class SimulatedMisplay
 
         int before = runner.MistakeCount;
         string wrongName = wrong.currentChemical != null ? wrong.currentChemical.chemicalName : "?";
-        // Through the bottle, never the binding: a direct HandleReagent call once reported
-        // Exp 2 CLEAN while a real player was hard-stuck (SimulatedRun's founding lesson).
+        // Through the bottle, never the binding: a direct HandleReagent call can report
+        // a module CLEAN while a real player is hard-stuck.
         var drawn = wrong.PourOut(5f);
         if (drawn != null) vessel.AddLiquid(drawn, 5f);
 
@@ -148,9 +148,8 @@ public static class SimulatedMisplay
         //
         // LiquidTaskBinding accumulates per step because one task may name several
         // reagents, and a completesTask:false step is finished later by a weigh station or
-        // rack group. Asserting task completion after pouring ONE of its reagents blamed
-        // the game for the probe's own partial play — in three modules, with the evidence
-        // sitting right there in the message ("needs 40.0, accumulated 42.0").
+        // rack group. Asserting task completion after pouring ONE of its reagents would
+        // blame the game for the probe's own partial play.
         //
         // What contamination could really break is the accumulator: if the wrong pour made
         // the binding stop counting the right reagent, the player is stranded. That is the
@@ -363,10 +362,15 @@ public static class SimulatedMisplay
     /// A stocked bench bottle holding something this binding does NOT expect.
     static LiquidPhysics FindWrongSource(LiquidTaskBinding binding, LiquidTaskBinding.ReagentStep step)
     {
-        var expected = new HashSet<ChemicalData>();
+        // Exclude what ANY role of a pooled tube takes: pouring Exp 2's glycerol into a free
+        // tube makes it the glycerol tube (correct play), which would otherwise be reported
+        // as a silent wrong pour whenever the unordered scene search picks it.
+        var expected = new HashSet<ChemicalData>(binding.AllRoleReagents());
         foreach (var s in binding.ExpectedSteps) if (s != null && s.reagent != null) expected.Add(s.reagent);
 
-        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        var all = new List<LiquidPhysics>(Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include));
+        all.Sort((a, b) => string.CompareOrdinal(a != null ? a.name : "", b != null ? b.name : ""));   // stable run to run
+        foreach (var lp in all)
         {
             if (lp == null || lp.currentChemical == null || lp.currentLiquidVolume < 10f) continue;
             if (expected.Contains(lp.currentChemical)) continue;

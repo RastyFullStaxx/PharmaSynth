@@ -1,7 +1,7 @@
 using UnityEngine;
 
-/// ONE shared tuning for Pharmee's robot voice (user 2026-07-27: "make it one
-/// reusable effect so once we tune it, it applies to other voices of Pharmee").
+/// ONE shared tuning for Pharmee's robot voice (one
+/// reusable effect, so one tuning applies to every Pharmee voice).
 ///
 /// Every RobotVoiceFx reads this asset, so there is a single place to dial the
 /// character and it reaches every line she will ever speak — generated or not.
@@ -11,9 +11,9 @@ using UnityEngine;
 /// written to the asset and SURVIVE exiting play mode, unlike edits to a scene
 /// component. So you can tune by ear in a live session and keep what you land on.
 ///
-/// ⭐ THE CHOSEN CHARACTER (user 2026-07-28, after hearing all the alternatives):
-/// RING MODULATION at a LOW carrier, blended with dry signal. The user describes
-/// it as "speaking against an electric fan" and WANTS that — just not too strong.
+/// ⭐ THE CHOSEN CHARACTER (picked after auditioning all the alternatives):
+/// RING MODULATION at a LOW carrier, blended with dry signal. It sounds
+/// like "speaking against an electric fan", which is intended — just not too strong.
 /// This was arrived at by elimination, so do not "improve" it away:
 ///   • Heavier band-limiting  -> "muffled"           (rejected)
 ///   • Decimation + comb      -> "sounds so human"   (rejected — it recolours

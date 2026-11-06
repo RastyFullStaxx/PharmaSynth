@@ -2,8 +2,8 @@
 using UnityEditor;
 using UnityEngine;
 
-/// Injects each experiment's ILO beats into its Intro cutscene (user 2026-07-10:
-/// Pharmee states the learning outcomes in the opening dialogue). Beats slot in
+/// Injects each experiment's ILO beats into its Intro cutscene
+/// (Pharmee states the learning outcomes in the opening dialogue). Beats slot in
 /// after the greeting beat: a lead-in, then one beat per objective (verbatim
 /// Appendix C copy from IloCopy). Idempotent — the lead-in text is the marker.
 public static class IloBeatInjector

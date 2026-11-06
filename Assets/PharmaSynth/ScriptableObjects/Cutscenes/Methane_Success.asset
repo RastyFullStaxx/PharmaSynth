@@ -18,6 +18,22 @@ MonoBehaviour:
   - subtitle: "That clean blue flame confirms it \u2014 you've synthesized methane!"
     seconds: 4
     face: 1
+    shot:
+      camera: Cam_PharmeeClose
+      moveTo: 
+      blend: 1
+      look: 1
+      lookMarker: 
+      fov: 45
+      pharmeePopIn: 1
   - subtitle: Excellent work. You're ready for the Prelim experiments.
     seconds: 3.5
     face: 1
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 1
+      look: 3
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0

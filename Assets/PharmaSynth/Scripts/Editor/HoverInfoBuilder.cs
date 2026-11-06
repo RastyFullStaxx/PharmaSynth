@@ -6,7 +6,7 @@ using UnityEngine.UI;
 using NearFar = UnityEngine.XR.Interaction.Toolkit.Interactors.NearFarInteractor;
 
 /// Builds the hover-inspector info card + wires the raycasting HoverInspector into
-/// SampleScene (user 2026-07-10). Point the right-hand ray (or gaze) at a reagent,
+/// SampleScene. Point the right-hand ray (or gaze) at a reagent,
 /// a piece of apparatus or an NPC and a smoothly-animated card names it and explains
 /// what it is / how to use it.
 ///
@@ -44,9 +44,9 @@ public static class HoverInfoBuilder
         if (tfx >= 0) mask &= ~(1 << tfx);
         mask &= ~(1 << avatar);
         inspector.Bind(aim, head, panel, mask);
-        // The OTHER hand points too (W5.55): carrying a tube in one hand is the normal
-        // working posture, and the card used to blank out for both hands the moment either
-        // one held anything.
+        // The OTHER hand points too: carrying a tube in one hand is the normal
+        // working posture, so the card must not blank out for both hands the moment either
+        // one holds anything.
         Transform alt = FindOtherRay(aim);
         inspector.BindAltAim(alt);
         EditorUtility.SetDirty(inspector);

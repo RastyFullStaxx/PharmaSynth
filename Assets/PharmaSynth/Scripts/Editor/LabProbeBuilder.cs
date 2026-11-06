@@ -4,18 +4,17 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-/// Builds the lab's REFLECTION and LIGHT probes (user 2026-08-28, "aesthetic lab").
+/// Builds the lab's REFLECTION and LIGHT probes.
 ///
-/// The scene had ZERO of both, while the Mobile RP asset already had reflection-probe
-/// blending AND box projection switched on - the features were paid for with nothing to feed
-/// them. Two consequences the player sees constantly:
+/// The Mobile RP asset has reflection-probe blending AND box projection switched on, and
+/// both need probes to feed them. Without probes:
 ///
-///   * Every glass material in the ChemLab pack sets _EnvironmentReflections = 1, so with no
-///     probe they all sampled the DEFAULT reflection - the built-in procedural outdoor sky -
-///     inside a sealed windowless room. That is why beakers and flasks read as pale plastic.
-///   * Every dynamic object (all grabbable glassware, held items, Pharmee, Dr. Jimenez) was
-///     lit by flat ambient alone, so a beaker was lit identically under a closed cabinet and
-///     directly beneath a lamp. Nothing in the room grounded anything.
+///   * Every glass material in the ChemLab pack sets _EnvironmentReflections = 1, so it
+///     samples the DEFAULT reflection - the built-in procedural outdoor sky - inside a
+///     sealed windowless room, and beakers and flasks read as pale plastic.
+///   * Every dynamic object (all grabbable glassware, held items, Pharmee, Dr. Jimenez) is
+///     lit by flat ambient alone, so a beaker is lit identically under a closed cabinet and
+///     directly beneath a lamp.
 ///
 /// Probe placement is DERIVED from the room's own renderer bounds rather than hard-coded, so
 /// it survives the furniture moves the user makes through Select Movable Furniture.
@@ -55,8 +54,7 @@ public static class LabProbeBuilder
 
     /// The room's extent, measured from the STATIC shell only. Grabbables and effect children
     /// are excluded deliberately: LiquidPourer's world-space pour stream outlives a pour still
-    /// pointing at the floor, and encapsulating it drags bounds a metre downwards - the same
-    /// trap that once threw racked test tubes into the air.
+    /// pointing at the floor, and encapsulating it drags bounds a metre downwards.
     static Bounds RoomBounds()
     {
         var b = new Bounds();

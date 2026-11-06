@@ -3,8 +3,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// W5.12 (user 2026-07-13): convert the Methane tutorial to LOCATION-FREE
-/// completion. Deletes the 5 fixed Station_* zone objects (no more standing on a
+/// Convert the Methane tutorial to LOCATION-FREE
+/// completion. Deletes the 5 fixed Station_* zone objects (no standing on a
 /// pad), and rewires the MethaneApparatusRig to own its TemperatureSim +
 /// GasCollection so heat/collect/splint fire by item PROXIMITY anywhere, and
 /// prepare-mixture completes by grinding a mortar. Run once. Idempotent.

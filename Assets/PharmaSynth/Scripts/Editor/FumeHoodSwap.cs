@@ -3,11 +3,10 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Swaps the sealed Tripo fume-hood model for the regenerated OPEN-SASH,
-/// hollow-chamber one (user 2026-07-18: "even if you have a sliding there, it
-/// is not hollow inside"). Idempotent:
-///   • deactivates the old FumeHoodModel (kept in the scene for hand-deletion,
-///     per the user's delete-by-hand preference),
+/// Swaps the sealed Tripo fume-hood model (a sash, but not hollow inside) for the
+/// OPEN-SASH, hollow-chamber one. Idempotent:
+///   • deactivates the old FumeHoodModel (kept in the scene for hand-deletion
+///     rather than deleted by the tool),
 ///   • mounts Art/Generated/Refs/FumeHoodOpen.prefab under FumeHood_StandIn,
 ///     height-normalised to the house 2.35 m,
 ///   • re-fits the WorkVolume trigger into the new chamber (upper-front region
@@ -90,8 +89,8 @@ public static class FumeHoodSwap
             Vector3 toBench = benchCenter - inst.transform.position; toBench.y = 0f;
             if (toBench.sqrMagnitude > 0.01f)
                 inst.transform.rotation = Quaternion.LookRotation(toBench.normalized, Vector3.up);
-            // Snap to the nearest 90° — the hood stands square against its wall
-            // (aiming exactly at the bench centre left it ~30° diagonal).
+            // Snap to the nearest 90°: the hood stands square against its wall
+            // (aiming exactly at the bench centre leaves it ~30° diagonal).
             float snappedYaw = Mathf.Round(inst.transform.rotation.eulerAngles.y / 90f) * 90f;
             inst.transform.rotation = Quaternion.Euler(0f, snappedYaw, 0f);
         }

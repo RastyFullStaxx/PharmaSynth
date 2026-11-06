@@ -6,13 +6,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
 
-/// Two VR-UI scene fixes (user 2026-07-15).
-///   • Quiz answers unclickable: a world-space Canvas needs a
-///     TrackedDeviceGraphicRaycaster for the XR ray to hit it — a plain
-///     GraphicRaycaster is mouse-only. The scene had 10 GraphicRaycasters but only
-///     3 tracked ones, so most panels (incl. the quiz) ignored the controller ray.
-///   • Dr. Jimenez's subtitles floated at local y=2.15 — above head height, up by
-///     the ceiling and unreadable. Lowered to just above his head.
+/// Two VR-UI scene fixes.
+///   • Quiz answers clickable: a world-space Canvas needs a
+///     TrackedDeviceGraphicRaycaster for the XR ray to hit it; a plain
+///     GraphicRaycaster is mouse-only, so a panel without one ignores the
+///     controller ray.
+///   • Dr. Jimenez's subtitles sit just above his head (at local y=2.15 they
+///     float up by the ceiling, unreadable).
 /// Both idempotent.
 public static class VrUiFixes
 {

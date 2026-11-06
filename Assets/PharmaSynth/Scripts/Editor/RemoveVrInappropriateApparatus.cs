@@ -6,9 +6,8 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// Deletes the SCENE INSTANCES of apparatus that the manuscript lists but that
-/// carry no meaningful VR interaction — pure bench scaffolding and passive
-/// instruments the game already abstracts (user 2026-07-17: "they should be
-/// removed even from the table, but not from the folders just in case").
+/// carry no meaningful VR interaction: pure bench scaffolding and passive
+/// instruments the game already abstracts. The prefabs stay in their folders.
 ///
 /// ⛔ DELIBERATE, DOCUMENTED EXCEPTION to the "ALL tools always present" client
 /// rule. These six are NOT a decluttering of usable tools — each is either a
@@ -27,17 +26,17 @@ public static class RemoveVrInappropriateApparatus
         ("kit-aspirator",    "vacuum suction for filtration/transfer — the game moves liquid by pour/decant, never suction"),
         ("kit-condenser",    "distillation cooling — distillation is an abstracted heat+collect sim, no condenser assembly"),
         ("kit-thermometer",  "temperature is shown live by the floating ProcessReadout / water-bath label, so the physical device is decorative"),
-        // Flame-rig / crucible ignition set (user 2026-07-18). NO manuscript step
+        // Flame-rig / crucible ignition set. NO manuscript step
         // and NO game experiment uses any of these; the zone-free water bath caps
         // at 100 °C so a crucible's >500 °C ignition has no place. The TRIPOD +
-        // WIRE GAUZE are KEPT — the user uses them as a heat platform over a burner.
+        // WIRE GAUZE are KEPT — they serve as a heat platform over a burner.
         ("kit-claytriangle", "cradles a crucible over an open flame — the crucible is gone and the tripod+gauze cover 'hold over the burner'"),
         ("kit-crucible",     "strong >500 °C ignition/ashing vessel — no experiment needs it; the water bath caps at 100 °C"),
         ("kit-crucibletongs","handles the hot crucible — useless once the crucible is removed"),
         ("kit-alcoholburner","redundant flame source — the Bunsen burner beside the water bath covers all heating (user 2026-07-18)"),
-        // Empty sample vials (user 2026-07-18): 0 manuscript ("vial"/"amber" never
+        // Empty sample vials: 0 manuscript ("vial"/"amber" never
         // appear) and 0 game usage — no layout, prop, or code references them.
-        // Leftover reagent-staging containers from the retired-battery Ethyl layout;
+        // Reagent-staging containers with no use in the bench-bound Ethyl layout;
         // the bench-bound rebuild draws every reagent from the Raw_ bottles.
         ("kit-vial", "empty sample vial — 0 manuscript & 0 game usage (leftover reagent-staging container)"),
     };

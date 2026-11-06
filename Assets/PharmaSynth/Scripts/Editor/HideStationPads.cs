@@ -3,9 +3,9 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// W5.12 (user 2026-07-13): the hand-built Methane station pads still render as
-/// coloured cubes on the table — the DynamicStage builder hides its own pads
-/// (padMr.enabled = false, W5.8) but the authored Station_* objects were missed.
+/// The hand-built Methane station pads render as
+/// coloured cubes on the table. The DynamicStage builder hides its own pads
+/// (padMr.enabled = false) but not the authored Station_* objects.
 /// The pads are purely cosmetic: the trigger COLLIDER + sensors that detect each
 /// step stay, and the guides/labels tell the player where to act — so the cube
 /// mesh just clutters the view. This disables the MeshRenderer on every

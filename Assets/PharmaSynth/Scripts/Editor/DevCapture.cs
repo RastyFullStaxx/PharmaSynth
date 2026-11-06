@@ -44,8 +44,7 @@ public static class DevCapture
             cam.nearClipPlane = 0.05f;
 
             // A bare URP camera defaults post-processing OFF, so a capture would show the
-            // scene WITHOUT the volume stack the player actually sees - which made every
-            // before/after shot a lie about the render setup. Opt in, and match the
+            // scene WITHOUT the volume stack the player actually sees. Opt in, and match the
             // pipeline's MSAA so thin glass edges alias in the capture the way they do
             // in the headset.
             var camData = go.GetComponent<UniversalAdditionalCameraData>();

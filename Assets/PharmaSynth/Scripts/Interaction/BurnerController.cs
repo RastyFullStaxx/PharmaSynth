@@ -1,7 +1,7 @@
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// An ignitable Bunsen/alcohol burner (W5.8: matches finally DO something).
+/// An ignitable Bunsen/alcohol burner.
 /// Bring a lit matchstick to the burner and it lights — a looping flame +
 /// point light; Heat stations whose required prop is a burner only advance
 /// their sim while it is LIT (ZoneSimStation ignition gate).
@@ -20,8 +20,8 @@ public class BurnerController : MonoBehaviour
     public static bool ShouldIgnite(bool burnerLit, bool matchLit, float distance)
         => !burnerLit && matchLit && distance <= MatchIgniteDistance;
 
-    /// Pure: a lit burner that gets picked up blows out (user 2026-07-14: moving a
-    /// burner must extinguish it — re-light it once it's back down).
+    /// Pure: a lit burner that gets picked up blows out; re-light it
+    /// once it is back down.
     public static bool ShouldBlowOut(bool lit, bool held) => lit && held;
 
     private void Update()
@@ -36,7 +36,12 @@ public class BurnerController : MonoBehaviour
         _nextScan = Time.time + 0.25f;
         foreach (var match in FindObjectsByType<Matchstick>(FindObjectsSortMode.None))
         {
-            if (ShouldIgnite(_lit, match.IsLit, Vector3.Distance(transform.position, match.transform.position)))
+            // Measure flame-to-flame: the burner's MOUTH to the match HEAD. Pivot to match
+            // origin put the target at the burner's foot, so a match held where a person
+            // lights a burner (its mouth) often sat out of range.
+            float d = Mathf.Min(Vector3.Distance(FlamePos(), match.HeadPosition),
+                                Vector3.Distance(transform.position, match.transform.position));
+            if (ShouldIgnite(_lit, match.IsLit, d))
             {
                 Ignite();
                 break;
@@ -72,15 +77,15 @@ public class BurnerController : MonoBehaviour
 
     private Vector3 FlamePos()
     {
-        // Hand-placed "FlameAnchor" child wins (drag it onto the burner mouth;
-        // user 2026-07-14) — otherwise use the barrel top.
+        // Hand-placed "FlameAnchor" child wins (drag it onto the burner mouth),
+        // otherwise use the barrel top.
         var anchor = transform.Find("FlameAnchor");
         if (anchor != null) return anchor.position;
         var top = Barrel();
         if (top == null) return transform.position + Vector3.up * 0.12f;
         // Put the flame at the top of the BARREL, not the centre of the whole
-        // burner+hose bounds (user 2026-07-13: the flame floated off to the side
-        // because the long gas hose dragged the bounds centre away).
+        // burner+hose bounds (the long gas hose drags the
+        // bounds centre off to the side).
         var tb = top.bounds;
         return new Vector3(tb.center.x, tb.max.y + 0.01f, tb.center.z);
     }
@@ -90,8 +95,7 @@ public class BurnerController : MonoBehaviour
     {
         _flame = new GameObject("BurnerFlame");
         // Parent to the burner ROOT — NOT the barrel mesh. A nested barrel transform
-        // can carry a tiny import scale, which shrank the particles to invisibility
-        // (user 2026-07-15: Prop_burner had no flame while Kit_BunsenBurner did).
+        // can carry a tiny import scale, which shrinks the particles to invisibility.
         // The root still carries the flame when the burner is moved.
         _flame.transform.SetParent(transform, true);
         _flame.transform.position = FlamePos();   // FlameAnchor child wins, else barrel top

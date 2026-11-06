@@ -1,10 +1,10 @@
 using UnityEngine;
 
-/// A tiny draggable marker the user positions in the editor to tell a verb
+/// A tiny draggable marker positioned by hand in the editor to tell a verb
 /// exactly WHERE something happens on an imported mesh — the flame on a match
 /// head, the flame on a burner mouth, the bowl of a scoopula. Bounds-based
-/// guessing can't know a model's axis convention (user 2026-07-14: "can I drag
-/// these to the specific parts?"), so the code reads this anchor's position and
+/// guessing can't know a model's axis convention,
+/// so the code reads this anchor's position and
 /// falls back to a heuristic only when no anchor is present.
 ///
 /// Convention: a child named "FlameAnchor" (Matchstick / BurnerController) or

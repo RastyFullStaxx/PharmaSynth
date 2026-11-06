@@ -1,8 +1,8 @@
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// Pour wiring for HAND-PLACED bottles (user 2026-07-10: tipping a reagent-shelf
-/// bottle showed no stream/puddle). ExperimentSceneBuilder wires runtime-spawned
+/// Pour wiring for HAND-PLACED bottles, so tipping a reagent-shelf bottle shows a
+/// stream and puddle. ExperimentSceneBuilder wires runtime-spawned
 /// pourables, but the 16 shelf display bottles (and batch-H cabinet stock) are
 /// scene objects with LiquidPhysics only. This mirrors the builder's pourable
 /// block for an existing bottle, idempotently, callable from the editor menu
@@ -26,7 +26,7 @@ public static class ShelfPourWiring
         int added = 0;
         if (lp.registry == null && registry != null) { lp.registry = registry; added++; }
 
-        // Visible fill (W5.8): most ChemLab bottle prefabs have no liquid child
+        // Visible fill: most ChemLab bottle prefabs have no liquid child
         // mesh, so pours in/out were invisible. Idempotent — authored _WithLiquid
         // setups and already-wired bottles are left alone.
         if (lp.mainRenderer == null || lp.mainRenderer.sharedMaterial == null
@@ -40,8 +40,8 @@ public static class ShelfPourWiring
         if (pourer == null) { pourer = bottle.AddComponent<LiquidPourer>(); added++; }
         if (pourer.spout == null)
         {
-            // Mouth at the TOP of the bottle's real bounds (the old fixed 0.12 m
-            // guess sat mid-body on tall bottles).
+            // Mouth at the TOP of the bottle's real bounds (a fixed 0.12 m guess sits
+            // mid-body on tall bottles).
             // SOLID meshes only: a bottle that has poured before carries a
             // world-space StreamLine child, and encapsulating it walked the spout
             // out to wherever the last arc landed.
@@ -68,7 +68,7 @@ public static class ShelfPourWiring
             added++;
         }
 
-        // Feedback layer (W5.8): reaction/mix/overflow popups + a live contents
+        // Feedback layer: reaction/mix/overflow popups + a live contents
         // tag when the bottle already carries a ProximityLabel.
         if (bottle.GetComponent<MixFeedback>() == null)
         {

@@ -7,9 +7,8 @@ using UnityEditor;
 using UnityEngine;
 
 /// Re-runnable regression suite for the PharmaSynth engine. Run via
-/// menu: Tools ▸ PharmaSynth ▸ Run Self-Tests. Consolidates the assertions that
-/// were verified incrementally during W2–W3 into one permanent, one-click check.
-/// (Kept as an Editor-menu suite rather than an NUnit asmdef to avoid restructuring
+/// menu: Tools ▸ PharmaSynth ▸ Run Self-Tests. One permanent, one-click check.
+/// (An Editor-menu suite rather than an NUnit asmdef, to avoid restructuring
 /// the runtime assembly; a formal EditMode asmdef migration can layer on later.)
 public static class PharmaSelfTests
 {
@@ -102,6 +101,8 @@ public static class PharmaSelfTests
         VisualSweepSuite();
         PharmeePolishSuite();
         ChecklistPagerSuite();
+        CinemaSuite();
+        ForgivenessSuite();
         DemoModeSuite();
         DemoActionsSuite();
         IloCopySuite();
@@ -117,7 +118,7 @@ public static class PharmaSelfTests
         if (_fail == 0) Debug.Log("<color=#4CD07D>" + summary + " — ALL GREEN</color>");
         else Debug.LogError(summary + " — " + _fail + " FAILED:\n" + string.Join("\n", _log));
 
-        // Cheap verification channel (efficiency policy 2026-07-12): sessions read
+        // Cheap verification channel: sessions read
         // this one-liner instead of wrapping the run in a RunCommand capture.
         // Logs/ not Temp/ — Unity wipes Temp at startup.
         try
@@ -177,7 +178,9 @@ public static class PharmaSelfTests
         var sc2 = new ScoreCalculator(w);
         A("score: weights normalized", Near(sc2.Compute(new Dictionary<RubricCategory, float> { { RubricCategory.Procedure, 1 }, { RubricCategory.ChemicalTests, 1 } }).Total, 100f, 0.2f));
         A("score: time under par", Near(ScoreCalculator.TimeSubScore(300, 600), 1f));
-        A("score: time 2x par", Near(ScoreCalculator.TimeSubScore(1200, 600), 0f));
+        A("score: full marks up to 1.5x par (first-time VR pace)", Near(ScoreCalculator.TimeSubScore(900, 600), 1f));
+        A("score: time halfway between 1.5x and 3x par is half marks", Near(ScoreCalculator.TimeSubScore(1350, 600), 0.5f));
+        A("score: time 3x par", Near(ScoreCalculator.TimeSubScore(1800, 600), 0f));
     }
 
     static void GraderSuite()
@@ -195,7 +198,8 @@ public static class PharmaSelfTests
         var log = new MistakeLog();
         log.Record(LabErrorType.WrongReagent, ""); log.Record(LabErrorType.WrongStep, "");
         log.Record(LabErrorType.MissingPPE, ""); log.Record(LabErrorType.DroppedGlassware, "");
-        A("grader: mistakes = 81.08", Near(grader.Grade(g, log, 900, 600, 2f / 3f).Total, 81.08f, 0.3f));
+        // 900 s on a 600 s par is inside the 1.5x time grace (full time marks).
+        A("grader: mistakes = 86.08", Near(grader.Grade(g, log, 900, 600, 2f / 3f).Total, 86.08f, 0.3f));
         A("mistakelog: category mapping", MistakeLog.CategoryFor(LabErrorType.DroppedGlassware) == RubricCategory.Sanitation);
     }
 
@@ -310,7 +314,7 @@ public static class PharmaSelfTests
             narr.EndLine();
             A("narration: EndLine idempotent", ends == 1);
 
-            // PACING (user 2026-07-19: "pharmee might become too annoying if he
+            // PACING ("pharmee might become too annoying if he
             // speaks rapidly"). The post-reveal READ hold is the floor that keeps
             // a finished line up long enough to actually read.
             A("narration: a finished line always holds the minimum read time",
@@ -319,12 +323,11 @@ public static class PharmaSelfTests
             A("narration: the read floor is unaffected by a long reveal",
                 NPCNarrationController.HoldSecondsAfterReveal(2f, 12f) >= 1.9f);
 
-            // OVERLAP (user 2026-07-19: "pharmee is still speaking ... where dr
-            // jimenez now speaks"). Two things caused it: Pharmee's autonomous
-            // brain reacted during the scripted review, and the gate scheduled
-            // each review beat on a FIXED dwell — a line longer than
-            // dwell x cps overran its slot and the next beat landed on top.
-            // SecondsFor reports a line's REAL floor time so schedulers can't
+            // OVERLAP: Pharmee must not keep speaking where Dr. Jimenez speaks.
+            // Two causes: Pharmee's autonomous brain reacting during the scripted
+            // review, and the gate scheduling each review beat on a FIXED dwell, so a
+            // line longer than dwell x cps overruns its slot and the next beat lands
+            // on top. SecondsFor reports a line's REAL floor time so schedulers can't
             // under-book it.
             float shortLine = narr.SecondsFor("Short.", 4f);
             float longLine = narr.SecondsFor(new string('x', 200), 4f);
@@ -345,10 +348,10 @@ public static class PharmaSelfTests
             narr.EndLine();
             A("hudbar: hides on end", !barRoot.activeSelf && lineText.text == string.Empty);
 
-            // MULTI-SPEAKER (2026-07-19): Dr. Jimenez owns a SEPARATE narration
-            // controller, so the bar used to show nothing at all while he spoke
-            // (it subscribed to exactly one channel) and the scene's baked
-            // "Pharmee" name was sticky. Each channel now carries its own name.
+            // MULTI-SPEAKER: Dr. Jimenez owns a SEPARATE narration
+            // controller, so a bar subscribed to one channel shows nothing while he
+            // speaks, and the scene's baked "Pharmee" name would stick. Each channel
+            // carries its own name.
             var speakerGo = new GameObject("Speaker"); speakerGo.transform.SetParent(barRoot.transform);
             var speakerText = speakerGo.AddComponent<TMPro.TextMeshProUGUI>();
             var jimGo = new GameObject("JimenezNarr");
@@ -483,9 +486,8 @@ public static class PharmaSelfTests
             { GatekeeperModel.ModuleOptions(flow, p, out var l, out _, out _); return l.Count; };
             A("gate: locked episode refused", !m.ChooseEpisode(ExperimentPeriod.Midterm, canSel, firstOf) && m.State == GateState.EpisodePick);
 
-            // TWO-STEP picker (user 2026-07-16: "on prelims campaign mode, there is no
-            // selection of choices! … I thought we have 2 experiments inside prelims?").
-            // A period now OPENS ITS MODULE LIST instead of auto-starting the first one.
+            // TWO-STEP picker: a period with two experiments must offer both.
+            // A period OPENS ITS MODULE LIST instead of auto-starting the first one.
             A("gate: a period opens its module list, it does NOT auto-start",
                 m.ChooseEpisode(ExperimentPeriod.Tutorial, canSel, firstOf)
                 && m.State == GateState.ModulePick && string.IsNullOrEmpty(m.SelectedModuleId));
@@ -512,7 +514,7 @@ public static class PharmaSelfTests
                 A("gate: module rows drop the redundant period prefix", !mLabels[0].StartsWith("Prelim:"));
             }
 
-            // 2026-07-11: the PPE locker moved just inside the lab → the door is
+            // the PPE locker moved just inside the lab → the door is
             // open through the gear-up steps (the run still gates on PPE + walk-in).
             A("gate: door SHUT during PPE + ready (W5.12), opens only when armed",
                 !GatekeeperModel.DoorOpen(GateState.CoatPrompt)
@@ -523,7 +525,7 @@ public static class PharmaSelfTests
             A("gate: cross before confirm refused", !m.Fire(GateEvent.CrossedThreshold));
             A("gate: proceed arms door", m.Fire(GateEvent.ProceedConfirmed) && m.State == GateState.DoorArmed && GatekeeperModel.DoorOpen(m.State));
             A("gate: walk-in runs", m.Fire(GateEvent.CrossedThreshold) && m.State == GateState.Running);
-            // Post-experiment review flow (2026-07-11): tests done → Jimenez quiz →
+            // Post-experiment review flow: tests done → Jimenez quiz →
             // score review → return home → entrance debrief → unlock announce.
             A("gate: continue illegal while running", !m.Fire(GateEvent.ContinueAfterPass) && m.State == GateState.Running);
             A("gate: tests done → quiz intro", m.Fire(GateEvent.TestsDone) && m.State == GateState.QuizIntro
@@ -542,7 +544,7 @@ public static class PharmaSelfTests
             var mr = new GatekeeperModel();
             mr.Fire(GateEvent.Approach); mr.Fire(GateEvent.PickCampaign); mr.Fire(GateEvent.ExplainDone);
             mr.ChooseEpisode(ExperimentPeriod.Tutorial, _ => true, _ => "tutorial-methane");
-            mr.ChooseModule("tutorial-methane", _ => true);   // picker is two-step now
+            mr.ChooseModule("tutorial-methane", _ => true);   // two-step picker
             mr.Fire(GateEvent.Coated); mr.Fire(GateEvent.Ready); mr.Fire(GateEvent.Loaded);
             mr.Fire(GateEvent.ProceedConfirmed); mr.Fire(GateEvent.CrossedThreshold);
             mr.Fire(GateEvent.TestsDone); mr.Fire(GateEvent.QuizBegin); mr.Fire(GateEvent.Graded);
@@ -551,7 +553,7 @@ public static class PharmaSelfTests
             var mq = new GatekeeperModel();
             mq.Fire(GateEvent.Approach); mq.Fire(GateEvent.PickCampaign); mq.Fire(GateEvent.ExplainDone);
             mq.ChooseEpisode(ExperimentPeriod.Tutorial, _ => true, _ => "tutorial-methane");
-            mq.ChooseModule("tutorial-methane", _ => true);   // picker is two-step now
+            mq.ChooseModule("tutorial-methane", _ => true);   // two-step picker
             mq.Fire(GateEvent.Coated); mq.Fire(GateEvent.Ready); mq.Fire(GateEvent.Loaded);
             mq.Fire(GateEvent.ProceedConfirmed); mq.Fire(GateEvent.CrossedThreshold); mq.Fire(GateEvent.TestsDone);
             mq.ResetToBlocked();
@@ -569,7 +571,7 @@ public static class PharmaSelfTests
             var m3 = new GatekeeperModel();
             m3.Fire(GateEvent.Approach); m3.Fire(GateEvent.PickCampaign); m3.Fire(GateEvent.ExplainDone);
             m3.ChooseEpisode(ExperimentPeriod.Tutorial, _ => true, _ => "tutorial-methane");
-            m3.ChooseModule("tutorial-methane", _ => true);   // picker is two-step now
+            m3.ChooseModule("tutorial-methane", _ => true);   // two-step picker
             m3.Fire(GateEvent.Coated); m3.Fire(GateEvent.Ready); m3.Fire(GateEvent.Loaded);
             m3.Fire(GateEvent.ProceedConfirmed); m3.Fire(GateEvent.CrossedThreshold);
             A("gate: supply prompt", m3.Fire(GateEvent.SupplyExhausted) && m3.State == GateState.SupplyPrompt && GatekeeperModel.DoorOpen(m3.State));
@@ -582,7 +584,7 @@ public static class PharmaSelfTests
             var m4 = new GatekeeperModel();
             m4.Fire(GateEvent.Approach); m4.Fire(GateEvent.PickCampaign); m4.Fire(GateEvent.ExplainDone);
             m4.ChooseEpisode(ExperimentPeriod.Tutorial, _ => true, _ => "tutorial-methane");
-            m4.ChooseModule("tutorial-methane", _ => true);   // picker is two-step now
+            m4.ChooseModule("tutorial-methane", _ => true);   // two-step picker
             bool m4Blocked = false;
             m4.Transition += (a, b) => { if (b == GateState.Blocked) m4Blocked = true; };
             m4.ResetToBlocked();
@@ -650,7 +652,7 @@ public static class PharmaSelfTests
                     A("gk: at episode pick", gk.Model.State == GateState.EpisodePick);
                     // deterministic pick (the panel path reads the real save file)
                     gk.Model.ChooseEpisode(ExperimentPeriod.Tutorial, _ => true, _ => "tutorial-methane");
-                    gk.Model.ChooseModule("tutorial-methane", _ => true);   // picker is two-step now
+                    gk.Model.ChooseModule("tutorial-methane", _ => true);   // two-step picker
                     gk.Model.Fire(GateEvent.Coated);  // simulated PPE
                     gk.OnPanelOption(0);              // I'm ready -> Loading -> armed -> ThresholdWarn
                     A("gk: armed after load", runner.IsArmed && gk.Model.State == GateState.ThresholdWarn);
@@ -733,7 +735,7 @@ public static class PharmaSelfTests
                     gk.OnApproachTriggerEntered();
                     gk.OnPanelOption(1); gk.OnPanelOption(0);
                     gk.Model.ChooseEpisode(ExperimentPeriod.Tutorial, _ => true, _ => "tutorial-methane");
-                    gk.Model.ChooseModule("tutorial-methane", _ => true);   // picker is two-step now
+                    gk.Model.ChooseModule("tutorial-methane", _ => true);   // two-step picker
                     gk.Model.Fire(GateEvent.Coated);
                     gk.OnPanelOption(0);      // ready -> armed
                     gk.OnPanelOption(0);      // proceed
@@ -748,7 +750,7 @@ public static class PharmaSelfTests
                     gk.OnContinueAfterPass(); // edit mode: return+debrief+announce run immediately
                     A("return: loop lands blocked", gk.Model.State == GateState.Blocked);
                     A("return: door re-blocked", blocker.activeSelf);
-                    // camera (rig child) must now stand on the marker XZ
+                    // camera (rig child) must stand on the marker XZ
                     Vector3 camWorld = camGo.transform.position;
                     A("return: teleported to front door", Near(camWorld.x, marker.x, 0.05f) && Near(camWorld.z, marker.z, 0.05f));
                 }
@@ -896,9 +898,9 @@ public static class PharmaSelfTests
 
     static void RealSizeSuite()
     {
-        A("size: table count", RealSizes.Count == 51);   // +DistillingFlask +8 distillation apparatus (pipette dropped) (W5.12)
+        A("size: table count", RealSizes.Count == 51);   // incl. DistillingFlask + 8 distillation apparatus
 
-        // W5.12 Methane stage visibility (user 2026-07-13): shown only during Lab
+        // Methane stage visibility: shown only during Lab
         // Tour OR the Methane attempt; hidden otherwise.
         A("methane-vis: shown in lab tour", MethaneStageVisibility.ShouldShow(true, false));
         A("methane-vis: shown during methane attempt", MethaneStageVisibility.ShouldShow(false, true));
@@ -985,7 +987,7 @@ public static class PharmaSelfTests
             mc.convex = false;
             A("phys: concave colliders convexified", PhysicsProfiles.ConvexifyMeshColliders(go) == 1 && mc.convex);
 
-            // Drop respawn: kill-Z + FLOOR-ONLY idle return-to-home (W5.12: items
+            // Drop respawn: kill-Z + FLOOR-ONLY idle return-to-home (items
             // the player stages on tables/shelves are never reclaimed mid-run).
             A("respawn: below kill-Z", DropRespawnMath.ShouldRespawn(-1.2f, -1f));
             A("respawn: on bench safe", !DropRespawnMath.ShouldRespawn(0.9f, -1f));
@@ -995,13 +997,15 @@ public static class PharmaSelfTests
             A("respawn: held item never returns", !DropRespawnMath.ShouldReturnHome(1.5f, 0f, true, 30f, 0.1f));
             A("respawn: moving item waits", !DropRespawnMath.ShouldReturnHome(1.5f, 0.4f, false, 30f, 0.1f));
             A("respawn: near home stays put", !DropRespawnMath.ShouldReturnHome(0.1f, 0f, false, 30f, 0.1f));
+            A("respawn: a floor item goes home after 8 s, not 25", DropRespawnMath.ShouldReturnHome(1.5f, 0f, false, 8.1f, 0.1f)
+                && !DropRespawnMath.ShouldReturnHome(1.5f, 0f, false, 7f, 0.1f));
             var dr = go.AddComponent<DropRespawn>();
             dr.Bind(go.GetComponent<Rigidbody>(), null);
             dr.SetHome(new Vector3(1f, 2f, 3f), Quaternion.identity);
             go.transform.position = new Vector3(9f, -5f, 9f);
             var rbDyn = go.GetComponent<Rigidbody>(); rbDyn.isKinematic = false;
-            // Respawn = a FRESH replacement: home supply restored (W5.12 — an
-            // exhausted bottle used to come back empty and invisible).
+            // Respawn = a FRESH replacement: home supply restored (an
+            // exhausted bottle must not come back empty and invisible).
             var lpHome = go.AddComponent<LiquidPhysics>();
             var chemHome = ScriptableObject.CreateInstance<ChemicalData>();
             try
@@ -1034,31 +1038,31 @@ public static class PharmaSelfTests
 
         var cases = new (string file, string seed, string[] reagents)[]
         {
-            // W5.9 manuscript fidelity: benzoic ester = PROPYL ALCOHOL (was the
-            // inert sulfuric-acid pairing); benzamide acid test + ethanol ester
-            // use the DILUTED acids; chloroform gains the dichromate oxidation.
-            // Benzoic (Exp 4) rebuilt zone-free 2026-07-18: no seeded vessel now
+            // manuscript fidelity: benzoic ester = PROPYL ALCOHOL (sulfuric acid
+            // alone is inert); benzamide acid test + ethanol ester
+            // use the DILUTED acids; chloroform has the dichromate oxidation.
+            // Benzoic (Exp 4) is zone-free: no seeded vessel
             // (the player synthesises the acid and draws from the flask) — its
             // FeCl3/ester rules are validated by the Exp 4 simrun firing them.
-            // Acetanilide (Exp 5) rebuilt zone-free 2026-07-18: no seeded vessel
+            // Acetanilide (Exp 5) is zone-free: no seeded vessel
             // (the player synthesises + scoops the crystals) — its bromination/
             // hydrolysis rules are validated by the Exp 5 simrun firing them.
-            // Benzamide (Exp 8) rebuilt zone-free 2026-07-18: no seeded vessel
+            // Benzamide (Exp 8) is zone-free: no seeded vessel
             // (the player synthesises in the ice bath and dips crystals from the
             // dried watch glass) — its alkali/acid/nitrous rules are validated
             // by the Exp 8 simrun firing them at temperature.
-            // Chloroform (Exp 7) rebuilt zone-free 2026-07-18: no seeded vessel
+            // Chloroform (Exp 7) is zone-free: no seeded vessel
             // (the player distils, washes and redistils the chloroform, then
             // draws every test from Test Tube 14) — its AgNO3/oxidation rules
             // are validated by the Exp 7 simrun firing them at temperature.
-            // Acetone (Exp 6) rebuilt zone-free 2026-07-18: no seeded vessel
+            // Acetone (Exp 6) is zone-free: no seeded vessel
             // (the player distils the acetone and draws from the receiver) —
             // its Tollens/Schiff/iodoform/bisulfite rules are validated by the
             // Exp 6 simrun firing them.
-            // Ethyl (Exp 3) rebuilt zone-free 2026-07-17: no seeded vessel now (it
+            // Ethyl (Exp 3) is zone-free: no seeded vessel (it
             // POURS ethanol/hypochlorite into fresh tubes) — its Iodoform/Ester
             // reactions are validated by the Exp 3 simrun firing them at temperature.
-            // WineMaking (Exp 9) rebuilt zone-free 2026-07-19: no pre-seeded CO2
+            // WineMaking (Exp 9) is zone-free: no pre-seeded CO2
             // tube (the FermentationController bubbles CO2 into the limewater the
             // player pours) — its WineFermentation + Limewater rules are validated
             // by the Exp 9 simrun firing them.
@@ -1108,7 +1112,7 @@ public static class PharmaSelfTests
         A("testvessel: all layout chemicals resolve", allResolve);
     }
 
-    /// Spill & breakage mishandling penalties (§2, user request 2026-07-09).
+    /// Spill & breakage mishandling penalties (§2).
     static void MishandlingSuite()
     {
         // Fragility table: glass breaks, tools don't, and every entry is a real prefab.
@@ -1118,7 +1122,7 @@ public static class PharmaSelfTests
         A("mishandle: tools are not", !Mishandling.IsBreakable("CrucibleTongs")
             && !Mishandling.IsBreakable("Spatula") && !Mishandling.IsBreakable("WashBottle")
             && !Mishandling.IsBreakable("TestTubeRack"));
-        // W5.8: solid glass / droppers / porcelain delisted — robust in the hand.
+        // solid glass / droppers / porcelain delisted: sturdy in the hand.
         A("mishandle: stir rod never shatters (W5.8)", !Mishandling.IsBreakable("GlassRod"));
         A("mishandle: funnel+dropper never shatter (W5.8)", !Mishandling.IsBreakable("Funnel")
             && !Mishandling.IsBreakable("Dropper"));
@@ -1129,7 +1133,7 @@ public static class PharmaSelfTests
             if (!RealSizes.TryGet(n, out _)) { allReal = false; _log.Add("breakable not in RealSizes: " + n); }
         A("mishandle: breakables are real prefabs", allReal);
 
-        // Impact policy (W5.12 leniency): only extreme falls / hard throws break —
+        // Impact policy: only extreme falls / hard throws break —
         // a normal bench-height drop always survives.
         A("mishandle: extreme drop breaks", Mishandling.ShouldBreak(7.1f));
         A("mishandle: threshold impact breaks", Mishandling.ShouldBreak(7.0f));
@@ -1138,30 +1142,30 @@ public static class PharmaSelfTests
         A("mishandle: carry-bump into wall safe", !Mishandling.ShouldBreak(2.5f));
         A("mishandle: gentle set-down safe", !Mishandling.ShouldBreak(0.8f));
 
-        // Impact loudness scales with speed (W5.12: soft contacts whispered at
+        // Impact loudness scales with speed (soft contacts whispered at
         // full volume before) — quiet set-down, full-volume real drop.
         A("impact: gentle set-down whispers", Mishandling.ImpactVolume01(0.8f) < 0.3f);
         A("impact: solid drop full volume", Mishandling.ImpactVolume01(4.5f) > 0.999f);
         A("impact: louder with speed", Mishandling.ImpactVolume01(2f) > Mishandling.ImpactVolume01(1f));
 
-        // Display names for mistake messages (W5.12: no more code names).
+        // Display names for mistake messages (no more code names).
         A("names: reagent code prettified", Mishandling.Prettify("Reagent_AceticAcid_Diluted (2)") == "Acetic Acid Diluted");
         A("names: liquid twin suffix stripped", Mishandling.Prettify("TestTube_WithLiquid") == "Test Tube");
         A("names: unit tails stay intact", Mishandling.Prettify("Beaker_100mL(Clone)") == "Beaker 100mL");
 
-        // Narration pacing (W5.12: long lines no longer vanish right after the
-        // last character types in; short lines keep their authored dwell).
-        // 1.2 → 1.9 s floor (2026-07-19): lines read as rushed in the headset.
+        // Narration pacing: long lines must not vanish right after the
+        // last character types in; short lines keep their authored dwell.
+        // 1.9 s floor: shorter reads as rushed in the headset.
         A("narration: long line keeps a read hold", Near(NPCNarrationController.HoldSecondsAfterReveal(3.5f, 4.7f), 1.9f));
         A("narration: short line keeps authored dwell", Near(NPCNarrationController.HoldSecondsAfterReveal(3.5f, 1.0f), 2.5f));
 
-        // QUIZ NAV CONTAINMENT (2026-07-19): Back/Next used to overflow the quiz
+        // QUIZ NAV CONTAINMENT: Back/Next must stay inside the quiz
         // panel. The real geometry is a 300-wide button on an 820-wide panel:
-        // the preferred 336 step put the outer edge at 486 vs a 410 half-width.
+        // the preferred 336 step puts the outer edge at 486 vs a 410 half-width.
         {
             // Real geometry: a 300-wide Submit on an 820-wide quiz panel. Three of
             // those need 900 units, so containment ALONE pulled Back/Next 73 units
-            // on top of Submit (user 2026-07-27) — they have to shrink first.
+            // on top of Submit — they have to shrink first.
             float w = QuizNavButtonsBuilder.WidthFor(300f, 820f);
             float step = QuizNavButtonsBuilder.StepFor(300f, 820f, 0f);
             A("quiznav: three buttons SHRINK to fit the row", Near(w, 820f * 0.92f / 3f));
@@ -1176,8 +1180,6 @@ public static class PharmaSelfTests
                 Near(QuizNavButtonsBuilder.WidthFor(300f, 0f), 300f)
                 && Near(QuizNavButtonsBuilder.StepFor(300f, 0f, 0f), 336f));
         }
-
-        // W5.33 PLAYTEST BATCH (user 2026-07-27) --------------------------------
 
         // Vessel axis: a tube is long, a watch glass and a mortar are WIDE. The
         // mound must lie along the round bore either way, not the longest side.
@@ -1235,7 +1237,7 @@ public static class PharmaSelfTests
 
         // The pan's scale reference is a plain private field, so the edit-time
         // Bind() does NOT survive a domain reload — the readout silently died for
-        // the rest of the session (user 2026-07-29). It must re-find the balance
+        // the rest of the session. It must re-find the balance
         // itself, exactly like GrindController.AutoFindPestle.
         {
             var balFix = new GameObject("BalanceFixture");
@@ -1251,7 +1253,7 @@ public static class PharmaSelfTests
         }
 
         // Pharmee's robot colouring: a blend, never a replacement, so speech stays
-        // intelligible in an educational game (user 2026-07-27).
+        // intelligible in an educational game.
         A("robot: zero mix leaves the voice untouched", Near(RobotVoiceFx.RingSample(0.5f, -1f, 0f), 0.5f));
         A("robot: full mix is pure ring product", Near(RobotVoiceFx.RingSample(0.5f, 1f, 1f), 0.5f)
             && Near(RobotVoiceFx.RingSample(0.5f, -1f, 1f), -0.5f));
@@ -1259,12 +1261,12 @@ public static class PharmaSelfTests
         A("robot: silence stays silent", Near(RobotVoiceFx.RingSample(0f, 1f, 0.5f), 0f));
         A("robot: mix is clamped", Near(RobotVoiceFx.RingSample(0.5f, -1f, 5f), -0.5f));
 
-        // CLARITY (user 2026-07-27: "sounds a bit muffled"). The grit must come
-        // from bit-crushing, which brightens, not distortion, which dulls.
+        // CLARITY: the grit must come
+        // from bit-crushing, which brightens, not distortion, which dulls (muffles).
         A("robot: no crush mix leaves the sample alone", Near(RobotVoiceFx.Crush(0.3f, 10f, 0f), 0.3f));
         // 0.28 sits BETWEEN 5-bit steps (which are 0.0625 apart) so the quantiser
-        // has something to move. The first version of this probed 0.3123, which is
-        // 0.0002 off a step — the test failed while the code was perfectly correct.
+        // has something to move. A probe like 0.3123 is 0.0002 off a step and
+        // fails while the code is correct.
         A("robot: crushing quantises the sample", !Near(RobotVoiceFx.Crush(0.28f, 5f, 1f), 0.28f, 0.005f));
         A("robot: a coarser depth quantises harder",
             Mathf.Abs(RobotVoiceFx.Crush(0.28f, 4f, 1f) - 0.28f)
@@ -1280,8 +1282,8 @@ public static class PharmaSelfTests
         A("robot: a bad sample rate cannot produce NaN", RobotVoiceFx.OnePoleAlpha(3000f, 0) > 0f);
 
         // The character must come from DECIMATION + COMB, not from a low-frequency
-        // ring-mod drone — that layered a hum under an untouched human voice and
-        // read as "a woman speaking against an electric fan" (user 2026-07-27).
+        // ring-mod drone, which layers a hum under an untouched human voice
+        // (a person speaking against an electric fan).
         A("robot: decimation holds each sample for several frames", RobotVoiceFx.HoldFrames(3f) == 3);
         A("robot: a factor of 1 means no decimation", RobotVoiceFx.HoldFrames(1f) == 1);
         A("robot: decimation never stalls or runs away",
@@ -1294,7 +1296,7 @@ public static class PharmaSelfTests
         A("robot: comb feedback can never self-oscillate",
             RobotVoiceFx.SafeFeedback(1.5f) <= 0.9f && RobotVoiceFx.SafeFeedback(-1f) >= 0f);
 
-        // VOCODER (user 2026-07-28: "sounds so human"). Filtering recolours a voice;
+        // VOCODER: filtering recolours a voice but it still sounds human;
         // only replacing the EXCITATION removes the human pitch contour.
         A("vocoder: bands span low to high", Near(RobotVocoder.BandCenter(0, 14, 150f, 6500f), 150f)
             && Near(RobotVocoder.BandCenter(13, 14, 150f, 6500f), 6500f, 1f));
@@ -1317,13 +1319,12 @@ public static class PharmaSelfTests
         A("vocoder: carrier noise mix is clamped",
             Near(RobotVoiceFx.Carrier(0.5f, 1f, 5f), 1f));
 
-        // ⛔ SCENE-vs-CODE DIALOGUE DRIFT (user 2026-07-27: "some dialogs of Pharmee
-        // are still the robot beep"). The gate's lines are a [SerializeField], so
+        // ⛔ SCENE-vs-CODE DIALOGUE DRIFT. The gate's lines are a [SerializeField], so
         // the SCENE holds the copy the player actually hears. Editing the code
         // defaults does NOT reach the game, and since the voice manifest is built
         // from the CODE, the spoken text silently stops matching any clip and drops
-        // to placeholder blips. The scene copy had also drifted to asking for a lab
-        // coat ALONE while the door demands coat + goggles + gloves.
+        // to placeholder blips. A drifted scene copy can also give wrong instructions
+        // (a lab coat ALONE while the door demands coat + goggles + gloves).
         // Pin what the player HEARS, not what the code says.
         {
             var gateGo = UnityEngine.Object.FindFirstObjectByType<PharmeeGatekeeper>(FindObjectsInactive.Include);
@@ -1363,8 +1364,8 @@ public static class PharmaSelfTests
                     A("voice: every gate line the player hears has a clip (" + unvoiced + " unvoiced)", unvoiced == 0);
 
                     // The guided tour is the SECOND scene-serialized dialogue source
-                    // and drifted the same way — it still sent players to an
-                    // "equipment cabinet" and to the emptied reagent shelf.
+                    // and drifts the same way (e.g. sending players to an
+                    // "equipment cabinet" or to the emptied reagent shelf).
                     var tour = UnityEngine.Object.FindFirstObjectByType<LabTourGuide>(FindObjectsInactive.Include);
                     if (tour != null)
                     {
@@ -1378,7 +1379,7 @@ public static class PharmaSelfTests
                             string mark = el.FindPropertyRelative("landmarkName")?.stringValue ?? "";
                             if (!string.IsNullOrWhiteSpace(beat)
                                 && bank.Get(VoiceSpeaker.Pharmee, VoiceLineId.For(beat)) == null) tourUnvoiced++;
-                            // A stop whose landmark no longer exists never fires at all.
+                            // A stop whose landmark doesn't exist never fires at all.
                             if (!string.IsNullOrEmpty(mark) && GameObject.Find(mark) == null) badMark++;
                         }
                         A("voice: every lab-tour beat has a clip (" + tourUnvoiced + " unvoiced)", tourUnvoiced == 0);
@@ -1390,7 +1391,7 @@ public static class PharmaSelfTests
                     // recaps it at QuizIntro (PharmeeGatekeeper.SpeakJimenezBrief).
                     // VoiceBank keys on speaker + text-hash, so Pharmee having a
                     // clip says NOTHING about Jimenez — his whole recap played as
-                    // blips while only Pharmee's copies existed (user 2026-07-29).
+                    // blips while only Pharmee's copies existed.
                     int iloUnvoiced = 0;
                     if (bank.Get(VoiceSpeaker.Jimenez, VoiceLineId.For(PharmeeLines.JimenezIloLeadIn)) == null)
                         iloUnvoiced++;
@@ -1407,7 +1408,7 @@ public static class PharmaSelfTests
             }
         }
 
-        // MUSIC DUCKING under dialogue (user 2026-07-27).
+        // MUSIC DUCKING under dialogue.
         A("duck: music drops while someone speaks", Near(MusicDucker.TargetVolume(1f, 0.25f, true), 0.25f));
         A("duck: the configured depth is a real fade-out, not a dip",
             VoiceAudioBuilder.MusicDuckTo <= 0.12f && VoiceAudioBuilder.MusicDuckTo >= 0f);
@@ -1415,7 +1416,7 @@ public static class PharmaSelfTests
         A("duck: a quiet setting stays proportional", Near(MusicDucker.TargetVolume(0.4f, 0.5f, true), 0.2f));
         A("duck: never negative", MusicDucker.TargetVolume(-1f, 0.25f, true) >= 0f);
 
-        // VOICE AUDIBILITY: heard room-wide, louder up close (user 2026-07-27).
+        // VOICE AUDIBILITY: heard room-wide, louder up close.
         A("voice: partial spatial blend — audible everywhere AND positional",
             VoiceAudioBuilder.VoiceSpatialBlend > 0.1f && VoiceAudioBuilder.VoiceSpatialBlend < 1f);
         A("voice: stays audible across the whole lab", VoiceAudioBuilder.VoiceMaxDistance >= 20f);
@@ -1425,12 +1426,11 @@ public static class PharmaSelfTests
 
         // Both NPCs must be able to SPEAK at all, and never at the same time.
         //
-        // ⛔ An AudioSource is only ONE of the three things a channel needs, and pinning
-        // just that is what let Dr. Jimenez go silent unnoticed (2026-09-05). `Wire NPC Polish`
-        // destroys and recreates his subtitle object, and a fresh NPCNarrationController
-        // defaults to `speaker = Pharmee` with a NULL `voiceBank` — so he had a working
-        // speaker cone, an animator that mouthed the words and a visible subtitle bubble,
-        // while every line resolved to no clip. Pin all three, or the next builder run is
+        // ⛔ An AudioSource is only ONE of the three things a channel needs. `Wire NPC Polish`
+        // destroys and recreates Dr. Jimenez's subtitle object, and a fresh NPCNarrationController
+        // defaults to `speaker = Pharmee` with a NULL `voiceBank`, so he can have a working
+        // speaker cone, an animator that mouths the words and a visible subtitle bubble
+        // while every line resolves to no clip. Pin all three, or the next builder run is
         // silent again and nothing says so.
         {
             int mute = 0, bankless = 0, misattributed = 0, channels = 0;
@@ -1461,12 +1461,11 @@ public static class PharmaSelfTests
 
         // ⛔ Every scene in Build Settings must AGREE about the XR Device Simulator.
         //
-        // `Play Mode ▸ Headset Mode` used to fix only the OPEN scenes, so running it with just
-        // SampleScene open disabled that simulator and left MainMenu's ACTIVE — and Play always
-        // boots MainMenu. The simulator then hijacked the HMD: the head pose froze at local
-        // (0,0,0) while the real Quest controllers kept reporting true poses, so the controllers
-        // floated ABOVE the view (user 2026-09-05, in the headset). Reading the scene FILES keeps
-        // this cheap and non-destructive — the suite must never open scenes to answer it.
+        // Fixing only the OPEN scenes would leave MainMenu's simulator ACTIVE when SampleScene
+        // alone is open, and Play always boots MainMenu. The simulator then hijacks the HMD:
+        // the head pose freezes at local (0,0,0) while the real Quest controllers keep reporting
+        // true poses, so the controllers float ABOVE the view. Reading the scene FILES keeps
+        // this cheap and non-destructive: the suite must never open scenes to answer it.
         {
             var simStates = new List<string>();
             foreach (var entry in EditorBuildSettings.scenes)
@@ -1492,7 +1491,7 @@ public static class PharmaSelfTests
               + string.Join(", ", simStates) + ")", agree);
         }
 
-        // ---- Rack tubes claim their own role (W5.52) ----
+        // ---- Rack tubes claim their own role ----
         //
         // The real Exp 2 shapes: the enol group separates on pour ONE (five different
         // alcohols), the alkaline-oxidation group shares its first TWO reagents and only
@@ -1552,7 +1551,7 @@ public static class PharmaSelfTests
                     new List<string> { "KMnO4", "KMnO4", "NaOH" }).Count == 3);
         }
 
-        // ---- Any tube will do (W5.53): pools per family, guidance follows the tube in hand ----
+        // ---- Any tube will do: pools per family, guidance follows the tube in hand ----
         // ⛔ All 23 bench tubes share ONE itemId (kit-testtube), hard-glass included, so the
         // name prefix is the only family signal. A soft tube must never claim the naked-flame
         // role: Exp 6's dry distillation is the whole point of the hard-glass tube.
@@ -1593,7 +1592,7 @@ public static class PharmaSelfTests
 
         // ⛔ Pharmee SPEAKS the text after the arrow in every hint, so a hint that says
         // "Test Tube 15" is a voice line insisting on a tube the player is not holding. With
-        // tubes claiming their own role (W5.53) that is not merely unhelpful, it is wrong.
+        // tubes claiming their own role that is wrong, not merely unhelpful.
         // "the second rack" is deliberately allowed: a rack is a real, distinct object.
         {
             var numbered = new List<string>();
@@ -1611,7 +1610,7 @@ public static class PharmaSelfTests
               hints > 0 && numbered.Count == 0);
         }
 
-        // ---- Any GLASSWARE will do (W5.54) ----
+        // ---- Any GLASSWARE will do ----
         // Tubes pool by name family (hard glass shares their itemId); everything else by its
         // LabItem itemId, because the spares are named Eq_WatchGlass / Kit_WatchGlass_1_11 /
         // WatchGlass_2 and no prefix rule survives that. A kind with one instance never pools.
@@ -1624,7 +1623,7 @@ public static class PharmaSelfTests
             && VesselRoleMatch.PoolKey("Anything", "") == "");
 
         // The ghost demo must mime at the SAME pool member the glow and the arrow use: with
-        // pool targets registered, Endpoints took whichever extra was listed first.
+        // pool targets registered, Endpoints would take whichever extra is listed first.
         {
             var a = new GameObject("pool_a"); var b = new GameObject("pool_b"); var fx = new GameObject("fixed_src");
             try
@@ -1645,9 +1644,9 @@ public static class PharmaSelfTests
         }
 
         // ⛔ A role is claimed by a POUR or by a delivery controller — never by construction.
-        // In a family with ONE role (Exp 9's limewater tube) every member used to claim it as it
-        // was wired: the authored member won the ledger, every extra started with an EMPTY
-        // candidate set, and any pour into it was scolded before the player did anything.
+        // In a family with ONE role (Exp 9's limewater tube), claiming at wiring time lets
+        // the authored member win the ledger while every extra starts with an EMPTY
+        // candidate set, and any pour into it is scolded before the player does anything.
         {
             var authoredGo = GameObject.CreatePrimitive(PrimitiveType.Cube);   // LiquidPhysics requires a Renderer
             var extraGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -1672,9 +1671,9 @@ public static class PharmaSelfTests
                     && extra.CandidateTasks().Contains("confirm-ferment")
                     && authored.ExpectedSteps.Count == 1 && extra.ExpectedSteps.Count == 0);
 
-                // A delivery controller IS the disambiguator: the first drop claims, exclusively —
-                // and the authored twin, which can now accept nothing, advertises NOTHING (the
-                // visual sweep ran Exp 7's distillate into a twin that scolded every drop).
+                // A delivery controller IS the disambiguator: the first drop claims, exclusively,
+                // and the authored twin, which can accept nothing, advertises NOTHING (otherwise
+                // a distillate run into the twin is scolded drop by drop).
                 bool took = extra.ClaimForTask("confirm-ferment");
                 A("role: a delivery claim takes the role for the receiver in hand, exclusively — the twin advertises nothing",
                     took && extra.ClaimedRole == 0 && !extra.RoleAmbiguous && extra.ExpectedSteps.Count == 1
@@ -1688,18 +1687,18 @@ public static class PharmaSelfTests
         }
 
         // ⛔ The stream takes a candidate only from the HAND, and the hand beats a nearer bench
-        // spare: a beaker resting near the bath claimed Exp 7's collect role by proximity before
-        // the player had picked anything up (W5.54 visual sweep).
+        // spare: otherwise a beaker resting near the bath claims Exp 7's collect role by
+        // proximity before the player has picked anything up.
         A("collect: a resting spare never receives by proximity — an advertised receiver, or a candidate in the hand",
             VaporMath.MayReceive(true, false, false) && VaporMath.MayReceive(false, true, true)
             && !VaporMath.MayReceive(false, true, false) && !VaporMath.MayReceive(false, false, true)
             && VaporMath.Prefer(true, 0.45f, false, 0.2f) && !VaporMath.Prefer(false, 0.2f, true, 0.45f)
             && VaporMath.Prefer(false, 0.2f, false, 0.3f) && !VaporMath.Prefer(true, 0.4f, true, 0.3f));
 
-        // ---- W5.55: any tube, recoverable mistakes, readable guidance ----
+        // ---- any tube, recoverable mistakes, readable guidance ----
 
-        // ⛔ A shared step counts ROLES, not members. Pooling put every bench tube in the
-        // group, so comparing against the member count would have asked for 19 alcohols.
+        // ⛔ A shared step counts ROLES, not members. Pooling puts every bench tube in the
+        // group, so comparing against the member count would ask for 19 alcohols.
         A("rack: a shared step completes on its ROLE count, not the pool's size",
             RackMath.AllReady(5, 5) && !RackMath.AllReady(4, 5) && RackMath.AllReady(19, 5)
             && !RackMath.AllReady(1, 0)
@@ -1754,9 +1753,9 @@ public static class PharmaSelfTests
             }
         }
 
-        // ⛔ ONE mistake per bad pour. A tilt-pour raises LiquidAdded every frame, and the
-        // unlatched version logged 1025 mistakes in a headset session — the grade was gone
-        // long before the player understood what was wrong.
+        // ⛔ ONE mistake per bad pour. A tilt-pour raises LiquidAdded every frame, so an
+        // unlatched binding logs a mistake per frame (1000+ in one session) and the grade
+        // is gone long before the player understands what was wrong.
         {
             var scoldGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
             var module = ScriptableObject.CreateInstance<ExperimentModuleDefinition>();
@@ -1791,7 +1790,7 @@ public static class PharmaSelfTests
             }
         }
 
-        // Practice is not assessed (user: "scores are not important for tutorial or practice
+        // Practice is not assessed ("scores are not important for tutorial or practice
         // mode"). Same call, same runner — only the session flag differs.
         {
             var practiceGo = new GameObject("selftest-practice");
@@ -1848,9 +1847,9 @@ public static class PharmaSelfTests
         // A custom shader with no stereo-instancing macros renders to eye index 0 ONLY.
         //
         // The project runs Single Pass Instanced: both eyes go into one texture array and the
-        // shader picks its slice from the instance id. PharmaGuide and PharmaGlow shipped
-        // without the macros, so the tutorial arrows and the highlight glow were visible in
-        // the LEFT EYE ONLY and the user played with one eye shut (2026-09-05, headset).
+        // shader picks its slice from the instance id. Without the macros, the tutorial
+        // arrows and the highlight glow (PharmaGuide, PharmaGlow) are visible in the
+        // LEFT EYE ONLY, which only shows with one eye shut.
         // Nothing in the editor shows this - the Game view renders a single eye and looks
         // perfect - so a text pin is the only cheap guard. Surface shaders (Glass) get the
         // handling generated for them, which is why the check is on the MACROS and not on
@@ -1872,14 +1871,13 @@ public static class PharmaSelfTests
               shaders > 0 && oneEyed.Count == 0);
         }
 
-        // ---- the manuscript is the AUTHORITY, so check the numbers against it (W5.49) ----
+        // ---- the manuscript is the AUTHORITY, so check the numbers against it ----
         //
-        // ⛔ Until now nothing did. The `content:` pins prove a module LOADS, has N tasks,
-        // is solvable and builds its scoring spine — never that "5 drops" is authored as 5.
-        // Every quantity in the game was hand-transcribed from Appendix C and hand-checked
-        // exactly once, at authoring time.
+        // ⛔ The `content:` pins prove a module LOADS, has N tasks,
+        // is solvable and builds its scoring spine, never that "5 drops" is authored as 5.
+        // Every quantity in the game is hand-transcribed from Appendix C.
         //
-        // The VERB CONTRACT (CLAUDE.md) is what makes this checkable: the number in the
+        // The verb contract (Docs/systems-reference.md) is what makes this checkable: the number in the
         // instruction IS the action count, whatever its unit, and a dropper delivers
         // DropperController.MlPerSqueeze per squeeze — so "2 drops" is authored as 2.
         //
@@ -1950,12 +1948,12 @@ public static class PharmaSelfTests
             }
         }
 
-        // ---- the manuscript's STEP ORDER, not just its numbers (W5.50) ----
+        // ---- the manuscript's STEP ORDER, not just its numbers ----
         //
         // ⛔ "runner: out-of-order = wrong step" proves the MECHANISM and "catalog: prereq
-        // chain valid + ordered" proves the module CHAIN. Neither ever checked that a module's
+        // chain valid + ordered" proves the module CHAIN. Neither checks that a module's
         // authored prerequisites follow Appendix C's own a-b-c sequence: a module whose steps
-        // were quietly reordered would pass every pin. Docs/manuscript-order.tsv gives every
+        // are quietly reordered would pass every pin. Docs/manuscript-order.tsv gives every
         // task its manuscript step as a sortable ordinal (A.a = 101 ... B.a = 201; the data
         // sheet is 999), and this asserts no prerequisite edge runs BACKWARDS through the
         // manual: for every "P must precede T", ordinal(P) <= ordinal(T).
@@ -2008,13 +2006,13 @@ public static class PharmaSelfTests
             }
         }
 
-        // ---- the manuscript's OBSERVATION WORDS, not just its numbers and order (W5.50) ----
+        // ---- the manuscript's OBSERVATION WORDS, not just its numbers and order ----
         //
-        // ⛔ The VISUAL sweep judges what the student SEES against the fired rule; nothing
-        // judged the WORDS the student reads (`expectedObservation`) against what the manual
-        // says they should observe. Two phrases ("fruity", "wintergreen") were pinned by hand;
-        // the other rules were not, so a rewrite that dropped "silver mirror" or "ammonia" would
-        // pass. Docs/manuscript-observations.tsv carries the manual's own result word per rule.
+        // ⛔ The VISUAL sweep judges what the student SEES against the fired rule; this
+        // judges the WORDS the student reads (`expectedObservation`) against what the manual
+        // says they should observe. Without it, a rewrite that dropped "silver mirror" or
+        // "ammonia" would pass. Docs/manuscript-observations.tsv carries the manual's own
+        // result word per rule.
         {
             string tsv = System.IO.Path.Combine(Application.dataPath, "..", "Docs/manuscript-observations.tsv");
             A("manuscript: the observation authority file is present", System.IO.File.Exists(tsv));
@@ -2044,7 +2042,7 @@ public static class PharmaSelfTests
             }
         }
 
-        // Voice budget order: Jimenez's rows are generated first (user 2026-07-27).
+        // Voice budget order: Jimenez's rows are generated first.
         A("voice: Jimenez sorts before Pharmee",
             VoiceManifestExporter.SpeakerPriority("Jimenez") < VoiceManifestExporter.SpeakerPriority("Pharmee"));
 
@@ -2073,9 +2071,8 @@ public static class PharmaSelfTests
         }
 
         // EVERY dialogue pool must reach the corpus, or the lines exist, play, and
-        // are never voiced. CampaignComplete — the campaign-completion payoff, the
-        // climax of the whole game — sat outside VoiceCorpus and played as blips
-        // until 2026-07-29. Reflect rather than enumerate, so a NEW pool added
+        // are never voiced (e.g. CampaignComplete, the campaign-completion payoff, would
+        // play as blips). Reflect rather than enumerate, so a NEW pool added
         // later fails this the moment it is forgotten.
         {
             var corpusText = new HashSet<string>();
@@ -2096,12 +2093,12 @@ public static class PharmaSelfTests
               missing.Count == 0);
         }
 
-        // Holo board scroll paging (W5.12: wrap + scrollable checklist).
+        // Holo board scroll paging (wrap + scrollable checklist).
         A("holo: page down moves toward the bottom", Near(HoloScroller.NextPage(1f, 0.6f, -1), 0.4f));
         A("holo: clamped at the bottom", HoloScroller.NextPage(0.2f, 0.6f, -1) == 0f);
         A("holo: clamped at the top", HoloScroller.NextPage(0.9f, 0.6f, +1) == 1f);
 
-        // Settle-freeze (W5.8): a released body at rest goes kinematic in place.
+        // Settle-freeze: a released body at rest goes kinematic in place.
         A("settle: rested body freezes", DropRespawnMath.ShouldSettleFreeze(false, false, 0.01f, 3f));
         A("settle: held blocks", !DropRespawnMath.ShouldSettleFreeze(true, false, 0.01f, 3f));
         A("settle: already kinematic no-op", !DropRespawnMath.ShouldSettleFreeze(false, true, 0.01f, 3f));
@@ -2128,7 +2125,7 @@ public static class PharmaSelfTests
             && Mishandling.DropSoundKey("EvaporatingDish") == "glass-clink");
         A("sfx: metal clatters", Mishandling.DropSoundKey("CrucibleTongs") == "drop-metal");
         A("sfx: wood knocks", Mishandling.DropSoundKey("TestTubeRack") == "drop-wood");
-        // W5.12 nature audit: the scale + burners sound (and are) metal, never glass.
+        // nature audit: the scale + burners sound (and are) metal, never glass.
         A("sfx: scale + burners are metal (W5.12)", Mishandling.DropSoundKey("Balance") == "drop-metal"
             && Mishandling.DropSoundKey("BunsenBurner") == "drop-metal"
             && Mishandling.DropSoundKey("AlcoholBurner") == "drop-metal"
@@ -2151,7 +2148,7 @@ public static class PharmaSelfTests
         A("avatar: foot keeps XZ", Near(foot.x, 2f) && Near(foot.z, -3f));
         A("avatar: foot sits on floor+offset", Near(foot.y, 0.27f));
 
-        // Per-piece PPE (user 2026-07-10): all three required; missing-summary text.
+        // Per-piece PPE: all three required; missing-summary text.
         var ppeSet = new PPESetModel();
         A("ppe: nothing worn at start", !ppeSet.AllWorn && ppeSet.WornCount == 0);
         A("ppe: missing lists all three", ppeSet.MissingSummary() == "lab coat, goggles and gloves");
@@ -2163,17 +2160,17 @@ public static class PharmaSelfTests
         ppeSet.Don(PPEPiece.Gloves);
         A("ppe: all three = fully dressed", ppeSet.AllWorn && ppeSet.MissingSummary() == "");
         A("ppe: clear strips everything", ppeSet.Clear() && !ppeSet.AllWorn && !ppeSet.Clear());
-        // Hard door gate (user 2026-07-14): campaign entry needs full PPE; tour/review don't.
+        // Hard door gate: campaign entry needs full PPE; tour/review don't.
         A("ppe: armed door requires PPE", GatekeeperModel.RequiresPPEToOpen(GateState.DoorArmed)
             && GatekeeperModel.RequiresPPEToOpen(GateState.Running));
         A("ppe: tour/review need no PPE", !GatekeeperModel.RequiresPPEToOpen(GateState.LabTour)
             && !GatekeeperModel.RequiresPPEToOpen(GateState.ScoreReview));
-        // A lit burner blows out when lifted (user 2026-07-14) and only re-lights once down.
+        // A lit burner blows out when lifted and only re-lights once down.
         A("burner: lifted blows out", BurnerController.ShouldBlowOut(true, true));
         A("burner: rests stay lit", !BurnerController.ShouldBlowOut(true, false));
         // LiquidPhysics must NOT adopt an opaque vessel mesh as its fill renderer —
         // it disables mainRenderer when empty, which vanished the mortar in play
-        // (user 2026-07-14). Only a PharmaLiquid "_Fill" surface may be adopted.
+        // Only a PharmaLiquid "_Fill" surface may be adopted.
         {
             var litSh = Shader.Find("Universal Render Pipeline/Lit");
             var fillSh = Shader.Find("PharmaSynth/Liquid");
@@ -2190,14 +2187,14 @@ public static class PharmaSelfTests
         A("pharmee: lean clamped", Near(PharmeeAttitude.LeanFor(3f, 22f, 14f), 14f));
         A("pharmee: no lean at rest", Near(PharmeeAttitude.LeanFor(0f, 22f, 14f), 0f));
 
-        // Station VFX (user 2026-07-10): verb → effect style, edit-mode-safe toggling.
+        // Station VFX: verb → effect style, edit-mode-safe toggling.
         A("vfx: heat steams", StationVfx.StyleFor(StationSim.Heat) == "steam");
         A("vfx: crystallise frosts", StationVfx.StyleFor(StationSim.Crystallise) == "frost");
         A("vfx: filter drips", StationVfx.StyleFor(StationSim.Filter) == "drip");
         A("vfx: collect bubbles", StationVfx.StyleFor(StationSim.Collect) == "bubbles");
         A("vfx: none is empty", StationVfx.StyleFor(StationSim.None) == "");
 
-        // Proctor roaming (user 2026-07-10): idle → walk out → observe → walk home.
+        // Proctor roaming: idle → walk out → observe → walk home.
         var roam = new ProctorRoamModel(3, idleMin: 1f, idleMax: 1f, observeSeconds: 2f, seed: 7);
         A("roam: starts at home", roam.Current == ProctorRoamModel.Phase.AtHome && !roam.IsWalking);
         roam.Tick(1.5f, true, true);                                     // idle expires
@@ -2218,18 +2215,18 @@ public static class PharmaSelfTests
         stay.Tick(10f, false, true);
         A("roam: never leaves during quiz", stay.Current == ProctorRoamModel.Phase.AtHome);
 
-        // Roamer stuck watchdog (user 2026-07-10: Jimenez ran through a wall endlessly).
+        // Roamer stuck watchdog (Jimenez ran through a wall endlessly).
         float stuck = 0f;
         A("roam: progress resets the watchdog", !ProctorRoamer.StuckTick(ref stuck, 0.5f, 1f, 2f) && Near(stuck, 0f));
         A("roam: brief block is tolerated", !ProctorRoamer.StuckTick(ref stuck, 0f, 1f, 2f));
         A("roam: sustained block gives up", ProctorRoamer.StuckTick(ref stuck, 0f, 1.5f, 2f) && Near(stuck, 0f));
 
-        // Spill puddle fade (user 2026-07-10): full while lingering, smooth fade after.
+        // Spill puddle fade: full while lingering, smooth fade after.
         A("puddle: opaque while lingering", Near(SpillPuddle.Alpha01(0f, 3f, 1.2f), 1f) && Near(SpillPuddle.Alpha01(2.9f, 3f, 1.2f), 1f));
         A("puddle: half-faded mid-fade", Near(SpillPuddle.Alpha01(3.6f, 3f, 1.2f), 0.5f));
         A("puddle: gone after fade", Near(SpillPuddle.Alpha01(4.2f, 3f, 1.2f), 0f) && Near(SpillPuddle.Alpha01(9f, 3f, 1.2f), 0f));
 
-        // Pharmee gate moods (user 2026-07-10): happy default, warning on trouble.
+        // Pharmee gate moods: happy default, warning on trouble.
         A("mood: friendly at the door", PharmeeMood.ExpressionForGate(GateState.ModeChoice) == PharmeeFaceExpression.Happy);
         A("mood: warns on supply trouble", PharmeeMood.ExpressionForGate(GateState.SupplyPrompt) == PharmeeFaceExpression.Warning);
         A("mood: celebrates the debrief", PharmeeMood.ExpressionForGate(GateState.Debrief) == PharmeeFaceExpression.Happy);
@@ -2387,8 +2384,8 @@ public static class PharmaSelfTests
         A("ui: percent format", ExperimentHudController.FormatPercent(0.754f) == "75%");
         A("ui: progress drops on mistakes", Near(ExperimentHudController.DisplayedProgress(0.8f, 2, 0.05f), 0.7f));
         A("ui: instruction from hint", PharmeeBrain.InstructionFor(new ExperimentTask { label = "X", hint = "do x" }) == "do x");
-        // Two-line "fact\n→ action" hints: Pharmee speaks ONLY the action line —
-        // the fact stays on the wrist panel (he was reading whole paragraphs).
+        // Two-line "fact\n→ action" hints: Pharmee speaks ONLY the action line;
+        // the fact stays on the wrist panel (speaking both reads out whole paragraphs).
         A("ui: pharmee speaks the ACTION line of a two-line hint",
             PharmeeBrain.InstructionFor(new ExperimentTask { label = "X",
                 hint = "KMnO4 oxidises benzaldehyde.\n→ Squeeze 2 dropper-loads in." })
@@ -2498,7 +2495,7 @@ public static class PharmaSelfTests
                 var cs = AssetDatabase.LoadAssetAtPath<CutsceneData>(cdir + k + "_" + kind + ".asset");
                 if (cs != null && cs.beats.Count > 0 && cs.TotalDuration() > 0f) csOk++;
             }
-        // 44 → 36: Aspirin + Caffeine dropped 2026-07-16 (9 modules × 4 kinds).
+        // 44 → 36: Aspirin + Caffeine dropped (9 modules × 4 kinds).
         A("roster: 36 cutscenes present with beats", csOk == 36);
 
         // Quiz banks: one per catalog module, all valid, 3 questions, scoring works.
@@ -2514,8 +2511,8 @@ public static class PharmaSelfTests
             }
             if (bank == null) { coverage = false; continue; }
             qBanks++; qTotal += bank.Count;
-            // ≥3 questions per bank. (Was "== 3": Chemical Compounding carries 5 since
-            // its rebuild to manuscript Exp 2, which has five distinct tests — 2026-07-15.)
+            // ≥3 questions per bank (Chemical Compounding carries 5: manuscript
+            // Exp 2 has five distinct tests).
             if (!bank.AllValid() || bank.Count < 3) allValid = false;
             // all-correct answers → perfect score
             var ans = new List<int>();
@@ -2523,8 +2520,8 @@ public static class PharmaSelfTests
             if (!Near(bank.Score(ans), 1f)) scoreOk = false;
         }
         A("roster: quiz bank per experiment (9)", coverage && qBanks == 9);
-        // 33 → 35: compounding's rebuild took its bank from 3 to 5 questions (2026-07-15).
-        // 35 → 29: Aspirin + Caffeine (3 each) dropped 2026-07-16.
+        // 33 → 35: compounding's rebuild took its bank from 3 to 5 questions.
+        // 35 → 29: Aspirin + Caffeine (3 each) dropped.
         A("roster: 29 quiz questions total, all valid (4 opts, in-range answer)", qTotal == 29 && allValid);
         A("roster: quiz scoring (all-correct = 100%)", scoreOk);
     }
@@ -2558,7 +2555,7 @@ public static class PharmaSelfTests
             bool reacted = false; lp.ReactionOccurred += _ => reacted = true;
             bool pended = false; lp.ReactionPending += _ => pended = true;
 
-            // HEAT GATE (user 2026-07-17: "achieve the needed in the procedure
+            // HEAT GATE ("achieve the needed in the procedure
             // first, before these reactions come"): BenzoicOxidation needs 40 C —
             // poured COLD it must HOLD (no early observation, no wrong-mix
             // scold), then fire the moment the bath brings the vessel there.
@@ -2596,12 +2593,11 @@ public static class PharmaSelfTests
             bind.HandleReagent(LoadChem("Chem_Aniline"));           // unexpected reagent → mistake
             A("pour: unexpected reagent logs a WrongReagent mistake", runner.Mistakes.CountOf(LabErrorType.WrongReagent) >= 1);
 
-            // ⛔ THE 2026-07-17 STUCK BUG, pinned at its exact shape: the binding
-            // must LISTEN to its vessel after SetVesselAndRunner (play-mode
-            // AddComponent ran OnEnable with vessel==null and nothing ever
-            // subscribed — every pour fired into the void and the player could
-            // never complete "add distilled water"). The REAL path is AddLiquid →
-            // event → binding, so that is what this drives.
+            // ⛔ The binding must LISTEN to its vessel after SetVesselAndRunner
+            // (play-mode AddComponent runs OnEnable with vessel==null, so if
+            // subscription lived only there, every pour would fire into the void and
+            // the player could never complete "add distilled water"). The REAL path
+            // is AddLiquid → event → binding, so that is what this drives.
             A("pour: binding LISTENS after SetVesselAndRunner", bind.IsListening);
             var water5 = LoadChem("Chem_DistilledWater");
             bind.AddExpected(water5, "dilute-test", 10f);
@@ -2613,7 +2609,7 @@ public static class PharmaSelfTests
             // scold): an expected chem for a PENDING task passes IsExpectedNow;
             // after its task completes it stops being expected.
             A("pour: a pending step's reagent is expected", bind.IsExpectedNow(water5));
-            // Leniency epsilon (2026-07-17): fifty 0.1 g float dips sum below 5.0 —
+            // Leniency epsilon: fifty 0.1 g float dips sum below 5.0 —
             // strict >= left the player one phantom dip short, forever.
             float drift = 0f; for (int k = 0; k < 50; k++) drift += 0.1f;
             A("pour: float-drift dips still meet the threshold",
@@ -2664,7 +2660,7 @@ public static class PharmaSelfTests
         Fires("Chem_Acetone", "Chem_SilverNitrate", "acetone + Tollens (negative)", false);
     }
 
-    // W5.8 pour-guard: the raycast transfer path, self-exclusion, trigger
+    // pour-guard: the raycast transfer path, self-exclusion, trigger
     // immunity and the fresh-vessel wake state — none of which the older pour
     // suites exercised (they pre-seeded chem+volume and bypassed the raycast).
     static void PourGuardSuite()
@@ -2676,8 +2672,8 @@ public static class PharmaSelfTests
         A("ledger: accumulates per chemical", led.Summary() == "Ethanol 120 ml + NaOH 50 ml");
         led.Add("Water", 10f);
         A("ledger: caps with a more-tail", led.Summary(2) == "Ethanol 120 ml + NaOH 50 ml + 1 more");
-        // The tube's own label asks for ALL of it (W5.55, user: "show all reagents text in
-        // the test tube, dont hide in + more"); the cap survives for the narrow hover card.
+        // The tube's own label asks for ALL of it (show every reagent in
+        // the test tube, never hidden behind "+ more"); the cap survives for the narrow hover card.
         A("ledger: All names every reagent",
             led.Summary(VesselLedger.All).EndsWith("+ Water 10 ml")
             && !led.Summary(VesselLedger.All).Contains("more"));
@@ -2685,8 +2681,8 @@ public static class PharmaSelfTests
         A("ledger: reaction collapses to the product", led.Summary() == "Ester 180 ml");
         led.Clear();
         A("ledger: clears", led.Count == 0 && led.Summary() == "");
-        // Units per entry (2026-07-17): a 0.5 g spatula dip used to int-round to
-        // "0 ml" — solids read in grams, sub-unit amounts keep one decimal.
+        // Units per entry: a 0.5 g spatula dip must not int-round to
+        // "0 ml"; solids read in grams, sub-unit amounts keep one decimal.
         led.Add("Aspirin", 0.5f, solid: true); led.Add("Distilled Water", 10f);
         A("ledger: solids read in grams, sub-gram amounts survive",
             led.Summary() == "Aspirin 0.5 g + Distilled Water 10 ml");
@@ -2699,8 +2695,8 @@ public static class PharmaSelfTests
         rule.inputChemicalA = chemA; rule.inputChemicalB = chemB; rule.resultLiquid = chemC;
         reg.rules = new List<ReactionRule> { rule };
 
-        // Fresh-vessel wake: adopt on first add, react on second (the path the
-        // phantom-500ml default used to block on every stage-built vessel).
+        // Fresh-vessel wake: adopt on first add, react on second (a phantom-500ml
+        // default would block this on every stage-built vessel).
         var wgo = GameObject.CreatePrimitive(PrimitiveType.Cube);
         try
         {
@@ -2717,8 +2713,8 @@ public static class PharmaSelfTests
             lp.SetContents(null, 123f);
             A("setcontents: blank arms empty regardless of ml", lp.IsEmpty && lp.currentChemical == null && lp.Ledger.Count == 0);
 
-            // SPILL → REFILL (user 2026-07-27: "the measurement still remains there
-            // from the spilled reagents"). A partial pour shrinks the story; a pour
+            // SPILL → REFILL: the measurement must not linger from spilled
+            // reagents. A partial pour shrinks the story; a pour
             // to dry erases it, so the refill starts clean instead of stacking.
             lp.SetContents(chemA, 100f);
             lp.PourOut(50f);
@@ -2790,9 +2786,8 @@ public static class PharmaSelfTests
             A("pour: self-tilt never fires LiquidAdded on itself", !selfAdded);
             A("pour: self-tilt still wastes liquid", srcLp.currentLiquidVolume < before);
 
-            // W5.12 pour assist: a receiver the precise ray narrowly misses is
-            // still caught by the sphere sweep (in-headset aim is imprecise —
-            // "the beaker won't catch the spills").
+        // pour assist: a receiver the precise ray narrowly misses is
+        // still caught by the sphere sweep (in-headset aim is imprecise).
             target.SetActive(true);
             target.transform.position = new Vector3(50.08f, 0.1f, 50f);
             target.transform.localScale = new Vector3(0.1f, 0.2f, 0.1f);
@@ -2814,7 +2809,7 @@ public static class PharmaSelfTests
         }
     }
 
-    // W5.8 feedback layer: live vessel/station status formats + mix popups.
+    // feedback layer: live vessel/station status formats + mix popups.
     static void FeedbackSuite()
     {
         // Vessel status formats.
@@ -2823,8 +2818,8 @@ public static class PharmaSelfTests
         A("status: unknown liquid", VesselStatusMath.Compose("Beaker", null, 55f) == "Beaker — 55 ml liquid");
         A("status: reagent bottle drops the echo", VesselStatusMath.Compose("Ethanol", "Ethanol", 150f) == "Ethanol — 150 ml");
         A("status: null name safe", VesselStatusMath.Compose(null, "Ethanol", 10f) == "Vessel — 10 ml Ethanol");
-        // Mixed contents show every element AND its amount (user 2026-07-17:
-        // "clear text of the current elements in this tube and their proportions").
+        // Mixed contents show every element AND its amount (clear text of the
+        // current contents of the tube and their proportions).
         A("status: mixed contents list the proportions",
             VesselStatusMath.ComposeMixed("Test Tube 3", "Ethanol 1 ml + Distilled Water 10 ml")
                 == "Test Tube 3 — Ethanol 1 ml + Distilled Water 10 ml"
@@ -2883,7 +2878,7 @@ public static class PharmaSelfTests
         finally { UnityEngine.Object.DestroyImmediate(vgo); }
     }
 
-    // W5.8 tool verbs: stir/grind orbit math, weighing, match striking, burner
+    // tool verbs: stir/grind orbit math, weighing, match striking, burner
     // ignition, the methane splint, and the completesTask=false pour flag.
     static void VerbSuite()
     {
@@ -2927,7 +2922,7 @@ public static class PharmaSelfTests
         A("weigh: item mode satisfied", WeighMath.Satisfied(true, "", null, 0f, 0f, "weigh-acetates", "weigh-acetates"));
         A("weigh: item mode wrong item", !WeighMath.Satisfied(true, "", null, 0f, 0f, "weigh-acetates", "prep-koh"));
 
-        // ScoopMath (W5.12): fixed charge per dip, solids only, no double-dip.
+        // ScoopMath: fixed charge per dip, solids only, no double-dip.
         A("scoop: dips only into solids", ScoopMath.CanPickUp(false, PhysicalState.Solid, 50f)
             && ScoopMath.CanPickUp(false, PhysicalState.Powder, 50f)
             && !ScoopMath.CanPickUp(false, PhysicalState.Liquid, 50f));
@@ -2939,7 +2934,7 @@ public static class PharmaSelfTests
             ScoopMath.CanDeposit(true, false) && !ScoopMath.CanDeposit(true, true) && !ScoopMath.CanDeposit(false, false));
         A("scoop: deposit label shows the running total",
             ScoopMath.DepositLabel("Salicylic Acid", 2f, 8f) == "+2 g Salicylic Acid  (8 g total)");
-        // The porcelain spatula (2026-07-16): Exp 2 weighs 0.1 g salicylic and 0.5 g
+        // The porcelain spatula: Exp 2 weighs 0.1 g salicylic and 0.5 g
         // aspirin — BOTH smaller than one 2 g scoopful, so the scoop cannot express
         // them at all. At 0.1 g/dip they become 1 and 5 dips.
         A("spatula: finer than the scoopula", ScoopMath.GramsPerSpatula < ScoopMath.GramsPerScoop);
@@ -2948,7 +2943,7 @@ public static class PharmaSelfTests
         A("spatula: 0.5 g aspirin = five dips",
             Near(ScoopMath.ScoopCharge(50f, ScoopMath.GramsPerSpatula) * 5f, 0.5f));
 
-        // DropperMath (2026-07-16): the liquid twin of the scoop. THE contract —
+        // DropperMath: the liquid twin of the scoop. THE contract —
         // the number in the manuscript instruction IS the squeeze count, whatever
         // its unit ("5 drops" -> 5 squeezes; "2 ml of Tollen's" -> 2 squeezes).
         A("dropper: draws only from liquids",
@@ -2958,8 +2953,8 @@ public static class PharmaSelfTests
         A("dropper: no top-up while loaded (an ambiguous count)",
             !DropperMath.CanFill(4f, PhysicalState.Liquid, 50f));
         A("dropper: empty bottle gives nothing", !DropperMath.CanFill(0f, PhysicalState.Liquid, 0f));
-        // 2026-07-17 playtest: after the last squeeze, the empty dropper hovering
-        // over the tube SUCKED THE DELIVERED REAGENT BACK OUT. Task vessels are
+        // After the last squeeze, the empty dropper hovering over the tube must
+        // NOT suck the delivered reagent back out. Task vessels are
         // destinations, never sources.
         A("dropper: never draws back out of a task vessel",
             !DropperMath.CanFill(0f, PhysicalState.Liquid, 50f, isTaskVessel: true));
@@ -2990,8 +2985,8 @@ public static class PharmaSelfTests
             DropperMath.SqueezeLabel("Ferric Chloride 10%", 3) == "drop 3  ·  Ferric Chloride 10%");
         A("dropper: fill label shows squeezes loaded",
             DropperMath.FillLabel("Tollen's Reagent", 10f) == "Tollen's Reagent  ·  10 drops loaded");
-        // Charge-drain geometry (2026-07-17): pivot-scaling shrank the charge
-        // symmetrically ("nailed to the middle") — it must pool AT THE TIP, so
+        // Charge-drain geometry: pivot-scaling shrinks the charge
+        // symmetrically (it stays "nailed to the middle"); it must pool AT THE TIP, so
         // the capsule shifts toward the tip by exactly the half-length it lost.
         A("dropper: drain shortens the charge, floored at a readable sliver",
             Near(DropperMath.DrainScaleY(2f, 1f), 2f)
@@ -3002,7 +2997,7 @@ public static class PharmaSelfTests
             && Near(DropperMath.DrainShift(1f, 2f, 2f), 0f)
             && Near(DropperMath.DrainShift(0.5f, 2f, 1.2f), 0.4f));
 
-        // TubeSlotMath (2026-07-16): release a tube near a workspace holder and it
+        // TubeSlotMath: release a tube near a workspace holder and it
         // seats in the nearest FREE green slot. Held or already-frozen tubes are not
         // candidates (a seated tube must not be stolen by a neighbouring slot).
         {
@@ -3019,31 +3014,31 @@ public static class PharmaSelfTests
                 && !TubeSlotMath.CanSnap(held: false, kinematic: true)
                 && TubeSlotMath.CanSnap(held: false, kinematic: false));
             // Seat by the mesh BOTTOM, never the pivot: these tube meshes carry the
-            // pivot at the TOP, so pivot-to-slot sank the 13 cm body under the table —
-            // the seat sound played and the tube "disappeared" (2026-07-17 playtest).
+            // pivot at the TOP, so pivot-to-slot sinks the 13 cm body under the table
+            // (the seat sound plays and the tube "disappears").
             A("tubeslot: seating lifts a top-pivot tube onto the slot",
                 Near(TubeSlotMath.BottomAlignDelta(0.917f, 0.787f), 0.13f)
                 && Near(TubeSlotMath.BottomAlignDelta(1f, 1f), 0f));
 
-            // Bench glass adopted by a layout gets its REAL capacity — the serialized
-            // default of 1000 ml made 5 counted drops a 0.5% (invisible) fill, which
-            // the playtest read as "no drop landed".
+            // Bench glass adopted by a layout gets its REAL capacity: the serialized
+            // default of 1000 ml makes 5 counted drops a 0.5% (invisible) fill, which
+            // reads as "no drop landed".
             A("bench: adopted tubes hold 25 ml, not a bucket",
                 Near(ExperimentSceneBuilder.BenchMaxVolumeFor("TestTube", 1000f), 25f)
                 && Near(ExperimentSceneBuilder.BenchMaxVolumeFor("Beaker_100mL", 1000f), 100f)
                 && Near(ExperimentSceneBuilder.BenchMaxVolumeFor("SomethingElse", 321f), 321f));
 
-            // Shared apparatus keeps a NEUTRAL label — a bench-bound vessel's floating
+            // Shared apparatus keeps a NEUTRAL label: a bench-bound vessel's floating
             // tag must come from the bench item ("Test Tube 3"), never the layout's
-            // internal role name ("TollensTube_1" read as reagent-dedicated glassware
-            // and would go stale under the next module — user 2026-07-17).
+            // internal role name ("TollensTube_1" reads as reagent-dedicated glassware
+            // and would go stale under the next module).
             A("bench: bound vessels are labelled by the bench item, not the layout role",
                 ExperimentSceneBuilder.BenchDisplayNameFor("Kit_TestTube_3") == "Test Tube 3"
                 && ExperimentSceneBuilder.BenchDisplayNameFor("Kit_Hard-GlassTestTube_2") == "Hard-Glass Test Tube 2"
                 && ExperimentSceneBuilder.BenchDisplayNameFor("Eq_Beaker_100mL") == "Beaker 100 mL");
 
-            // ZONE-FREE heat (user 2026-07-17: "the entire lab IS the zone"): the
-            // water bath is a real tool — water first, flame second, then heat;
+            // ZONE-FREE heat: the
+            // water bath is a real tool (water first, flame second, then heat),
             // capped at boiling; its label always names the next thing it needs.
             A("waterbath: water then flame then heat",
                 !WaterBathMath.IsHeating(false, true) && !WaterBathMath.IsHeating(true, false)
@@ -3057,9 +3052,9 @@ public static class PharmaSelfTests
                 && !VesselHeatTask.ShouldComplete(true, 80f, 90f)
                 && VesselHeatTask.ShouldComplete(true, 90f, 90f));
         }
-        // The SCENE wiring — the dropper bug's exact shape was "verb authored, never
-        // ATTACHED" (DropperController existed in code, 0 in the scene, and the player
-        // squeezed a dead prop). Pin the components onto the actual objects.
+        // The SCENE wiring: a verb authored in code but never ATTACHED (a
+        // DropperController with 0 instances in the scene) leaves the player
+        // squeezing a dead prop. Pin the components onto the actual objects.
         {
             int droppers = 0, wired = 0;
             foreach (var t in UnityEngine.Object.FindObjectsByType<Transform>(
@@ -3072,7 +3067,7 @@ public static class PharmaSelfTests
             A("wired: every Eq_Dropper has the DropperController verb (found " + droppers + ")",
                 droppers > 0 && wired == droppers);
             // The charge visuals are HAND-FITTED children (skinned-mesh bounds lie —
-            // a bounds-derived tip floated the bead in mid-air, 2026-07-17): a
+            // a bounds-derived tip floated the bead in mid-air): a
             // DropperTip anchor and a DropperLiquid capsule inside the stem.
             int tips2 = 0, liquids2 = 0, allDrop = 0, hidden2 = 0;
             foreach (var t in UnityEngine.Object.FindObjectsByType<DropperController>(
@@ -3087,7 +3082,7 @@ public static class PharmaSelfTests
             A("wired: every dropper has a hand-fit DropperLiquid", allDrop > 0 && liquids2 == allDrop);
             // The capsule stays VISIBLE in the editor (the fitting aid must be
             // seen to be fitted) and Awake→CacheLiquid hides it the moment Play
-            // starts — in play only actual contents show (user 2026-07-17).
+            // starts — in play only actual contents show.
             A("wired: DropperLiquid capsules stay visible in the editor scene",
                 liquids2 > 0 && hidden2 == 0);
 
@@ -3095,7 +3090,7 @@ public static class PharmaSelfTests
             A("wired: the porcelain spatula dips fine (0.1 g)",
                 spat != null && spat.GetComponent<ScoopController>() != null
                 && Near(spat.GetComponent<ScoopController>().GramsPerDip, ScoopMath.GramsPerSpatula));
-            // The two solids tools carry DIFFERENT heap shapes (user 2026-07-18):
+            // The two solids tools carry DIFFERENT heap shapes:
             // the porcelain spatula a flat elongated smear, the scoopula a rounded
             // bowl-pile — they must not look identical.
             var scoopula = GameObject.Find("Eq_Scoopula");
@@ -3119,7 +3114,7 @@ public static class PharmaSelfTests
                 holders > 0 && snapping == holders);
         }
 
-        // MATERIALS guide (user 2026-07-17): every module's watch panel opens with the
+        // MATERIALS guide: every module's watch panel opens with the
         // full gather-first list — reagents WITH totals derived from the layout
         // bindings, apparatus authored from the procedures. Not a checklist item;
         // always visible; the board keeps its scroll position between opens.
@@ -3142,8 +3137,8 @@ public static class PharmaSelfTests
             string hdr = ChecklistPager.BuildMaterialsHeader(m5b);
             A("materials: header renders both sections",
                 hdr.Contains("MATERIALS") && hdr.Contains("Reagents:") && hdr.Contains("Apparatus:"));
-            // One bullet ROW per item (user 2026-07-17) — the dot-joined line wrapped
-            // mid-name; every listed material now starts its own "• " line.
+            // One bullet ROW per item (a dot-joined line wraps
+            // mid-name); every listed material starts its own "• " line.
             A("materials: every item is its own bullet row",
                 m5b == null || hdr.Split('•').Length - 1
                     >= m5b.materialReagents.Count + m5b.materialApparatus.Count);
@@ -3151,16 +3146,16 @@ public static class PharmaSelfTests
                 ChecklistPager.BuildMaterialsHeader(null) == "");
             // The procedures say "add distilled water" — the reagent bottle must carry
             // that exact name, or its hover and the wash bottle's both read "distilled
-            // water" and the player can't tell which the step means (user 2026-07-17).
+            // water" and the player can't tell which the step means.
             A("water: the procedure's 'distilled water' IS the reagent bottle's name",
                 m5b != null && m5b.materialReagents.Exists(r => r.StartsWith("Distilled Water"))
                 && !m5b.materialReagents.Exists(r => r.Contains("Purified")));
         }
 
-        // FUME-HOOD RULE (manuscript audit 2026-07-17): the manuscript demands the
-        // hood in exactly ONE place — Exp 5 §A, aniline + acetyl chloride. Any other
+        // FUME-HOOD RULE: the manuscript demands the
+        // hood in exactly ONE place, Exp 5 §A, aniline + acetyl chloride. Any other
         // chem carrying the flag makes CORRECT bench play log FumeHoodViolations
-        // (SimulatedRun found 4 per perfect Exp 2 run before the audit).
+        // (e.g. 4 per perfect Exp 2 run).
         {
             var flagged = new List<string>();
             foreach (var g in AssetDatabase.FindAssets("t:ChemicalData",
@@ -3170,7 +3165,7 @@ public static class PharmaSelfTests
                 if (c != null && c.requiresFumeHood) flagged.Add(c.chemicalName);
             }
             flagged.Sort();
-            // + Potassium Dichromate (2026-07-18, Exp 7 polish): its ONLY use is
+            // + Potassium Dichromate (Exp 7 polish): its ONLY use is
             // chloroform's oxidation test, whose manuscript hint is "Fume hood!"
             // — flagging the chem makes the position-based hood sanction real.
             A("fumehood: ONLY the manuscript's hood chems require the hood"
@@ -3179,10 +3174,10 @@ public static class PharmaSelfTests
                 && flagged[2] == "Potassium Dichromate");
         }
 
-        // WRAP-UP tasks (2026-07-17): a closing beat with no physical verb
+        // WRAP-UP tasks: a closing beat with no physical verb
         // ("record your observations") auto-completes once every other task is
-        // done — without this the checklist could never finish (SimulatedRun
-        // caught Exp 2 deadlocked on its final step).
+        // done; without this the checklist could never finish (a module would
+        // deadlock on its final step).
         {
             var wrapTasks = new List<ExperimentTask>
             {
@@ -3208,7 +3203,7 @@ public static class PharmaSelfTests
             A("wrapup: Exp 2's record-observations is authored as a wrap-up", authored);
         }
 
-        // TIME-SKIP (user 2026-07-17): a longProcess task fades black then returns
+        // TIME-SKIP: a longProcess task fades black then returns
         // with a "time passed" message — the reusable compression for week-long
         // waits (Exp 3 fermentation and every later lengthy process).
         {
@@ -3224,8 +3219,8 @@ public static class PharmaSelfTests
                 && TimeSkipController.MessageFor(skipBlank).Length > 0);
         }
 
-        // SIMULATED RUN (2026-07-17, user: "I want you to see the bugs yourselves
-        // before I test manually"): every suite run PLAYS Exp 2 end-to-end through
+        // SIMULATED RUN (catch the bugs here
+        // before a manual test): every suite run PLAYS Exp 2 end-to-end through
         // the real wiring — builder, bindings, racks, station sims — with VERB-
         // CONTRACT action counts. Clean = every task completes, zero mistakes,
         // zero bugs, and every consumed chemical has a sufficient bench source.
@@ -3239,7 +3234,7 @@ public static class PharmaSelfTests
 
             // Exp 3 (ethyl alcohol): the zone-free ferment→CO₂→limewater mechanic,
             // the week-long time-skip, distillation + the three warm tests all
-            // played through the real wiring (2026-07-17).
+            // played through the real wiring.
             var sim3Log = new System.Text.StringBuilder();
             var sim3 = SimulatedRun.Run("prelim-ethyl-alcohol", sim3Log);
             string sim3Note = sim3 == null ? "did not run"
@@ -3249,7 +3244,7 @@ public static class PharmaSelfTests
 
             // Exp 4 (benzoic acid): oxidation heat-gate, the funnel filtration,
             // acidify crystals, the ICE-BATH chill + time-skip and the LITMUS
-            // strip confirmation all played through the real wiring (2026-07-18).
+            // strip confirmation all played through the real wiring.
             var sim4Log = new System.Text.StringBuilder();
             var sim4 = SimulatedRun.Run("midterm-benzoic-acid", sim4Log);
             string sim4Note = sim4 == null ? "did not run"
@@ -3260,7 +3255,7 @@ public static class PharmaSelfTests
             // Exp 5 (acetanilide): the FUME-HOOD carry (aniline + acetyl
             // chloride sanctioned only inside the hood), the ice-water-then-
             // chill crystallisation, and the two-tube bromination comparison
-            // all played through the real wiring (2026-07-18).
+            // all played through the real wiring.
             var sim5Log = new System.Text.StringBuilder();
             var sim5 = SimulatedRun.Run("midterm-acetanilide", sim5Log);
             string sim5Note = sim5 == null ? "did not run"
@@ -3281,7 +3276,7 @@ public static class PharmaSelfTests
             // Exp 7 (chloroform): the two water-bath distillations (heat task +
             // vapor collect, twice), the decant wash, the FLAME non-flammability
             // confirm, the hood-sanctioned dichromate oxidation and the warm
-            // AgNO3 precipitate all played through the real wiring (2026-07-18).
+            // AgNO3 precipitate all played through the real wiring.
             var sim7Log = new System.Text.StringBuilder();
             var sim7 = SimulatedRun.Run("midterm-chloroform", sim7Log);
             string sim7Note = sim7 == null ? "did not run"
@@ -3321,13 +3316,13 @@ public static class PharmaSelfTests
                 !FermentationMath.CO2Confirmed(0f) && FermentationMath.CO2Confirmed(2f));
         }
 
-        // ICE BATH + CHILL (Exp 4, 2026-07-18): the water bath's cold twin — set
+        // ICE BATH + CHILL (Exp 4): the water bath's cold twin — set
         // a vessel in the bucket, anywhere, and the crystallise step completes
         // only once it actually holds product AND has gone cold (ambient 25 °C
         // can never satisfy it by standing around).
         A("icebath: chills only within reach", IceBathMath.Chills(0.2f) && !IceBathMath.Chills(0.5f));
-        // User-scalable zone anchors (2026-07-18): the wire-sphere gizmo's world
-        // scale IS the diameter — half the X scale drives the tool's reach; no
+        // Hand-scalable zone anchors: the wire-sphere gizmo's world
+        // scale IS the diameter; half the X scale drives the tool's reach; no
         // anchor falls back to the coded constant.
         A("zone: anchor scale drives the effect radius",
             WaterBathMath.EffectRadius(1f, 0.32f) == 0.5f
@@ -3341,7 +3336,7 @@ public static class PharmaSelfTests
                 && bathT.transform.Find("BurnerZone") != null
                 && iceT != null && iceT.transform.Find("ChillZone") != null);
         }
-        // FUME HOOD guidance (2026-07-18): the hood is an OPEN alcove — its
+        // FUME HOOD guidance: the hood is an OPEN alcove — its
         // label guides idle and flips to a ✓ while a vessel is protected.
         A("fumehood: label guides idle and confirms protection",
             FumeHoodStatusLabel.StatusLine(null).Contains("IN here")
@@ -3359,7 +3354,7 @@ public static class PharmaSelfTests
                 hshell != null && solidWalls == 5
                 && hz.GetComponent<BoxCollider>() != null && hz.GetComponent<BoxCollider>().isTrigger);
         }
-        // The hood's TEETH (edge case, 2026-07-18): a toxic pour with the vessel
+        // The hood's TEETH (edge case): a toxic pour with the vessel
         // at the open bench grades a FumeHoodViolation; the SAME pour with the
         // vessel inside the hood volume is sanctioned. Drives the REAL scene
         // hood through a probe vessel — position is the only variable.
@@ -3393,13 +3388,13 @@ public static class PharmaSelfTests
             finally { UnityEngine.Object.DestroyImmediate(fhRunnerGo); UnityEngine.Object.DestroyImmediate(fhVesselGo); }
         }
 
-        // Observation dedupe (2026-07-18): a burst of identical squeezes fires
+        // Observation dedupe: a burst of identical squeezes fires
         // ONE popup/sting; a different rule always announces.
         A("mixfx: repeated identical observation stays quiet",
             !MixFeedback.ShouldShowObservation(true, 10f, 9f)
             && MixFeedback.ShouldShowObservation(true, 14f, 9f)
             && MixFeedback.ShouldShowObservation(false, 10f, 9.9f));
-        // Live temp goal on heat/chill vessel tags (2026-07-18): shows until the
+        // Live temp goal on heat/chill vessel tags: shows until the
         // goal side is reached, then yields to the step's own completion cue.
         A("vesselstatus: temp goal narrates until reached",
             VesselStatusMath.TempGoalLine(25f, 50f, false) == "25 C — warm to 50 C (water bath)"
@@ -3412,16 +3407,16 @@ public static class PharmaSelfTests
             && !VesselChillTask.ShouldComplete(true, false, IceBathMath.IceWaterC, 8f)
             && !VesselChillTask.ShouldComplete(true, true, 25f, 8f));
 
-        // LITMUS (Exp 4, 2026-07-18): the strip reads the MIXTURE, not whichever
-        // chemical landed first — an acid dominates any amount of water, so
-        // "water first, then the product" can no longer soft-lock the test.
+        // LITMUS (Exp 4): the strip reads the MIXTURE, not whichever
+        // chemical landed first: an acid dominates any amount of water, so
+        // "water first, then the product" cannot soft-lock the test.
         A("litmus: the extreme component dominates the mixture",
             LitmusMath.DominantPH(7f, 2.9f) == 2.9f && LitmusMath.DominantPH(2.9f, 7f) == 2.9f
             && LitmusMath.DominantPH(7f, 13.5f) == 13.5f);
         A("litmus: task needs served AND a definitive read",
             VesselLitmusTask.ShouldComplete(true, true) && !VesselLitmusTask.ShouldComplete(true, false)
             && !VesselLitmusTask.ShouldComplete(false, true));
-        // Exp 8 (2026-07-18): the BASE read — ammonia vapour on alkaline
+        // Exp 8: the BASE read — ammonia vapour on alkaline
         // hydrolysis turns red litmus blue, and that read completes too.
         A("litmus: 10% NaOH actually reads BASE (authored pH)",
             LoadChem("Chem_SodiumHydroxide10") != null
@@ -3438,7 +3433,7 @@ public static class PharmaSelfTests
                 && LitmusMath.ColorForPH(benzoicChem.pH) == LitmusMath.AcidRed);
         }
 
-        // NAKED FLAME + VAPOR + WEIGH (Exp 6 dry distillation, 2026-07-18).
+        // NAKED FLAME + VAPOR + WEIGH (Exp 6 dry distillation).
         A("flame: reaches past the bath cap, only within reach",
             FlameMath.Heats(0.1f) && !FlameMath.Heats(0.3f)
             && FlameMath.NextTemp(100f, 1f) == 160f && FlameMath.NextTemp(390f, 1f) == FlameMath.MaxC
@@ -3450,7 +3445,7 @@ public static class PharmaSelfTests
             VesselWeighTask.ShouldComplete(true, true) && !VesselWeighTask.ShouldComplete(true, false)
             && !VesselWeighTask.ShouldComplete(false, true));
 
-        // RackMath (2026-07-16): a step shared by a SET of tubes is done only when
+        // RackMath: a step shared by a SET of tubes is done only when
         // every member tube has had its reagent. Exp 2's five enol samples, its
         // butyl alcohols, acetone-vs-acetaldehyde: the comparison IS the lesson, so
         // one tube must never stand in for the set.
@@ -3458,14 +3453,14 @@ public static class PharmaSelfTests
         A("rack: an empty group never auto-completes", !RackMath.AllReady(0, 0));
         A("rack: progress counts the set", RackMath.ProgressLabel(3, 5) == "tube 3 of 5");
 
-        // CleanupMath (W5.12): residue on empty, five swipes clean, rinse helps.
+        // CleanupMath: residue on empty, five swipes clean, rinse helps.
         A("clean: emptying a used vessel leaves residue", CleanupMath.BecomesDirty(60f, true)
             && !CleanupMath.BecomesDirty(60f, false) && !CleanupMath.BecomesDirty(0f, true));
         A("clean: five swipes scrub it clean", Near(CleanupMath.AfterSwipe(100f), 80f)
             && CleanupMath.AfterSwipe(15f) == 0f);
         A("clean: wash-bottle rinse also cleans", CleanupMath.AfterRinse(100f, 90f) == 0f
             && Near(CleanupMath.AfterRinse(100f, 10f), 88f));
-        // W5.59: residue never reaches the label. The prefix was the only thing cleaning ever did,
+        // residue never reaches the label. The prefix is all cleaning would show,
         // and to a player a vessel that says Dirty is a vessel they must clean.
         {
             var labelGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -3485,8 +3480,8 @@ public static class PharmaSelfTests
             finally { UnityEngine.Object.DestroyImmediate(labelGo); UnityEngine.Object.DestroyImmediate(testChem); }
         }
 
-        // W5.59: a SOLID never pours — solids are scooped. A tilted jar of sugar used to stream
-        // a brown liquid column because the pourer never looked at the state.
+        // a SOLID never pours; solids are scooped. Without the state check a tilted jar of
+        // sugar streams a brown liquid column.
         {
             var liq = ScriptableObject.CreateInstance<ChemicalData>(); liq.state = PhysicalState.Liquid;
             var sol = ScriptableObject.CreateInstance<ChemicalData>(); sol.state = PhysicalState.Solid;
@@ -3499,9 +3494,9 @@ public static class PharmaSelfTests
             finally { UnityEngine.Object.DestroyImmediate(liq); UnityEngine.Object.DestroyImmediate(sol); UnityEngine.Object.DestroyImmediate(pow); }
         }
 
-        // W5.59: ONE lab reset restores the apparatus — empty, cool, unclaimed, unlabelled — and
+        // ONE lab reset restores the apparatus (empty, cool, unclaimed, unlabelled) and
         // refills the reagents WITHOUT refilling the glassware it just emptied (the supply
-        // monitor used to restock any binding-less vessel from its last chemical).
+        // monitor would otherwise restock any binding-less vessel from its last chemical).
         {
             var app = GameObject.CreatePrimitive(PrimitiveType.Cube); app.name = "Eq_ResetProbe";
             var jar = GameObject.CreatePrimitive(PrimitiveType.Cube); jar.name = "Raw_ResetProbe";
@@ -3529,8 +3524,8 @@ public static class PharmaSelfTests
                     && bindA.ClaimedRole == -1                               // role released through Emptied
                     && Near(lpJ.currentLiquidVolume, 150f));                 // the reagent refilled
                 // The RULE, on the real scene: a used vessel carries CleanableVessel; a SOURCE never
-                // does. A name rule ("not Raw_") swept the wash bottle and the methane charge jar
-                // into the reset and starved the tutorial's setup step (Simulate Everything, W5.59).
+                // does. A name rule ("not Raw_") sweeps the wash bottle and the methane charge jar
+                // into the reset and starves the tutorial's setup step.
                 var flor = GameObject.Find("FlorenceFlask");
                 var wash = GameObject.Find("Eq_WashBottle");
                 var charge = GameObject.Find("Prop_reagent-jar");
@@ -3548,9 +3543,9 @@ public static class PharmaSelfTests
             }
         }
 
-        // W5.59: every solid jar on the shelf shows a heap, never a liquid column. Six jars did
-        // not — the PowderJar prefab carries only a Liquid surface — and the scoop, which keys
-        // on the chemical's state, worked on "liquid" sugar regardless.
+        // every solid jar on the shelf shows a heap, never a liquid column (the PowderJar
+        // prefab carries only a Liquid surface). The scoop keys on the chemical's state,
+        // so it works either way and can't catch this.
         {
             int solidJars = 0, noHeap = 0; string worstJar = "";
             foreach (var lp in UnityEngine.Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -3580,20 +3575,20 @@ public static class PharmaSelfTests
         A("burner: unlit match never", !BurnerController.ShouldIgnite(false, false, 0.1f));
         A("burner: far match never", !BurnerController.ShouldIgnite(false, true, 0.5f));
         A("burner: already lit no-op", !BurnerController.ShouldIgnite(true, true, 0.1f));
-        // Live instrument readout (user 2026-07-15): only shows while something is
+        // Live instrument readout: only shows while something is
         // happening; reuses the pinned station formats so it reads the same.
         A("readout: hidden at ambient", !ProcessReadout.ShouldShow(true, 22f, 22f, false, 0f));
         A("readout: shows once heating", ProcessReadout.ShouldShow(true, 60f, 22f, false, 0f));
         A("readout: shows while collecting", ProcessReadout.ShouldShow(false, 0f, 22f, true, 0.2f));
         A("readout: hidden with nothing collected", !ProcessReadout.ShouldShow(false, 0f, 22f, true, 0f));
-        // Grinding needs the reagent IN the mortar (user 2026-07-15: you could grind
+        // Grinding needs the reagent IN the mortar (you could grind
         // an empty mortar while the powder sat on the scoop).
         A("grind: empty mortar can't grind", !GrindController.CanGrind(true, 0f));
         A("grind: loaded mortar grinds", GrindController.CanGrind(true, 2f));
         A("grind: cosmetic mortar always grinds", GrindController.CanGrind(false, 0f));
         // Powder must NOT take its size from a POSITION-ONLY anchor. A BowlAnchor has
-        // scale 1, so sizing from it produced a 1-unit beach-ball in the mortar (user
-        // 2026-07-15). Only an anchor that declares previewsScale supplies the size.
+        // scale 1, so sizing from it produced a 1-unit beach-ball in the mortar.
+        // Only an anchor that declares previewsScale supplies the size.
         {
             var powderHost = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             try
@@ -3607,7 +3602,7 @@ public static class PharmaSelfTests
                 Transform heap = powderHost.transform.Find("Powder");
                 // Guard is "not a 1-unit beach-ball", not a tight bound: a Cylinder
                 // primitive's bounds are (1,2,1) → bore 1 → w = bore*0.5 = 0.5 EXACTLY,
-                // so "< 0.5f" failed on the boundary it was never aiming at.
+                // so "< 0.5f" would fail on the boundary it isn't aiming at.
                 A("powder: position-only anchor does NOT set size",
                   heap != null && heap.localScale.x < 0.6f && heap.localScale.y < 0.6f);
             }
@@ -3615,9 +3610,9 @@ public static class PharmaSelfTests
         }
 
         // HUD dropdown re-fits to however many items are visible — the demo verbs
-        // live in it and are hidden outside a demo session (user 2026-07-15).
+        // live in it and are hidden outside a demo session.
         // pad + items*h + (items-1)*gap = 16 + 168 + 12 = 196 (the 6-item and empty
-        // cases below pin the same formula; the old 200 was an arithmetic slip).
+        // cases below pin the same formula).
         A("hudmenu: 3 items (no demo)", Near(HudMenuDropdown.HeightFor(3, 56f, 6f, 16f), 196f));
         A("hudmenu: 6 items (demo session)", Near(HudMenuDropdown.HeightFor(6, 56f, 6f, 16f), 382f));
         A("hudmenu: empty list collapses to padding", Near(HudMenuDropdown.HeightFor(0, 56f, 6f, 16f), 16f));
@@ -3641,7 +3636,7 @@ public static class PharmaSelfTests
         A("splint: waits for a match first", !MethaneApparatusRig.SplintShouldFire(true, false, float.MaxValue, false, 5f));
         A("splint: not collected never", !MethaneApparatusRig.SplintShouldFire(false, false, 0.1f, true, 30f));
         A("splint: fires once", !MethaneApparatusRig.SplintShouldFire(true, true, 0.1f, true, 30f));
-        // W5.12 location-free: proximity reach check (heat/collect/assemble).
+        // location-free: proximity reach check (heat/collect/assemble).
         A("reach: within fires", MethaneApparatusRig.WithinReach(0.2f, 0.35f));
         A("reach: beyond doesn't", !MethaneApparatusRig.WithinReach(0.5f, 0.35f));
 
@@ -3741,12 +3736,10 @@ public static class PharmaSelfTests
     /// EVERY layout's taskIds must exist in its module's graph, and every task the
     /// graph declares must have some way to be completed.
     ///
-    /// This exists because Layout_ChemicalCompounding sat STALE for a session: its
-    /// stations still completed the retired battery (test-combustion / test-sodium /
-    /// gather-ethanol / test-bromine / test-kmno4) after the module was rebuilt to
-    /// the 13 manuscript tasks — ZERO overlap. The stage built, nothing errored, and
-    /// not one task could ever complete. Nothing caught it because no test compared
-    /// the two halves. (2026-07-16)
+    /// A layout whose stations complete a different task set than its module's graph
+    /// (e.g. a retired battery left in place after the module is rebuilt, ZERO overlap)
+    /// builds a stage with no errors, and not one task can ever complete. Only a test
+    /// comparing the two halves catches it.
     static void LayoutGraphCoverageSuite()
     {
         const string LDir = "Assets/PharmaSynth/ScriptableObjects/Layouts";
@@ -3778,7 +3771,7 @@ public static class PharmaSelfTests
 
             // (b) Every graph task needs an owner: a station, a completing binding,
             //     a rack group (deferred bindings whose members share a rackGroup),
-            //     or a zone-free heat vessel (heatToC > 0 — VesselHeatTask, 2026-07-17).
+            //     or a zone-free heat vessel (heatToC > 0 — VesselHeatTask).
             foreach (var t in module.graphTasks)
             {
                 bool owned = false;
@@ -3807,7 +3800,7 @@ public static class PharmaSelfTests
         A("cover: every graph task has a completion owner" + (allReachable ? "" : "  [" + deadNote + "]"), allReachable);
     }
 
-    // W5.8 builder wiring for the verb stations (pins the applied layout data).
+    // builder wiring for the verb stations (pins the applied layout data).
     static void VerbWiringSuite()
     {
         var lib = AssetDatabase.LoadAssetAtPath<SceneAssetLibrary>("Assets/PharmaSynth/ScriptableObjects/SceneAssetLibrary.asset");
@@ -3817,18 +3810,17 @@ public static class PharmaSelfTests
             layouts.Add(AssetDatabase.LoadAssetAtPath<ExperimentLayout>(AssetDatabase.GUIDToAssetPath(g)));
         if (lib == null || layouts.Count == 0) { A("verbwire: assets available", false); return; }
 
-        // Layout data applied (menu Tools ▸ PharmaSynth ▸ Apply W5.8 Verb Data).
-        // (Aspirin's weigh station + Caffeine's mortar were pinned here until both
-        // modules were dropped 2026-07-16; Acetone still covers the Weigh verb.)
+        // Layout data applied (by the verb-data applier menu).
+        // Acetone covers the Weigh verb.
         ExperimentLayout acetone = null, benzamide = null;
         foreach (var l in layouts)
         {
             if (l.moduleId == "midterm-acetone") acetone = l;
             if (l.moduleId == "final-benzamide") benzamide = l;
         }
-        // Acetone went zone-free 2026-07-18: the WEIGH lives on the BENCH
-        // balance now (Eq_Balance: pan trigger + station + grams display,
-        // wired by Apply W5.8), not on a layout station.
+        // Acetone is zone-free: the WEIGH lives on the BENCH
+        // balance (Eq_Balance: pan trigger + station + grams display,
+        // wired by the verb-data applier), not on a layout station.
         var balT = GameObject.Find("Eq_Balance");
         A("verbwire: bench balance carries the weigh rig (pan + station + display)",
             balT != null && balT.transform.Find("Pan") != null
@@ -3836,7 +3828,7 @@ public static class PharmaSelfTests
             && balT.GetComponent<WeighingScaleController>() != null);
         A("verbwire: burners carry the naked flame",
             UnityEngine.Object.FindAnyObjectByType<NakedFlameHeat>(FindObjectsInactive.Include) != null);
-        // Zone-free since the Exp 8 polish (2026-07-18): the stir is authored as
+        // Zone-free since the Exp 8 polish: the stir is authored as
         // Vessel.stirTaskId on the chilled reaction beaker, not a Stir station.
         bool benzStir = false;
         if (benzamide != null) foreach (var v in benzamide.vessels) if (v.stirTaskId == "stir-stand") benzStir = true;
@@ -3856,8 +3848,7 @@ public static class PharmaSelfTests
             A("verbwire: benzamide rod stirs the vessel",
                 UnityEngine.Object.FindAnyObjectByType<StirController>(FindObjectsInactive.Include) != null);
 
-            // (The acetone balance/burner assertions moved to the BENCH pins
-            // above when Exp 6 went zone-free, 2026-07-18.)
+            // (The acetone balance/burner assertions are the BENCH pins above.)
         }
         finally
         {
@@ -3876,7 +3867,7 @@ public static class PharmaSelfTests
         return null;
     }
 
-    // W5.8 table pass: every layout re-zoned onto the deck with real spacing.
+    // table pass: every layout re-zoned onto the deck with real spacing.
     static void LayoutSpacingSuite()
     {
         // The zoning grid itself keeps its promises (one full station row = the
@@ -3918,7 +3909,7 @@ public static class PharmaSelfTests
             foreach (var p in layout.props) all.Add(p.pos);
             // A BENCH-BOUND vessel's pos is IGNORED (the object already exists and
             // is hand-placed), so it can't overlap or fall off the deck — only
-            // SPAWNED vessels are laid out by the grid (2026-07-17).
+            // SPAWNED vessels are laid out by the grid.
             foreach (var v in layout.vessels) if (string.IsNullOrEmpty(v.benchItem)) all.Add(v.pos);
             foreach (var p in all) if (!LayoutTidyMath.OnDeck(p)) badDeck++;
             for (int i = 0; i < all.Count; i++)
@@ -3933,11 +3924,11 @@ public static class PharmaSelfTests
         A("tidy: stations keep verb elbow room", badStations == 0);
     }
 
-    // W5.10 center-table shelf platforms — geometry invariants.
+    // center-table shelf platforms — geometry invariants.
     static void WorkspaceShelfSuite()
     {
         const int n = 3;
-        // Tiles rest ON the rail tops (matches the user's plank top 1.563).
+        // Tiles rest ON the rail tops (matches the hand-laid plank top 1.563).
         A("shelf: top sits on the rails", Near(WorkspaceShelfMath.TopY, 1.563f, 0.001f));
 
         // Tiles tile the full width with only the seam gap between them, and
@@ -3965,7 +3956,7 @@ public static class PharmaSelfTests
         A("shelf: tile bridges both rails", zFrontEdge >= -3.16f && zBackEdge <= -3.49f);
         A("shelf: tiles are thin planks", Near(size.y, WorkspaceShelfMath.Thickness) && size.y < 0.05f);
 
-        // W5.12 second row (the user's lower planks at y≈1.20): below the top
+        // second row (the hand-laid lower planks at y≈1.20): below the top
         // row with real headroom for glassware, same footprint.
         A("shelf: two rows", WorkspaceShelfMath.Rows == 2);
         A("shelf: lower row at the user's plank height", Near(WorkspaceShelfMath.TopYOf(1), 1.215f, 0.001f));
@@ -3974,7 +3965,7 @@ public static class PharmaSelfTests
             Near(WorkspaceShelfMath.TileCenter(0, n, 1).z, WorkspaceShelfMath.TileCenter(0, n, 0).z)
             && Near(WorkspaceShelfMath.TileCenter(0, n, 1).x, WorkspaceShelfMath.TileCenter(0, n, 0).x));
 
-        // W5.12 apparatus-kit layout: both rows fit tightly with no overlaps,
+        // apparatus-kit layout: both rows fit tightly with no overlaps,
         // and the manuscript-derived kit manifest holds its shape.
         foreach (var (plan, rowName) in new[] { (WorkspaceKitsBuilder.Row0Plan(), "top"),
                                                 (WorkspaceKitsBuilder.Row1Plan(), "lower") })
@@ -4009,7 +4000,7 @@ public static class PharmaSelfTests
         A("kits: brush staged beside the racks", brush);
         A("kits: one Bunsen heating set + the alcohol crucible set (user layout W5.12)", burners == 1 && clay);
 
-        // W5.12 rack dispenser: capped, reusable, seat detection.
+        // rack dispenser: capped, reusable, seat detection.
         A("rack: tube seated when resting in the hole", RackDispenserMath.InHole(false, 0.02f));
         A("rack: held tube is not seated", !RackDispenserMath.InHole(true, 0.02f));
         A("rack: tube pulled clear is not seated", !RackDispenserMath.InHole(false, 0.2f));
@@ -4017,11 +4008,11 @@ public static class PharmaSelfTests
             && RackDispenserMath.OutCount(6, 6) == 0);
         A("rack: live label reads seated/capacity", RackDispenserMath.Label("Test Tubes", 4, 6) == "Test Tubes  4/6");
 
-        // Racks are FIXED FURNITURE (user 2026-07-29). Both roles — the storage
+        // Racks are FIXED FURNITURE. Both roles — the storage
         // racks tubes live in and the workspace holders they get dragged into —
         // must never be pickable: grabbing one carries every seated tube with it.
         // Pinned against the SCENE, because only a builder re-run can undo it
-        // (pure math cannot see a re-added component — the W5.8 striker lesson).
+        // (pure math cannot see a re-added component).
         {
             var stillGrabbable = new List<string>();
             foreach (string rn in W533Fixes.FixedRacks)
@@ -4036,10 +4027,10 @@ public static class PharmaSelfTests
               stillGrabbable.Count == 0);
         }
 
-        // The yield stepper was DELETED (user 2026-07-29): the value was read by
-        // nothing, and the player could not have computed it anyway. The C# API is
+        // The yield stepper is DELETED: the value was read by
+        // nothing, and the player could not compute it anyway. The C# API is
         // gone so code can't regress, but the SCENE widgets could be re-added by a
-        // panel rebuild — pin them absent.
+        // panel rebuild, so pin them absent.
         {
             var ghosts = new List<string>();
             foreach (string yn in W533Fixes.YieldWidgets)
@@ -4053,7 +4044,7 @@ public static class PharmaSelfTests
         foreach (var s in WorkspaceKitsBuilder.Row1Plan()) if (!RealSizes.TryGet(s.prefab, out _)) namesReal = false;
         A("kits: every kit prefab is a real pack item", namesReal);
 
-        // W5.12 apparatus snap: directed pairs + seat math (grab moves the
+        // apparatus snap: directed pairs + seat math (grab moves the
         // group; the ACTIVATE click detaches — AssemblyMath owns the policy).
         A("snap: gauze onto tripod, never the reverse",
             AssemblyMath.CanAttach("WireGauze", "Tripod") && !AssemblyMath.CanAttach("Tripod", "WireGauze"));
@@ -4079,7 +4070,7 @@ public static class PharmaSelfTests
             Near(AssemblyMath.SeatCenter(SnapAnchor.PoleMid, hostB, partB).y, 0.5f));
     }
 
-    // W5.9 flow-smoothness audit fixes.
+    // flow-smoothness guards.
     static void W59FlowSuite()
     {
         // F2: displayed percentages FLOOR (the gate compares raw values).
@@ -4211,7 +4202,7 @@ public static class PharmaSelfTests
             PharmeeLines.DebriefRemark(95f, true) != PharmeeLines.DebriefRemark(95f, false));
         A("campaign: non-final remark unchanged", PharmeeLines.DebriefRemark(95f, false) == PharmeeLines.DebriefRemark(95f));
 
-        // F10: data-integrity guards (silent-unpassable + "outro always plays").
+        // Data-integrity guards (silent-unpassable + "outro always plays").
         int emptyModules = 0;
         foreach (var g in AssetDatabase.FindAssets("t:ExperimentModuleDefinition", new[] { "Assets/PharmaSynth/ScriptableObjects/Experiments" }))
         {
@@ -4303,9 +4294,9 @@ public static class PharmaSelfTests
                 A("tutorial: campaign ignores the guided flag",
                     !ProximityLabel.ShouldShow(50f, 1.4f, false, true));
 
-                // The x-ray ghost copies only BODY meshes. It once copied each item's
-                // floating ProximityLabel too — that label carries a big compensating
-                // scale, so the silhouette came out hugely oversized.
+                // The x-ray ghost copies only BODY meshes. Each item's floating
+                // ProximityLabel carries a big compensating scale, so copying it
+                // too makes the silhouette hugely oversized.
                 var probeMesh = new Mesh { name = "selftest-probe-mesh" };
                 var solidGo = new GameObject("solid-probe");
                 var solidMf = solidGo.AddComponent<MeshFilter>();
@@ -4391,9 +4382,9 @@ public static class PharmaSelfTests
                 }
                 TutorialSession.Active = false;
 
-                // Waypoint sizing is now a TARGET HEIGHT IN METRES, not a multiplier:
-                // a multiplier scaled whatever the artist authored and then distance
-                // scaling multiplied it AGAIN, so the marker filled the view up close.
+                // Waypoint sizing is a TARGET HEIGHT IN METRES, not a multiplier:
+                // a multiplier scales whatever the artist authored and then distance
+                // scaling multiplies it AGAIN, so the marker fills the view up close.
                 A("tutorial: marker sizing holds a constant apparent height",
                     Near(WaypointGuide.DistanceScale(2f, 2f, 0.35f, 3.5f), 1f)
                     && Near(WaypointGuide.DistanceScale(1f, 2f, 0.35f, 3.5f), 0.5f));
@@ -4444,7 +4435,7 @@ public static class PharmaSelfTests
                 A("tutorial: summary pluralises many corrections",
                     TutorialCoach.SummaryText(12, 3) == "Practice complete — 12 steps, 3 corrections along the way.");
 
-                // ---- W5.39 verb demonstration -------------------------------------
+                // ---- verb demonstration -------------------------------------
                 // The registry carries the VERB as well as the object, derived in the
                 // same sweep, so a demonstration can never mime a different motion from
                 // the one the step's binding will accept.
@@ -4452,13 +4443,13 @@ public static class PharmaSelfTests
                 TaskTargetRegistry.Register("t-v", probe.transform, TargetRole.Source, false, VerbKind.Scoop);
                 A("tutorial: registry carries the step's verb",
                     TaskTargetRegistry.Targets("t-v")[0].verb == VerbKind.Scoop);
-                // Every pre-W5.39 caller (MethaneApparatusRig among them) omits the verb,
+                // Every older caller (MethaneApparatusRig among them) omits the verb,
                 // so the default has to be the one that suits an unknown step: carry it.
                 TaskTargetRegistry.Register("t-w", probe.transform, TargetRole.Station, true);
                 A("tutorial: an unspecified verb defaults to Place",
                     TaskTargetRegistry.Targets("t-w")[0].verb == VerbKind.Place);
 
-                // W5.42: never point the player at something they cannot see. Hidden
+                // never point the player at something they cannot see. Hidden
                 // objects here are hidden ON PURPOSE — the module's own end product, the
                 // methane-only staged props, the dispensers' Template_ clone sources —
                 // and glowing one is glowing nothing.
@@ -4476,7 +4467,7 @@ public static class PharmaSelfTests
                     A("tutorial: a null component is never a target",
                         !TutorialTargets.Visible(null));
 
-                // ---- W5.44 ground path + aiming cues -------------------------------
+                // ---- ground path + aiming cues -------------------------------
                 var route = new List<Vector3>
                 {
                     new Vector3(0f, 0f, 0f), new Vector3(0f, 0f, 2f), new Vector3(3f, 0f, 2f),
@@ -4521,8 +4512,7 @@ public static class PharmaSelfTests
                 A("path: with no route the beacon always takes over",
                     !GuidePathMath.ShowPath(5f, false) && GuidePathMath.ShowBeacon(5f, false));
 
-                // THE MARK ITSELF (W5.49). It was a PrimitiveType.Quad — a plain square —
-                // for the whole of W5.44, despite everything calling it a chevron; a row of
+                // THE MARK ITSELF must be a chevron, not a PrimitiveType.Quad: a row of
                 // sliding squares cannot read as direction however correct the flow is.
                 {
                     GuidePathMath.ChevronGeometry(out var cv, out var ct);
@@ -4554,8 +4544,7 @@ public static class PharmaSelfTests
                 }
 
                 // The ends ramp, or every chevron pops in at the player's feet and vanishes
-                // at full strength on arrival. `along01` was computed for this in W5.44 and
-                // then never read by the driver.
+                // at full strength on arrival. The driver must read `along01` for this.
                 A("path: the flow fades in at the start and out at the end",
                     GuidePathMath.FadeAt(0f) < 0.01f && GuidePathMath.FadeAt(1f) < 0.01f
                     && GuidePathMath.FadeAt(0.5f) > 0.99f);
@@ -4648,7 +4637,7 @@ public static class PharmaSelfTests
                 A("tutorial: a vertically-stacked pour still has an axis",
                     VerbDemoMath.TiltAxis(vFrom, vFrom + Vector3.up).sqrMagnitude > 0.9f);
 
-                // ---- W5.40 playability battery -------------------------------------
+                // ---- playability battery -------------------------------------
                 // Reachability: the band a standing VR player can actually work in.
                 A("reach: bench height is fine", ReachabilityAudit.HeightVerdict(1.0f) == ReachabilityAudit.Verdict.Fine);
                 A("reach: shoulder height is fine", ReachabilityAudit.HeightVerdict(1.6f) == ReachabilityAudit.Verdict.Fine);
@@ -4671,8 +4660,8 @@ public static class PharmaSelfTests
                     !ReachabilityAudit.IsEnclosed(new bool[0]));
 
                 // HasCondition exists so the simulator can tell "the player did the verb
-                // badly" apart from "nothing was listening" — the two look identical
-                // otherwise, and that ambiguity cost a whole methane debugging pass.
+                // badly" apart from "nothing was listening"; the two look identical
+                // otherwise.
                 {
                     var g = new TaskGraph(new List<ExperimentTask> { new ExperimentTask { taskId = "hc-a" } });
                     A("graph: no condition until one is registered", !g.HasCondition("hc-a"));
@@ -4706,7 +4695,7 @@ public static class PharmaSelfTests
         A("data: every module resolves a quiz bank", missingBanks == 0);
     }
 
-    // W5.9 manuscript re-verification fixes.
+    // manuscript re-verification fixes.
     static void W59ManuscriptSuite()
     {
         var reg = AssetDatabase.LoadAssetAtPath<ReactionRegistry>("Assets/PharmaSynth/ScriptableObjects/Reactions/MasterReactionRegistry.asset");
@@ -4714,7 +4703,7 @@ public static class PharmaSelfTests
         ChemicalData Chem(string f) => AssetDatabase.LoadAssetAtPath<ChemicalData>("Assets/PharmaSynth/ScriptableObjects/Chemicals/" + f + ".asset");
         ExperimentLayout Layout(string f) => AssetDatabase.LoadAssetAtPath<ExperimentLayout>("Assets/PharmaSynth/ScriptableObjects/Layouts/" + f + ".asset");
 
-        // M1: benzoic ester test finally has its alcohol.
+        // M1: benzoic ester test has its alcohol.
         var esterRule = AssetDatabase.LoadAssetAtPath<ReactionRule>("Assets/PharmaSynth/ScriptableObjects/Reactions/Test_BenzoateEster.asset");
         A("m1: ester rule uses propyl alcohol", esterRule != null && esterRule.inputChemicalB == Chem("Chem_PropylAlcohol"));
         A("m1: benzoic+propyl reaction resolves", reg != null
@@ -4741,12 +4730,10 @@ public static class PharmaSelfTests
             }
         A("m2: module has the oxidation test task", m2Task);
         A("m2: data sheet waits for it", m2Gated);
-        // Exp 7 polish pass (2026-07-18): the oxidation rule used to have
-        // resultLiquid NULL (the product trap — the mix would VANISH on firing)
-        // and no heat gate despite the manuscript's "HEAT a few drops"; the
-        // AgNO3 rule claimed a precipitate with resultPrecipitate NULL (nothing
-        // ever showed) and paired plain silver nitrate where the manuscript
-        // says ALCOHOLIC. Pinned so they can't regress.
+        // Exp 7 rules: the oxidation rule needs a resultLiquid (NULL is the product
+        // trap: the mix would VANISH on firing) and a heat gate (the manuscript's
+        // "HEAT a few drops"); the AgNO3 rule needs a resultPrecipitate (it claims a
+        // precipitate) and pairs ALCOHOLIC silver nitrate, as the manuscript says.
         A("m2: oxidation rule keeps its product + heat gate", oxRule != null
             && oxRule.resultLiquid == Chem("Chem_Chloroform") && oxRule.minTemperatureC >= 50f);
         var agRule = AssetDatabase.LoadAssetAtPath<ReactionRule>("Assets/PharmaSynth/ScriptableObjects/Reactions/Test_ChloroformAgNO3.asset");
@@ -4768,13 +4755,12 @@ public static class PharmaSelfTests
         A("m2: chloroform layout is zone-free with the watch-glass flame test",
             m2Flame && m2Stations);
 
-        // M6 (Exp 8 polish 2026-07-18): benzamide rules un-trapped and paired
-        // with bottles that EXIST. The synthesis + acid rules had resultLiquid
-        // NULL (the product trap); the hydrolyses fired at 40 despite "heat to
-        // BOILING"; the alkali paired plain "Sodium Hydroxide" — a chem with no
-        // bench bottle (only the 10% and 6N bottles exist); Sodium Nitrite was
-        // missing from the reagent catalog entirely (no bottle at all) and
-        // marked Solid though the manuscript adds "3 ml of 10% solution".
+        // M6 (Exp 8): benzamide rules free of the product trap and paired
+        // with bottles that EXIST. The synthesis + acid rules need a resultLiquid
+        // (NULL = the product trap); the hydrolyses fire at boiling ("heat to
+        // BOILING"), not 40; the alkali pairs a bottled NaOH (only the 10% and 6N
+        // bottles exist, plain "Sodium Hydroxide" has none); Sodium Nitrite is in
+        // the reagent catalog as a solution, since the manuscript adds "3 ml of 10% solution".
         var benzRule = AssetDatabase.LoadAssetAtPath<ReactionRule>("Assets/PharmaSynth/ScriptableObjects/Reactions/Benzamide.asset");
         A("m6: benzamide synthesis keeps its product + fires in the ice (no gate)",
             benzRule != null && benzRule.resultLiquid == Chem("Chem_Benzamide") && benzRule.minTemperatureC <= 0f);
@@ -4805,10 +4791,10 @@ public static class PharmaSelfTests
         A("m3: fruit juice renamed", Chem("Chem_GrapeJuice") != null && Chem("Chem_GrapeJuice").chemicalName == "Mixed Fruit Juice");
         A("m3: old name no longer resolves", lib != null && lib.GetChemical("Grape Juice") == null
             && lib.GetChemical("Mixed Fruit Juice") != null);
-        // Exp 9 rebuilt zone-free 2026-07-19: the jar no longer START-fills with
-        // juice (that hid the shorthand — no bench bottle, so the player could
-        // not pour their own must); it starts EMPTY and BINDS Mixed Fruit Juice
-        // for prepare-must, poured from the new Raw_MixedFruitJuice catalog bottle.
+        // Exp 9 is zone-free: the jar starts EMPTY (a start-filled jar hides the
+        // missing bench bottle, so the player could not pour their own must) and
+        // BINDS Mixed Fruit Juice for prepare-must, poured from the
+        // Raw_MixedFruitJuice catalog bottle.
         var wine = Layout("Layout_WineMaking");
         bool m3Binds = false, m3Empty = true, m3Stir = false, m3Ferment = false;
         if (wine != null)
@@ -4841,9 +4827,9 @@ public static class PharmaSelfTests
         A("m4: benzamide acid test uses diluted HCl", acidRule != null && acidRule.inputChemicalB == Chem("Chem_DilutedHydrochloricAcid"));
         bool m4Acet = false;
         var acetanilide = Layout("Layout_Acetanilide");
-        // 2026-07-18 rebuild: the manuscript's 0.1N HCl prep-preamble bottle is
-        // USED in the bromination tubes (trace acidification) — the old staged
-        // prep-hcl prop is gone with the zone-free layout.
+        // The manuscript's 0.1N HCl prep-preamble bottle is
+        // USED in the bromination tubes (trace acidification); there is no
+        // staged prep-hcl prop in the zone-free layout.
         if (acetanilide != null)
             foreach (var v in acetanilide.vessels) foreach (var b in v.bindings)
                 if (b.reagentChemical == "Hydrochloric Acid 0.1N" && b.taskId == "test-bromination") m4Acet = true;
@@ -4858,7 +4844,7 @@ public static class PharmaSelfTests
         }
         A("m4: iodoform tests stage their KI", kiBindings == 2);
 
-        // M5a: the compounding quiz matches the REBUILT manuscript battery (2026-07-15) —
+        // M5a: the compounding quiz matches the REBUILT manuscript battery —
         // it must probe the manual's own tests, never the retired sodium/bromine ones.
         var quiz = AssetDatabase.LoadAssetAtPath<QuizBank>("Assets/PharmaSynth/ScriptableObjects/Quizzes/Quiz_ChemicalCompounding.asset");
         bool noRetired = true;
@@ -4866,7 +4852,7 @@ public static class PharmaSelfTests
             foreach (var q in quiz.questions)
                 if (q.prompt.Contains("sodium metal") || q.prompt.Contains("unsaturation")) noRetired = false;
         A("m5: compounding quiz drops the retired sodium/bromine battery", quiz != null && noRetired);
-        // Watch-panel contract (user 2026-07-16): every Exp 2 step prints the
+        // Watch-panel contract: every Exp 2 step prints the
         // manuscript's REAL quantity for learning, then the achievable action under
         // it — "Add 2 ml of Tollen's reagent" / "-> 2 squeezes". ChecklistPager shows
         // t.hint under the current step, so this copy IS the in-game instruction.
@@ -4880,9 +4866,9 @@ public static class PharmaSelfTests
                     if (string.IsNullOrWhiteSpace(t.hint) || !t.hint.Contains("\n")) twoLine = false;
                     else
                     {
-                        // The action line must name a COUNTABLE verb — the count is
-                        // the measurement, and an un-actionable hint is the whole
-                        // reason the old copy failed the player.
+                        // The action line must name a COUNTABLE verb: the count is
+                        // the measurement, and an un-actionable hint leaves the
+                        // player with nothing to do.
                         string how = t.hint.Substring(t.hint.IndexOf('\n')).ToLowerInvariant();
                         if (!(how.Contains("squeeze") || how.Contains("dip") || how.Contains("tilt-pour")
                               || how.Contains("funnel") || how.Contains("burner") || how.Contains("board")))
@@ -4936,13 +4922,11 @@ public static class PharmaSelfTests
     {
         var lib = AssetDatabase.LoadAssetAtPath<SceneAssetLibrary>("Assets/PharmaSynth/ScriptableObjects/SceneAssetLibrary.asset");
         var reg = AssetDatabase.LoadAssetAtPath<ReactionRegistry>("Assets/PharmaSynth/ScriptableObjects/Reactions/MasterReactionRegistry.asset");
-        // SYNTHETIC fixture (2026-07-18, the Chloroform polish pass): the legacy
-        // spawn path — stations, sockets, hazards, teleport pads, props, seeded
-        // vessels — used to run on whichever REAL module still staged stations;
-        // Chloroform was the last, and its zone-free rebuild would have orphaned
-        // the test. It now runs on an in-memory layout + module it can never
-        // lose to future polish (the simrig fixture pattern). No real module
-        // stages stations any more, but the spawn path stays load-bearing (a
+        // SYNTHETIC fixture: the legacy
+        // spawn path (stations, sockets, hazards, teleport pads, props, seeded
+        // vessels) runs on an in-memory layout + module, because no real module
+        // stages stations any more and a real one could drop them in any polish
+        // pass (the simrig fixture pattern). The spawn path stays load-bearing (a
         // future layout may stage one), so it stays pinned here.
         A("builder: library/registry load", lib != null && reg != null);
         A("builder: library has prefabs + chemicals", lib != null && lib.prefabs.Count >= 40 && lib.chemicals.Count >= 20);
@@ -5045,10 +5029,10 @@ public static class PharmaSelfTests
                 if (li2.name.StartsWith("Prop_")) propItems++;
             A("builder: props carry LabItem ids", propItems == lay.props.Count);
 
-            // ⛔ INVERTED 2026-07-16. These used to REQUIRE the builder to stage a rack +
-            // 6 tubes, 2 spare beakers, a flask and a MatchStriker cube on every module —
-            // enforcing duplicates of a bench that now permanently carries all of it, and
-            // silently re-spawning the clones the user had deleted by hand. The bench IS
+            // ⛔ INVERTED. The builder must NOT stage a rack +
+            // 6 tubes, 2 spare beakers, a flask or a MatchStriker cube on any module:
+            // those duplicate a bench that permanently carries all of it, and
+            // re-spawn clones deleted by hand. The bench IS
             // the kit; the layout only binds to it.
             A("builder: no rack kit — the bench has racks",
                 FindChildByName(bgo.transform, "RackKit") == null
@@ -5079,8 +5063,8 @@ public static class PharmaSelfTests
                     runner.Graph.IsComplete(step0.taskId) || bind.ReadyFor(step0.taskId) || bind.IsListening);
             }
 
-            // W5.8 pour fix: receiving vessels must spawn EMPTY (wake branch
-            // armed — the old phantom 500 ml default blocked chemical adoption
+            // pour contract: receiving vessels must spawn EMPTY (wake branch
+            // armed; a phantom 500 ml default blocks chemical adoption
             // forever) and must be able to RENDER liquid (_Fill contract).
             bool mainEmptyOk = false, mainRenderOk = false, seededKeepsFill = true;
             foreach (var vlp in bgo.GetComponentsInChildren<LiquidPhysics>())
@@ -5102,12 +5086,12 @@ public static class PharmaSelfTests
                 if (lib.GetPrefab(nm + "_WithLiquid") == null) twinsOk = false;
             A("builder: every vessel swap twin resolves", twinsOk);
 
-            // W5.8 feedback layer: sim stations show live status; vessels and
+            // feedback layer: sim stations show live status; vessels and
             // pourables carry live tags + mix popups.
             A("builder: sim stations get live status labels", bgo.GetComponentsInChildren<StationStatusLabel>().Length >= 1);
             A("builder: vessels get live status + mix feedback",
                 bgo.GetComponentsInChildren<VesselStatus>().Length >= 2 && bgo.GetComponentsInChildren<MixFeedback>().Length >= 2);
-            // Precipitate layer (2026-07-18): without it, "white crystals
+            // Precipitate layer: without it, "white crystals
             // separate" fired with nothing visible in adopted/spawned glass.
             bool allPpt = true;
             foreach (var vlp in bgo.GetComponentsInChildren<LiquidPhysics>())
@@ -5150,10 +5134,10 @@ public static class PharmaSelfTests
             // Every station must be completable by an item that EXISTS — either a prop
             // the layout stages, or one of the permanent bench items.
             //
-            // This used to demand the item be in the SAME LAYOUT, which quietly encoded
+            // Demanding the item be in the SAME LAYOUT would encode
             // the opposite of the hard client rule ("ALL general tools are ALWAYS on the
-            // bench") and pushed layouts into staging their own funnel/burner/dropper —
-            // 46 duplicates of apparatus that was already there (user 2026-07-16). A
+            // bench") and push layouts into staging their own funnel/burner/dropper,
+            // duplicating apparatus that is already there. A
             // station's ZoneItemSensor matches a LabItem.itemId wherever it lives, so
             // pointing at the bench (kit-bunsenburner, kit-funnel) is the correct shape.
             var ids = new HashSet<string>(BenchItemIds);
@@ -5163,12 +5147,12 @@ public static class PharmaSelfTests
         }
         A("builder: every layout resolves all prefab/chemical/station names", resolveMisses == 0);
 
-        // ⛔ A LAYOUT MUST NOT RE-STAGE THE PERMANENT BENCH (user 2026-07-16).
+        // ⛔ A LAYOUT MUST NOT RE-STAGE THE PERMANENT BENCH.
         // Every general tool and raw reagent is ALWAYS out (the hard client rule), so
         // staging a dropper/funnel/burner/spatula or a pourable reagent bottle spawns a
-        // DUPLICATE of something already on the bench. Exp 2's first draft shipped 46 of
-        // them — 21 bottles, 2 droppers, a spatula, a funnel, a burner, 20 tubes — beside
-        // the Eq_*/Kit_*/Raw_* originals. Stations point at bench itemIds instead.
+        // DUPLICATE of something already on the bench (for Exp 2 that would be 46:
+        // 21 bottles, 2 droppers, a spatula, a funnel, a burner, 20 tubes, beside
+        // the Eq_*/Kit_*/Raw_* originals). Stations point at bench itemIds instead.
         {
             var bench = BenchItemIds;
             bool noToolDupes = true, noReagentDupes = true;
@@ -5176,7 +5160,7 @@ public static class PharmaSelfTests
             foreach (var g in AssetDatabase.FindAssets("t:ExperimentLayout", new[] { LayoutDir }))
             {
                 var l = AssetDatabase.LoadAssetAtPath<ExperimentLayout>(AssetDatabase.GUIDToAssetPath(g));
-                if (l == null || l.moduleId != "prelim-chemical-compounding") continue;   // the rebuilt module
+                if (l == null || l.moduleId != "prelim-chemical-compounding") continue;   // the manuscript Exp 2 module
                 foreach (var p in l.props)
                 {
                     if (bench.Contains(p.itemId)) { noToolDupes = false; dupeNote = l.name + " -> " + p.itemId; }
@@ -5188,10 +5172,10 @@ public static class PharmaSelfTests
             A("bench: compounding stages no tool the bench already has" + (noToolDupes ? "" : "  [" + dupeNote + "]"), noToolDupes);
             A("bench: compounding stages no reagent bottle (the shelf holds them)" + (noReagentDupes ? "" : "  [" + dupeNote + "]"), noReagentDupes);
 
-            // Vessels must BIND to the bench, not spawn twins beside it — Exp 2 shipped
-            // 20 Vessel_TestTube clones next to the real Kit_TestTube_0-18. And every
-            // benchItem must EXIST: a name typo means the step can never complete, the
-            // same silent class of bug as the stale layout nothing caught.
+            // Vessels must BIND to the bench, not spawn twins beside it (e.g. 20
+            // Vessel_TestTube clones next to the real Kit_TestTube_0-18). And every
+            // benchItem must EXIST: a name typo means the step can never complete, a
+            // silent class of bug nothing else catches.
             var sceneNames = new HashSet<string>();
             foreach (var t in UnityEngine.Object.FindObjectsByType<Transform>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -5319,18 +5303,18 @@ public static class PharmaSelfTests
         }
         finally { UnityEngine.Object.DestroyImmediate(rgo2); UnityEngine.Object.DestroyImmediate(bgo2); UnityEngine.Object.DestroyImmediate(ego2); }
 
-        // Rich dialogue pools (user 2026-07-10: richer NPC interactions).
+        // Rich dialogue pools (richer NPC interactions).
         A("lines: Pick wraps index + non-empty", !string.IsNullOrEmpty(PharmeeLines.Pick(PharmeeLines.Idle, 0))
             && PharmeeLines.Pick(PharmeeLines.Greetings, 5) == PharmeeLines.Pick(PharmeeLines.Greetings, 5 % PharmeeLines.Greetings.Length));
         A("lines: greetings pool has variety", PharmeeLines.Pick(PharmeeLines.Greetings, 0) != PharmeeLines.Pick(PharmeeLines.Greetings, 1));
         A("lines: Pick handles null + negative", PharmeeLines.Pick(null, 3) == "" && !string.IsNullOrEmpty(PharmeeLines.Pick(PharmeeLines.ExamRemarks, -2)));
 
-        // Guided lab tour (storyboard 2026-07-10): narrated beats, closer invites a campaign.
+        // Guided lab tour (storyboard): narrated beats, closer invites a campaign.
         A("tour: multiple beats + closer invites a campaign",
             PharmeeLines.TourBeats.Length >= 6
             && PharmeeLines.TourBeats[PharmeeLines.TourBeats.Length - 1].ToLower().Contains("campaign"));
 
-        // Location-triggered tour (storyboard 2026-07-10): narrate the nearest unvisited landmark.
+        // Location-triggered tour (storyboard): narrate the nearest unvisited landmark.
         {
             var pos = new[] { new Vector3(10, 0, 0), new Vector3(1, 0, 0), new Vector3(0, 0, 1) };
             var vis = new[] { false, false, false };
@@ -5341,7 +5325,7 @@ public static class PharmaSelfTests
             A("tour: nothing in range → -1", LabTourGuide.FirstUnvisitedInRange(new Vector3(50, 0, 50), pos, vis, rad) == -1);
         }
 
-        // Typewriter dialogue (user 2026-07-10): lines type out char-by-char with blips.
+        // Typewriter dialogue: lines type out char-by-char with blips.
         {
             var go = new GameObject("tw");
             try
@@ -5352,7 +5336,7 @@ public static class PharmaSelfTests
             finally { UnityEngine.Object.DestroyImmediate(go); }
         }
 
-        // Give way (user 2026-07-10): Pharmee steps aside when the player bumps him.
+        // Give way: Pharmee steps aside when the player bumps him.
         // Far away → no step.
         A("giveway: no step outside personal space",
             PharmeeGiveWay.SideStep(new Vector3(3f, 1f, 0f), Vector3.zero, Vector3.forward, 0.95f, 0.65f) == Vector3.zero);
@@ -5368,14 +5352,14 @@ public static class PharmaSelfTests
             A("giveway: closer = bigger step", near > edge && near > 0f);
         }
 
-        // Mirror render gate (perf 2026-07-10): skip the reflection pass when far,
+        // Mirror render gate (perf): skip the reflection pass when far,
         // behind the glass, or turned away.
         A("mirror: renders when near, in front, looking at it", MirrorPlane.ShouldRender(2f, 6f, 0.8f, 0.9f));
         A("mirror: skips when too far", !MirrorPlane.ShouldRender(9f, 6f, 0.8f, 0.9f));
         A("mirror: skips when behind the glass", !MirrorPlane.ShouldRender(2f, 6f, -0.5f, 0.9f));
         A("mirror: skips when turned away", !MirrorPlane.ShouldRender(2f, 6f, 0.8f, -0.6f));
 
-        // Hover highlight (user 2026-07-10: prop readability) — pops on hover, restores.
+        // Hover highlight (prop readability) — pops on hover, restores.
         A("hover: scale pops when lit, base when not",
             HoverHighlight.HighlightScale(Vector3.one, true, 1.06f) == Vector3.one * 1.06f
             && HoverHighlight.HighlightScale(Vector3.one, false, 1.06f) == Vector3.one);
@@ -5401,7 +5385,7 @@ public static class PharmaSelfTests
         A("audio: silence = -80 dB", Near(VolumeUtil.LinearToDb(0f), -80f, 0.01f));
         A("audio: half volume ~ -6 dB", Near(VolumeUtil.LinearToDb(0.5f), -6.02f, 0.1f));
 
-        // Per-shot pitch variation (realism 2026-07-10): centred at 1.0, bounded by
+        // Per-shot pitch variation (realism): centred at 1.0, bounded by
         // the jitter amount, and only physical sounds vary (not UI/musical stings).
         A("audio: pitch jitter centred + bounded",
             Near(AudioService.JitteredPitch(0.08f, 0.5f), 1f, 0.0001f)
@@ -5411,19 +5395,19 @@ public static class PharmaSelfTests
             AudioService.PitchVaries("footstep") && AudioService.PitchVaries("glass-shatter")
             && !AudioService.PitchVaries("ui-click") && !AudioService.PitchVaries("grade-pass"));
 
-        // Continuous pour sound (realism 2026-07-10): silent when righted, swells with flow.
+        // Continuous pour sound (realism): silent when righted, swells with flow.
         A("audio: pour silent when not pouring", Near(LiquidPourer.PourVolume(false, 0.5f, 1f, 1f), 0f, 0.0001f));
         A("audio: pour swells with flow",
             LiquidPourer.PourVolume(true, 0.5f, 1f, 1f) > LiquidPourer.PourVolume(true, 0.5f, 1f, 0f)
             && LiquidPourer.PourVolume(true, 0.5f, 1f, 0f) > 0f);
 
-        // Dialogue ducking (user 2026-07-10): beds dip while an NPC speaks, restore after.
+        // Dialogue ducking: beds dip while an NPC speaks, restore after.
         A("audio: duck dips beds while speaking, full otherwise",
             Near(DialogueDucker.DuckTarget(1, 0.45f), 0.45f, 0.001f)
             && Near(DialogueDucker.DuckTarget(2, 0.45f), 0.45f, 0.001f)
             && Near(DialogueDucker.DuckTarget(0, 0.45f), 1f, 0.001f));
 
-        // Atmosphere VFX (user 2026-07-10): AC vapour + haze style tags.
+        // Atmosphere VFX: AC vapour + haze style tags.
         A("atmosphere: style tags", AtmosphereVfx.StyleName(AtmosphereVfx.Style.AcVapor) == "ac-vapor"
             && AtmosphereVfx.StyleName(AtmosphereVfx.Style.Haze) == "haze");
 
@@ -5486,11 +5470,9 @@ public static class PharmaSelfTests
     {
         var lib = AssetDatabase.LoadAssetAtPath<SceneAssetLibrary>("Assets/PharmaSynth/ScriptableObjects/SceneAssetLibrary.asset");
         var reg = AssetDatabase.LoadAssetAtPath<ReactionRegistry>("Assets/PharmaSynth/ScriptableObjects/Reactions/MasterReactionRegistry.asset");
-        // SYNTHETIC fixture (2026-07-18): every polished module has gone
+        // SYNTHETIC fixture: every polished module is
         // zone-free, so the classic Heat-station rig is exercised on an
-        // in-memory layout + module — immune to module polish forever (the
-        // Acetanilide→Acetone re-homings both broke when their host was
-        // polished; never again).
+        // in-memory layout + module that no module polish can break.
         A("simrig: library loads", lib != null);
         if (lib == null) return;
         var module = ScriptableObject.CreateInstance<ExperimentModuleDefinition>();
@@ -5526,7 +5508,7 @@ public static class PharmaSelfTests
             runner.Graph.Tick();
             A("simrig: heat task pending before heating", !runner.Graph.IsComplete("rig-heat"));
 
-            // W5.8 ignition gate: the station's prop is a BunsenBurner, so heat
+            // ignition gate: the station's prop is a BunsenBurner, so heat
             // only advances once the burner is LIT (light it with a match).
             var burnerProp = FindChildByName(bgo.transform, "Prop_rig-heat");
             var burner = burnerProp != null ? burnerProp.GetComponent<BurnerController>() : null;
@@ -5671,7 +5653,7 @@ public static class PharmaSelfTests
             var rig = xgo.AddComponent<MethaneApparatusRig>();
 
             runner.StartExperiment();
-            // W5.12: location-free rig — no zones; heat/collect complete via the
+            // location-free rig — no zones; heat/collect complete via the
             // rig's own TemperatureSim/GasCollection conditions (driven by burner/
             // collection-tube PROXIMITY in play; here we drive the sims directly).
             rig.Bind(runner, temp, gas);
@@ -5712,8 +5694,7 @@ public static class PharmaSelfTests
             else if (e.period == ExperimentPeriod.Midterm) mid++;
             else fin++;
         }
-        // Client's 2026-07-16 grouping: tutorial + Exp 2-9. (Was 1/2/4/4 before
-        // Aspirin + Caffeine were dropped from the Final period.)
+        // Client's period grouping: tutorial + Exp 2-9.
         A("catalog: period split 1/2/4/2", tut == 1 && pre == 2 && mid == 4 && fin == 2);
 
         // Every prerequisite must reference an experiment earlier in the roster.
@@ -5770,7 +5751,7 @@ public static class PharmaSelfTests
         finally { UnityEngine.Object.DestroyImmediate(rgo); UnityEngine.Object.DestroyImmediate(lgo); }
     }
 
-    /// Adversarial EDGE CASES (user 2026-07-17: "cover edge cases with proper
+    /// Adversarial EDGE CASES ("cover edge cases with proper
     /// error handling, effects, features"): a confused/mischievous player does
     /// the WRONG thing and the game must respond — grade the mistake, refuse the
     /// impossible, block the out-of-order, never false-complete. Each drives the
@@ -5913,11 +5894,11 @@ public static class PharmaSelfTests
     {
         string dir = "Assets/PharmaSynth/ScriptableObjects/Experiments/";
         foreach (var (file, tasks) in new[] {
-            // Compounding: 6 → 13 when it was rebuilt to manuscript Exp 2 (2026-07-15).
+            // Compounding: 13 tasks, manuscript Exp 2.
             ("Tutorial_Methane", 5), ("Prelim_ChemicalCompounding", 13), ("Prelim_EthylAlcohol", 8),
             ("Midterm_BenzoicAcid", 9),
-            ("Midterm_Acetanilide", 8), ("Midterm_Acetone", 8), ("Midterm_Chloroform", 13),   // Exp 5+6 rebuilt to 8; Exp 7 rebuilt to 13 (two distillations + weigh, 2026-07-18)
-            ("Final_Benzamide", 10), ("Final_WineMaking", 7) })   // Exp 8 → 10; Exp 9 → 7 (zone-free ferment→rack→clarity/taste→label, 2026-07-19)
+            ("Midterm_Acetanilide", 8), ("Midterm_Acetone", 8), ("Midterm_Chloroform", 13),   // Exp 7 = two distillations + weigh
+            ("Final_Benzamide", 10), ("Final_WineMaking", 7) })   // Exp 9 = zone-free ferment→rack→clarity/taste→label
         {
             var m = AssetDatabase.LoadAssetAtPath<ExperimentModuleDefinition>(dir + file + ".asset");
             A("content: " + file + " loads", m != null);
@@ -5942,16 +5923,13 @@ public static class PharmaSelfTests
             A("content: " + file + " builds mastery model", m.BuildMasteryModel() != null);
             A("content: " + file + " builds score calculator", m.BuildScoreCalculator() != null);
 
-            // BEATABLE (2026-07-19, found by SimulatedCampaign): a PERFECT run —
-            // every task completed, zero mistakes, all quiz answers right — must
-            // clear the BKT mastery gate. With the default parameters a skill
-            // observed ONCE caps at 0.68, so a module whose tracked set holds
-            // several single-task skills can NEVER reach the 0.90 mean: Exp 3
-            // graded a flawless play "TRY AGAIN" (mastery 0.83), Exp 2 passed by
-            // 0.0001, and Exp 4-9 + the TUTORIAL were all unwinnable. Each
-            // module's trackedSkills now names its SIGNATURE skills (>=2
+            // BEATABLE: a PERFECT run (every task completed, zero mistakes, all quiz
+            // answers right) must clear the BKT mastery gate. With the default
+            // parameters a skill observed ONCE caps at 0.68, so a module whose tracked
+            // set holds several single-task skills can NEVER reach the 0.90 mean.
+            // Each module's trackedSkills names its SIGNATURE skills (>=2
             // observations on a perfect run); this replays the exact runner
-            // observation walk purely so no module ever ships unbeatable again.
+            // observation walk purely so no module ever ships unbeatable.
             var mastery = m.BuildMasteryModel();
             foreach (var t in m.graphTasks)
                 if (mastery.IsTracked(t.skill)) mastery.Observe(t.skill, true);
@@ -5959,7 +5937,7 @@ public static class PharmaSelfTests
                 + mastery.OverallMastery().ToString("0.000") + ")",
                 mastery.OverallMastery() >= m.masteryThreshold);
 
-            // FORGIVING (2026-07-19, pTransit 0.20→0.30): the mastery gate is
+            // FORGIVING (pTransit 0.30): the mastery gate is
             // INVISIBLE to the player — the grade screen shows a rubric %, so a
             // run that earns >=90 there must not be secretly failed by BKT. One
             // slip costs the rubric 4 points (procedure -0.10 × weight 0.40), so
@@ -5981,12 +5959,9 @@ public static class PharmaSelfTests
                 + forgiving.OverallMastery().ToString("0.000") + " still clears the gate)",
                 forgiving.OverallMastery() >= m.masteryThreshold);
 
-            // ILOs REACH THE PLAYER (2026-07-19). intendedLearningOutcomes was
-            // DEAD DATA — its only reader was the legacy ExperimentFlowManager,
-            // which was in no scene and was deleted 2026-08-07 — and the asset text
-            // had drifted from the manuscript-verbatim IloCopy the intro speaks.
-            // Now: synced to IloCopy, rendered on the wrist board for the whole
-            // run, and recapped by Dr. Jimenez before the quiz.
+            // ILOs REACH THE PLAYER. intendedLearningOutcomes is synced to the
+            // manuscript-verbatim IloCopy the intro speaks, rendered on the wrist
+            // board for the whole run, and recapped by Dr. Jimenez before the quiz.
             var ilos = m.intendedLearningOutcomes;
             A("content: " + file + " carries its manuscript ILOs", ilos != null && ilos.Count > 0);
             var copy = IloCopy.ForModule(m.moduleId);
@@ -6017,7 +5992,7 @@ public static class PharmaSelfTests
         return true;
     }
 
-    // Hover-inspector knowledge base + panel animation (user 2026-07-10).
+    // Hover-inspector knowledge base + panel animation.
     static void HoverInfoSuite()
     {
         A("info: equipment authored", LabInfoDatabase.EquipmentCount >= 25);
@@ -6062,7 +6037,7 @@ public static class PharmaSelfTests
         A("panel: distant target stays readable-close", HoverInfoPanel.PlaceDistance(4f, 0.5f, 1.1f, 0.4f) <= 1.1f + 1e-4f);
         A("panel: never negative", HoverInfoPanel.PlaceDistance(0.3f, 0.5f, 1.1f, 0.4f) >= 0.3f);
 
-        // Held-item suppression (user 2026-07-11: the card must not sit over an
+        // Held-item suppression (the card must not sit over an
         // item you're holding). Grabbable NOT selected → not held; null safe.
         var hgo = GameObject.CreatePrimitive(PrimitiveType.Cube);
         try
@@ -6074,7 +6049,7 @@ public static class PharmaSelfTests
         finally { UnityEngine.Object.DestroyImmediate(hgo); }
     }
 
-    // Corner music speaker playlist advance (user 2026-07-10).
+    // Corner music speaker playlist advance.
     static void MusicSpeakerSuite()
     {
         A("music: single track stays", MusicSpeaker.NextIndex(0, 1, true, 0.9f) == 0);
@@ -6085,7 +6060,7 @@ public static class PharmaSelfTests
         A("music: shuffle in range", shuf >= 0 && shuf < 5);
         A("music: empty safe", MusicSpeaker.NextIndex(0, 0, true, 0.5f) == 0);
 
-        // Speaker LED blink envelope (user 2026-07-19) — period 1.15 s, 22% lit.
+        // Speaker LED blink envelope — period 1.15 s, 22% lit.
         const float P = 1.15f, ON = 0.22f, E = 0.05f, DIM = 0.12f;
         A("led: peak mid-pulse", Mathf.Approximately(SpeakerLedBlink.Level01(P * ON * 0.5f, P, ON, E, DIM), 1f));
         A("led: dim in the gap", Mathf.Approximately(SpeakerLedBlink.Level01(P * 0.6f, P, ON, E, DIM), DIM));
@@ -6098,10 +6073,10 @@ public static class PharmaSelfTests
     }
 
 
-    // W5.37 surface + render calibration (user 2026-08-28, "make it an aesthetic lab").
+    // surface + render calibration (the lab's look).
     // These pin ASSET state, not math, on purpose: a pack reimport or one stray inspector drag
     // silently restores the bad values, and no pure test can see a material regression - the
-    // same lesson as the builder that wiped MatchStrikerSurface while every pure test passed.
+    // same reason the matchbox striker is pinned on the scene, not only in math.
     static void SurfaceSuite()
     {
         foreach (var surf in LabSurfaceTuner.Surfaces)
@@ -6119,10 +6094,10 @@ public static class PharmaSelfTests
                   Mathf.Approximately(mat.GetFloat("_Metallic"), surf.metallic));
         }
 
-        // The whole bug class, not just the four known offenders: URP clamps _Smoothness to
-        // 0-1, so anything above it renders as a perfect mirror. Four pack materials shipped
-        // at 2.19-3.20 and turned the ceiling, floor and cabinets into mirrors reflecting the
-        // outdoor procedural skybox inside a sealed room.
+        // The whole bug class, not just known offenders: URP clamps _Smoothness to
+        // 0-1, so anything above it renders as a perfect mirror (pack materials at
+        // 2.19-3.20 turn the ceiling, floor and cabinets into mirrors reflecting the
+        // outdoor procedural skybox inside a sealed room).
         int outOfRange = 0;
         foreach (var guid in UnityEditor.AssetDatabase.FindAssets("t:Material", new[] { "Assets/PharmaSynth" }))
         {
@@ -6132,8 +6107,8 @@ public static class PharmaSelfTests
         }
         A("surface: no material has smoothness > 1", outOfRange == 0);
 
-        // The walls and ceiling shipped with NO albedo at all - the largest surfaces in the
-        // player's view carrying zero texture is what made the room read as a grey box.
+        // The walls and ceiling need an albedo: the largest surfaces in the player's
+        // view carrying zero texture make the room read as a grey box.
         foreach (var p in new[]
         {
             "Assets/PharmaSynth/Art/Environment/Laboratory/Materials/Exterior/Wall_0.mat",
@@ -6146,8 +6121,8 @@ public static class PharmaSelfTests
               m != null && m.GetTexture("_BaseMap") != null);
         }
 
-        // Boil ramp (W5.37). boilingPointC was chemistry-only data until now, so heating a
-        // beaker vented steam from the STATION while the liquid inside sat perfectly still.
+        // Boil ramp: boilingPointC drives the liquid, so a heated beaker boils
+        // instead of venting steam from the STATION while the liquid sits perfectly still.
         A("boil: empty vessel never boils", LiquidPhysics.BoilFor(0f, 300f, 100f) == 0f);
         A("boil: cold liquid is still", LiquidPhysics.BoilFor(50f, 25f, 100f) == 0f);
         A("boil: full boil at the point", Mathf.Approximately(LiquidPhysics.BoilFor(50f, 100f, 100f), 1f));
@@ -6156,8 +6131,8 @@ public static class PharmaSelfTests
         A("boil: clamped above the point", Mathf.Approximately(LiquidPhysics.BoilFor(50f, 250f, 100f), 1f));
         A("boil: follows the chemical, not 100 C", LiquidPhysics.BoilFor(50f, 80f, 78f) > 0.9f);
 
-        // The render pipeline was authored and inert: a Volume with Bloom/Vignette/Tonemapping
-        // sat in the scene while both cameras had post-processing switched off.
+        // The render pipeline must be live: a Volume with Bloom/Vignette/Tonemapping
+        // does nothing while the cameras have post-processing switched off.
         var rp = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset>(
             "Assets/Settings/Mobile_RPAsset.asset");
         A("render: mobile RP asset exists", rp != null);
@@ -6169,7 +6144,7 @@ public static class PharmaSelfTests
     }
 
 
-    // W5.38 Pharmee animation set (checklist section 3 / asset-production-spec A1).
+    // Pharmee animation set (checklist section 3 / asset-production-spec A1).
     // Pure curves, pinned here because there is no headset pass to judge them by eye.
     static void PharmeeGestureSuite()
     {
@@ -6265,7 +6240,7 @@ public static class PharmaSelfTests
         }
     }
 
-    // Font-safe glyph sanitiser for the lab pads / holo board (user 2026-07-10).
+    // Font-safe glyph sanitiser for the lab pads / holo board.
     static void GlyphSafeSuite()
     {
         A("glyph: arrow → ->", GlyphSafe.Sanitize("purple→brown") == "purple->brown");
@@ -6277,12 +6252,12 @@ public static class PharmaSelfTests
         A("glyph: null/empty safe", GlyphSafe.Sanitize(null) == null && GlyphSafe.Sanitize("") == "");
     }
 
-    // Fixed per-scene eye height (user 2026-07-11 design pivot: NOT relative to
-    // the player's real height — the runtime's Floor/Device flip-flop made any
-    // relative scheme spawn players on the floor or the roof).
+    // Fixed per-scene eye height, NOT relative to
+    // the player's real height: the runtime's Floor/Device flip-flop makes any
+    // relative scheme spawn players on the floor or the roof.
     static void HeightCalibrationSuite()
     {
-        // --- head pushback: horizontal-only (2026-08-24 under-the-floor fix) ---
+        // --- head pushback: horizontal-only (under-the-floor fix) ---
         {
             var last = new UnityEngine.Vector3(0f, 1.45f, 0f);
             var dirDown = new UnityEngine.Vector3(0f, -1f, 0f);
@@ -6310,12 +6285,12 @@ public static class PharmaSelfTests
         A("height: upward adjust clamped", Near(HeightCalibration.FixedOffset(1.65f, 0.00f), HeightCalibration.MaxAdjust));
         A("height: downward adjust clamped", Near(HeightCalibration.FixedOffset(1.65f, 4.00f), -HeightCalibration.MaxAdjust));
         A("height: different scene targets differ", HeightCalibration.FixedOffset(1.40f, 1.0f) < HeightCalibration.FixedOffset(1.80f, 1.0f));
-        // Pose validity (2026-07-11 "1.6x too tall / roof" root cause: calibrating
-        // from an UNTRACKED zero pose during the load fade must be impossible).
+        // Pose validity: calibrating from an UNTRACKED zero pose during the load
+        // fade must be impossible (it spawns the player 1.6x too tall, at the roof).
         A("height: untracked zero pose rejected", !HeightCalibration.PoseValid(UnityEngine.Vector3.zero, 0f));
         A("height: settled real pose accepted", HeightCalibration.PoseValid(new UnityEngine.Vector3(0.1f, 1.0f, 0.2f), 1.001f));
         A("height: tracking-kick-in jump rejected", !HeightCalibration.PoseValid(new UnityEngine.Vector3(0.1f, 1.0f, 0.2f), 0f));
-        // Two-sided drift ("stuck at 0.96 after headset repositioned"): tall
+        // Two-sided drift (e.g. stuck at 0.96 after the headset is repositioned): tall
         // corrects with a small allowance, stuck-short with a generous one so
         // ordinary crouching/bench-leaning is never touched.
         A("height: standing-up overshoot detected", Near(HeightCalibration.TallExcess(2.10f, 1.65f), 0.30f));
@@ -6327,7 +6302,7 @@ public static class PharmaSelfTests
         // Hand-vs-glove display policy (bare hand unless the PPE glove is worn).
         A("handswap: bare hand when unglovd", HandSwap.ShowBareHand(false));
         A("handswap: glove replaces bare hand", !HandSwap.ShowBareHand(true));
-        // Three-pose two-skin hands (user 2026-07-11: free + grab + point, bare + nitrile).
+        // Three-pose two-skin hands (free + grab + point, bare + nitrile).
         A("handpose: grab wins over point", HandPosePolicy.PoseFor(true, true) == HandPoseKind.Grab);
         A("handpose: hovering an interactable points", HandPosePolicy.PoseFor(false, true) == HandPoseKind.Point);
         A("handpose: idle hand is free", HandPosePolicy.PoseFor(false, false) == HandPoseKind.Free);
@@ -6339,7 +6314,7 @@ public static class PharmaSelfTests
         A("handpose: distal curls less than proximal", HandPosePolicy.DistalCurl < HandPosePolicy.ProximalCurl);
     }
 
-    // Fitted watch geometry (user 2026-07-11: the solid Tripo watch cannot wrap a
+    // Fitted watch geometry (the solid Tripo watch cannot wrap a
     // wrist — the band is generated around the MEASURED wrist cross-section).
     static void WatchMathSuite()
     {
@@ -6367,8 +6342,8 @@ public static class PharmaSelfTests
         UnityEngine.Object.DestroyImmediate(mesh);
     }
 
-    // Held-item collision profile (user 2026-07-10: grabbed props phased through
-    // walls — pack prefabs shipped with Instantaneous movement, no physics sweep).
+    // Held-item collision profile: pack prefabs default to Instantaneous movement
+    // (no physics sweep), so grabbed props phase through walls.
     static void GrabTuningSuite()
     {
         var host = new GameObject("tune-host");
@@ -6403,7 +6378,7 @@ public static class PharmaSelfTests
         }
     }
 
-    // Shelf-bottle pour wiring (user 2026-07-10: tipping shelf bottles showed no
+    // Shelf-bottle pour wiring (tipping shelf bottles showed no
     // stream/puddle — LiquidPourer only existed on runtime-spawned props).
     static void ShelfPourWiringSuite()
     {
@@ -6414,7 +6389,7 @@ public static class PharmaSelfTests
             A("shelfpour: non-liquid rejected", ShelfPourWiring.WireBottle(bottle, null, null) == -1);
             var blp = bottle.AddComponent<LiquidPhysics>();
             int added = ShelfPourWiring.WireBottle(bottle, null, null);
-            A("shelfpour: adds visual+pourer+spout+spill+reactor+feedback", added == 6);   // W5.8: +visual +MixFeedback
+            A("shelfpour: adds visual+pourer+spout+spill+reactor+feedback", added == 6);   // +visual +MixFeedback
             var pourer = bottle.GetComponent<LiquidPourer>();
             A("shelfpour: pourer present", pourer != null);
             A("shelfpour: spout wired", pourer != null && pourer.spout != null);
@@ -6426,7 +6401,372 @@ public static class PharmaSelfTests
         finally { UnityEngine.Object.DestroyImmediate(bottle); }
     }
 
-    // Focused checklist for the single holo procedures board (user 2026-07-10:
+    // CINEMATIC CUTSCENES (client slides cutscenes-sample.pdf): a shot
+    // camera films the lab onto a screen in a dark room; the XR camera is never moved.
+    static void CinemaSuite()
+    {
+        A("cine: ease runs 0 → 1, symmetric", Near(ShotMath.Ease(0f), 0f) && Near(ShotMath.Ease(1f), 1f)
+            && Near(ShotMath.Ease(0.5f), 0.5f) && Near(ShotMath.Ease(2f), 1f));
+
+        var cur = new ShotMath.Pose(new Vector3(0f, 2f, 0f), Quaternion.identity);
+        var mk = new ShotMath.Pose(new Vector3(5f, 1.5f, 0f), Quaternion.Euler(0f, 90f, 0f));
+        var dest = new ShotMath.Pose(new Vector3(5f, 1.5f, 4f), Quaternion.identity);
+        Vector3 target = new Vector3(5f, 1f, 8f);
+
+        ShotMath.Ends(false, cur, mk, null, out var s0, out var e0);
+        var p0 = ShotMath.Evaluate(s0, e0, false, target, 0f);
+        A("cine: a cut starts on its marker, already aimed at the target",
+            Near(Vector3.Distance(p0.pos, mk.pos), 0f)
+            && Vector3.Dot(p0.rot * Vector3.forward, (target - mk.pos).normalized) > 0.999f);
+        A("cine: a cut with no dolly holds its marker", Near(Vector3.Distance(e0.pos, mk.pos), 0f));
+
+        ShotMath.Ends(true, cur, mk, null, out var s1, out var e1);
+        A("cine: a blend glides from where the camera is to the marker",
+            Near(Vector3.Distance(ShotMath.Evaluate(s1, e1, true, null, 0f).pos, cur.pos), 0f)
+            && Near(Vector3.Distance(ShotMath.Evaluate(s1, e1, true, null, 1f).pos, mk.pos), 0f)
+            && Quaternion.Angle(ShotMath.Evaluate(s1, e1, true, null, 1f).rot, mk.rot) < 0.5f);
+
+        ShotMath.Ends(false, cur, mk, dest, out var s2, out var e2);
+        bool level = true, aimed = true;
+        for (int i = 0; i <= 10; i++)
+        {
+            var p = ShotMath.Evaluate(s2, e2, false, target, i / 10f);
+            if (Mathf.Abs(Vector3.Dot(p.rot * Vector3.right, Vector3.up)) > 1e-3f) level = false;
+            if (Vector3.Dot(p.rot * Vector3.forward, (target - p.pos).normalized) < 0.999f) aimed = false;
+        }
+        A("cine: a dolly with a look target never rolls the horizon", level);
+        A("cine: a dolly stays locked on its look target every frame", aimed);
+        ShotMath.Ends(false, cur, null, null, out var s3, out var e3);
+        A("cine: a beat with no camera holds the previous framing",
+            Near(Vector3.Distance(s3.pos, cur.pos), 0f) && Near(Vector3.Distance(e3.pos, cur.pos), 0f));
+
+        var plain = ScriptableObject.CreateInstance<CutsceneData>();
+        plain.beats = new List<CutsceneData.Beat> { new CutsceneData.Beat { subtitle = "hi" } };
+        var test = CinemaCutsceneTools.TestSequence();
+        A("cine: no shots = subtitle cutscene, any shot = cinematic", !plain.IsCinematic && test.IsCinematic);
+        UnityEngine.Object.DestroyImmediate(plain);
+
+        A("cine: Pharmee's pop scales 0 → overshoot → 1",
+            CutsceneDirector.PopScale(0f) < 0.01f && Near(CutsceneDirector.PopScale(1f), 1f)
+            && CutsceneDirector.PopScale(0.8f) > 1f);
+        A("cine: the product shot finds the player's synthesis, never shelf stock",
+            CinemaView.HoldsProduct("Eq_Beaker_250", "benzoic acid", null, "Benzoic Acid")
+            && CinemaView.HoldsProduct("Kit_TestTube_3", null, "Benzoic Acid", "Benzoic Acid")
+            && !CinemaView.HoldsProduct("Raw_BenzoicAcid", "Benzoic Acid", null, "Benzoic Acid")
+            && !CinemaView.HoldsProduct("Eq_Beaker_250", "Water", null, "Benzoic Acid")
+            && !CinemaView.HoldsProduct("Eq_Beaker_250", "Water", null, null));
+
+        CinemaView.ScreenPose(new Vector3(0f, 1.6f, 0f), new Vector3(0f, -0.8f, 0.6f), 2.5f, out var sp, out var sr);
+        A("cine: the screen lands level ahead of the head, even looking down",
+            Near(sp.y, 1.6f) && Near(sp.z, 2.5f) && Mathf.Abs((sr * Vector3.forward).y) < 1e-4f);
+
+        // Enter/Exit restore exactly what they changed — a stuck culling mask would
+        // leave the player in a black void with no way out.
+        A("cine: the Cinema layer exists", CinemaView.Layer >= 0);
+        var cg = new GameObject("cine_xr");
+        var vg = new GameObject("cine_view");
+        try
+        {
+            var cam = cg.AddComponent<Camera>();
+            cam.cullingMask = 0x5F; cam.clearFlags = CameraClearFlags.Skybox; cam.backgroundColor = Color.red;
+            var view = vg.AddComponent<CinemaView>();
+            view.Enter(cam);
+            A("cine: inside, the XR camera sees only the theatre",
+                view.Active && cam.cullingMask == 1 << CinemaView.Layer && cam.clearFlags == CameraClearFlags.SolidColor
+                && view.ShotCamera.enabled && view.ShotCameraIsFlat
+                && (view.ShotCamera.cullingMask & (1 << CinemaView.Layer)) == 0);
+            view.SetTint(Color.red);
+            view.Exit();
+            A("cine: exit clears the timelapse tint", view.Tint == Color.white);
+            A("cine: exit restores the XR camera exactly",
+                !view.Active && cam.cullingMask == 0x5F && cam.clearFlags == CameraClearFlags.Skybox
+                && cam.backgroundColor == Color.red && !view.ShotCamera.enabled);
+            view.Exit();
+            A("cine: a second exit is harmless", cam.cullingMask == 0x5F);
+        }
+        finally { UnityEngine.Object.DestroyImmediate(vg); UnityEngine.Object.DestroyImmediate(cg); }
+
+        // The clock pauses for a mid-run cinematic without thawing a review freeze.
+        var module = ScriptableObject.CreateInstance<ExperimentModuleDefinition>();
+        module.graphTasks = new List<ExperimentTask> { T("a", TaskPhase.Synthesis, 1, LabSkill.Transfer, RubricCategory.Procedure) };
+        module.trackedSkills = new List<LabSkill> { LabSkill.Transfer };
+        var rg = new GameObject("cine_runner");
+        try
+        {
+            var runner = rg.AddComponent<ExperimentRunner>();
+            runner.SetModule(module);
+            runner.StartExperiment();
+            runner.AdvanceTime(5f);
+            runner.PauseClock(true); runner.AdvanceTime(20f);
+            bool held = Near(runner.ElapsedSeconds, 5f);
+            runner.PauseClock(false); runner.AdvanceTime(1f);
+            A("cine: a cutscene pauses the clock and releases it", held && Near(runner.ElapsedSeconds, 6f));
+            runner.FreezeClock(); runner.PauseClock(true); runner.PauseClock(false); runner.AdvanceTime(9f);
+            A("cine: releasing a pause never thaws the review freeze", Near(runner.ElapsedSeconds, 6f));
+            bool aborted = false; runner.Aborted += () => aborted = true;
+            runner.PauseClock(true); runner.Abort();
+            A("cine: abort announces itself and clears the pause", aborted && !runner.ClockPaused);
+        }
+        finally { UnityEngine.Object.DestroyImmediate(rg); UnityEngine.Object.DestroyImmediate(module); }
+
+        // PHASE 2 — the slide template on the library (Apply Cutscene Shots).
+        A("cine: each cinematic opens on the slides' card",
+            CutsceneDirector.CardFor(CutsceneData.Kind.ReagentPrep).title == "Preparations Complete"
+            && CutsceneDirector.CardFor(CutsceneData.Kind.Success).title == "Experiment Complete"
+            && CutsceneDirector.CardFor(CutsceneData.Kind.Failure).title.Length > 0
+            && CutsceneDirector.CardFor(CutsceneData.Kind.Intro).title == ""
+            && CutsceneDirector.CardFor(CutsceneData.Kind.Intro, "Benzoic Acid").title == "Benzoic Acid");
+        {
+            var b0 = CinemaCutsceneTools.TemplateShot(CutsceneData.Kind.Success, 0);
+            var b1s = CinemaCutsceneTools.TemplateShot(CutsceneData.Kind.Success, 1);
+            var b1f = CinemaCutsceneTools.TemplateShot(CutsceneData.Kind.Failure, 1);
+            var b2 = CinemaCutsceneTools.TemplateShot(CutsceneData.Kind.Success, 2);
+            A("cine: template — Pharmee pops out, the camera glides to her close-up",
+                b0.pharmeePopIn && b0.blend && b0.look == CinemaLook.Pharmee && b0.camera == "Cam_PharmeeClose");
+            A("cine: template — the pan lands on the product only on a pass",
+                b1s.look == CinemaLook.Product && b1f.look == CinemaLook.Bench && b1s.blend && b1s.camera == "Cam_Bench");
+            A("cine: template — later beats hold", !b2.HasCamera);
+            A("cine: intro — Pharmee pops out first, objectives hold on her, the last beat pans to the bench",
+                CinemaCutsceneTools.TemplateShot(CutsceneData.Kind.Intro, 0, 6).pharmeePopIn
+                && !CinemaCutsceneTools.TemplateShot(CutsceneData.Kind.Intro, 3, 6).HasCamera
+                && CinemaCutsceneTools.TemplateShot(CutsceneData.Kind.Intro, 5, 6).camera == "Cam_Bench");
+        }
+        {
+            var lib = AssetDatabase.LoadAssetAtPath<CutsceneLibrary>(CinemaCutsceneTools.LibraryPath);
+            int total = 0; var off = new List<string>();
+            foreach (var c in CinemaCutsceneTools.TemplatedCutscenes(lib))
+            {
+                total++;
+                bool ok = c.IsCinematic;
+                for (int i = 0; i < c.beats.Count && ok; i++)
+                {
+                    var want = CinemaCutsceneTools.TemplateShot(c.kind, i, c.beats.Count); var got = c.beats[i].shot;
+                    ok = got != null && got.camera == want.camera && got.blend == want.blend && got.look == want.look
+                         && got.pharmeePopIn == want.pharmeePopIn;
+                }
+                if (!ok) off.Add(c.name);
+            }
+            A("content: all 36 cutscenes (intro, prep, success, failure) carry the cinematic template" + (off.Count > 0 ? " — off: " + string.Join(", ", off) : ""),
+                total == 36 && off.Count == 0);
+        }
+
+        // PHASE 3 — the corner-camera timelapse for longProcess tasks.
+        A("timelapse: one day/night cycle per day, capped, none under a day",
+            TimelapseMath.Cycles(168f) == 7 && TimelapseMath.Cycles(48f) == 2 && TimelapseMath.Cycles(2000f) == 7
+            && TimelapseMath.Cycles(0.25f) == 0 && TimelapseMath.Cycles(0f) == 0);
+        A("timelapse: lit at dawn and at the end, dark at midnight",
+            TimelapseMath.Tint(0f, 168f) == Color.white && TimelapseMath.Tint(1f, 168f) == Color.white
+            && Vector4.Distance(TimelapseMath.Tint(0.5f / 7f, 168f), TimelapseMath.Night) < 0.01f
+            && TimelapseMath.IsNight(0.5f / 7f, 168f) && !TimelapseMath.IsNight(0f, 168f));
+        A("timelapse: a 15-minute wait never goes dark", TimelapseMath.Tint(0.5f, 0.25f) == Color.white);
+        A("timelapse: the counter reads days, minutes, or no number at all",
+            TimelapseMath.Counter(0f, 168f).StartsWith("DAY 1 OF 7") && TimelapseMath.Counter(0.99f, 168f).StartsWith("DAY 7 OF 7")
+            && TimelapseMath.Counter(1f, 0.25f).StartsWith("0:15 OF 0:15") && TimelapseMath.Counter(0.5f, 0f) == ">> FAST FORWARD");
+        {
+            var stated = new Dictionary<string, float> { { "confirm-ferment", 168f }, { "ferment", 168f }, { "stir-stand", 0.25f } };
+            int longTasks = 0; var wrong = new List<string>();
+            foreach (var guid in AssetDatabase.FindAssets("t:ExperimentModuleDefinition", new[] { "Assets/PharmaSynth/ScriptableObjects/Experiments" }))
+            {
+                var m = AssetDatabase.LoadAssetAtPath<ExperimentModuleDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+                foreach (var t in m.graphTasks)
+                {
+                    if (!t.longProcess) continue;
+                    longTasks++;
+                    float want = stated.TryGetValue(t.taskId, out var h) ? h : 0f;
+                    if (!Near(t.timelapseHours, want)) wrong.Add(t.taskId + "=" + t.timelapseHours);
+                }
+            }
+            A("timelapse: only durations the procedure states carry a number" + (wrong.Count > 0 ? " — " + string.Join(", ", wrong) : ""),
+                longTasks == 6 && wrong.Count == 0);
+        }
+
+        // Pharmee's speech bubble rides 1.1-1.4 m above her pivot; parked at 1.45 in the
+        // corner it goes through the 2.64 m ceiling.
+        {
+            var mroot = GameObject.Find(CinemaView.MarkersRoot);
+            var corner = mroot != null ? mroot.transform.Find("Marker_PharmeeCorner") : null;
+            bool clear = false;
+            if (corner != null && Physics.Raycast(corner.position + Vector3.up * 0.2f, Vector3.up, out var ceil, 4f))
+                clear = corner.position.y + 1.4f < ceil.point.y;
+            A("bench: Pharmee's corner keeps her speech bubble under the ceiling", clear);
+        }
+        // Dr. Jimenez floated ~10 cm: his capsule bottom sat 2 cm above his feet and a
+        // CharacterController rests one skinWidth above the ground on top of that.
+        {
+            var jim = GameObject.Find("DrJimenez");
+            var cc = jim != null ? jim.GetComponent<CharacterController>() : null;
+            var model = jim != null ? jim.transform.Find("JimenezModel") : null;
+            bool grounded = false;
+            if (cc != null && model != null)
+            {
+                Bounds jb = default; bool any = false;
+                foreach (var r in jim.GetComponentsInChildren<SkinnedMeshRenderer>()) { if (!any) { jb = r.bounds; any = true; } else jb.Encapsulate(r.bounds); }
+                float bottom = jim.transform.TransformPoint(cc.center).y - cc.height * 0.5f;      // capsule bottom, world
+                float idleSoles = jb.min.y + LabNpcPolishBuilder.JimenezIdleLift;
+                grounded = any && Mathf.Abs((bottom - cc.skinWidth) - idleSoles) < 0.01f;
+            }
+            A("bench: Dr. Jimenez's capsule puts his animated soles on the floor", grounded);
+        }
+
+        // The balance readout (a world TMP label at 20000) drew straight through the grade
+        // card at 4500 — review panels must sort above world labels (below bubbles/HUD).
+        {
+            bool ok = true;
+            foreach (var n in new[] { "GradeScreen", "PostLabTablet" })
+            {
+                var g = GameObject.Find(n); var c = g != null ? g.GetComponentInChildren<Canvas>(true) : null;
+                ok &= c != null && c.sortingOrder > 20000 && c.sortingOrder < 29000;
+            }
+            A("bench: the grade card and quiz tablet draw over world labels", ok);
+        }
+        // Reagent labels hug the glass: band centred on the body within 3 mm.
+        {
+            var cab = GameObject.Find("ReagentCabinets"); int off = 0, n = 0;
+            if (cab != null)
+                foreach (var lp in cab.GetComponentsInChildren<LiquidPhysics>(true))
+                {
+                    var label = lp.transform.Find("NameLabel"); if (label == null) continue;
+                    var body = lp.GetComponent<Renderer>(); if (body == null) continue;
+                    n++;
+                    var d = new Vector2(label.position.x - body.bounds.center.x, label.position.z - body.bounds.center.z).magnitude;
+                    if (d > 0.003f) off++;
+                }
+            A("bench: every cabinet label is centred on its glass (" + n + " checked, " + off + " off)", n > 0 && off == 0);
+        }
+
+        // A component whose class lives in another class's file saves with a local-only
+        // script link: it reloads as an empty slot, or, worse, Unity rebuilds it from the
+        // class NAME in the editor while a player build drops it (e.g. the fume hood
+        // label, the brush, both burners' open-flame heat).
+        {
+            int empty = 0, unbacked = 0; var names = new List<string>();
+            foreach (var go in UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include))
+            {
+                if (go.hideFlags != HideFlags.None) continue;   // runtime-built helpers (cinema rig, fade quad)
+                foreach (var c in go.GetComponents<Component>())
+                {
+                    if (c == null) { empty++; if (names.Count < 5) names.Add(go.name); continue; }
+                    if (c is MonoBehaviour mb && mb.GetType().Assembly.GetName().Name == "Assembly-CSharp"
+                        && string.IsNullOrEmpty(AssetDatabase.GetAssetPath(MonoScript.FromMonoBehaviour(mb))))
+                    { unbacked++; if (names.Count < 5) names.Add(go.name + "/" + mb.GetType().Name); }
+                }
+            }
+            A("bench: every component in the scene has a real script file" + (names.Count > 0 ? " — " + string.Join(", ", names) : ""),
+                empty == 0 && unbacked == 0);
+        }
+
+        // ...and the cause can't come back: every game component / ScriptableObject class must
+        // have a script file of its own name, or adding one in the editor and saving breaks it.
+        {
+            var backed = new HashSet<System.Type>();
+            foreach (var guid in AssetDatabase.FindAssets("t:MonoScript", new[] { "Assets/PharmaSynth/Scripts" }))
+            {
+                var ms = AssetDatabase.LoadAssetAtPath<MonoScript>(AssetDatabase.GUIDToAssetPath(guid));
+                if (ms != null && ms.GetClass() != null) backed.Add(ms.GetClass());
+            }
+            var misfiled = new List<string>();
+            foreach (var t in typeof(ExperimentRunner).Assembly.GetTypes())
+            {
+                if (t.IsAbstract || t.IsGenericType || t.IsNested) continue;
+                if (!typeof(MonoBehaviour).IsAssignableFrom(t) && !typeof(ScriptableObject).IsAssignableFrom(t)) continue;
+                if (!backed.Contains(t)) misfiled.Add(t.Name);
+            }
+            A("bench: every game component lives in a file named after it" + (misfiled.Count > 0 ? " — " + string.Join(", ", misfiled) : ""),
+                misfiled.Count == 0);
+        }
+
+        // Scene pins: the markers the shots name must really exist in SampleScene.
+        var root = GameObject.Find(CinemaView.MarkersRoot);
+        A("bench: CutsceneMarkers holds the CinemaView", root != null && root.GetComponent<CinemaView>() != null);
+        if (root != null)
+        {
+            var missing = new List<string>();
+            foreach (var m in CinemaCutsceneTools.DefaultMarkers) if (root.transform.Find(m.name) == null) missing.Add(m.name);
+            foreach (var b in test.beats)
+                foreach (var n in new[] { b.shot.camera, b.shot.moveTo })
+                    if (!string.IsNullOrEmpty(n) && root.transform.Find(n) == null) missing.Add(n);
+            A("bench: every cutscene marker exists" + (missing.Count > 0 ? " — missing " + string.Join(", ", missing) : ""),
+                missing.Count == 0);
+        }
+        UnityEngine.Object.DestroyImmediate(test);
+    }
+
+    // FORGIVENESS for an imprecise player: one slip is one mistake,
+    // an early pour recovers by itself, and shelf stock can never be contaminated.
+    static void ForgivenessSuite()
+    {
+        A("forgive: a held bottle with nothing under it only trickles; a knocked-over one spills fully",
+            Near(PourMath.SpillAmount(10f, true, false), 1.5f) && Near(PourMath.SpillAmount(10f, true, true), 10f)
+            && Near(PourMath.SpillAmount(10f, false, false), 10f));
+        A("forgive: a brushing scoop tips only where it can't be a mistake",
+            ScoopMath.DepositsOnTouch(false, false) && ScoopMath.DepositsOnTouch(true, true) && !ScoopMath.DepositsOnTouch(true, false));
+        A("forgive: a bump off the balance pan keeps the settle timer",
+            WeighMath.WithinBumpGrace(0.2f) && !WeighMath.WithinBumpGrace(0.6f));
+        A("forgive: a too-gentle match strike is recognised (spark + hint), a resting touch is not",
+            Matchstick.IsWeakStrike(true, false, false, 0.2f, true) && !Matchstick.IsWeakStrike(true, false, false, 0.02f, true)
+            && !Matchstick.IsWeakStrike(true, false, false, 0.5f, true));
+        A("calm: Pharmee repeats a warning only after 6 s, a different one at once",
+            !PharmeeBrain.WarnAgain(LabErrorType.WrongReagent, LabErrorType.WrongReagent, 2f)
+            && PharmeeBrain.WarnAgain(LabErrorType.WrongReagent, LabErrorType.WrongReagent, 7f)
+            && PharmeeBrain.WarnAgain(LabErrorType.SpilledReagent, LabErrorType.WrongReagent, 1f));
+
+        var chem = ScriptableObject.CreateInstance<ChemicalData>(); chem.chemicalName = "Water";
+        var other = ScriptableObject.CreateInstance<ChemicalData>(); other.chemicalName = "Ethanol";
+        var module = ScriptableObject.CreateInstance<ExperimentModuleDefinition>();
+        module.graphTasks = new List<ExperimentTask> {
+            T("first", TaskPhase.Synthesis, 1, LabSkill.Transfer, RubricCategory.Procedure),
+            T("second", TaskPhase.Synthesis, 1, LabSkill.Transfer, RubricCategory.Procedure, "first"),
+        };
+        module.trackedSkills = new List<LabSkill> { LabSkill.Transfer };
+        // LiquidPhysics needs a Renderer host — primitives, not bare GameObjects.
+        var rg = new GameObject("forgive_runner");
+        var vg = GameObject.CreatePrimitive(PrimitiveType.Cube); vg.name = "forgive_vessel";
+        var shelf = new GameObject("Raw_TestStock");
+        var jar = GameObject.CreatePrimitive(PrimitiveType.Cube); jar.name = "Jar"; jar.transform.SetParent(shelf.transform);
+        try
+        {
+            var runner = rg.AddComponent<ExperimentRunner>();
+            runner.SetModule(module); runner.StartExperiment();
+            for (int i = 0; i < 30; i++) runner.CompleteTask("second");
+            A("forgive: thirty early attempts are ONE out-of-order mistake", runner.MistakeCount == 1);
+
+            runner.Retry();
+            var lp = vg.AddComponent<LiquidPhysics>(); lp.maxVolume = 500f;
+            var b = vg.AddComponent<LiquidTaskBinding>();
+            b.SetVesselAndRunner(lp, runner);
+            b.AddExpected(chem, "second", 10f);
+            for (int i = 0; i < 12; i++) b.HandleReagent(chem, 1f);     // poured early, a tick at a time
+            bool early = !runner.Graph.IsComplete("second") && runner.MistakeCount == 1;
+            runner.CompleteTask("first");
+            A("forgive: an early pour costs one mistake, not one per tick", early);
+            A("forgive: the early-poured step completes when its prerequisite does", runner.Graph.IsComplete("second"));
+            b.Detach();
+
+            var stock = jar.AddComponent<LiquidPhysics>(); stock.currentChemical = chem; stock.currentLiquidVolume = 100f;
+            A("forgive: shelf stock refuses a different chemical, accepts its own",
+                LabReset.RefusesTransfer(stock, other) && !LabReset.RefusesTransfer(stock, chem));
+            A("forgive: a work vessel takes anything", !LabReset.RefusesTransfer(lp, other));
+
+            // Slips are charged to the grade, not to mastery (methane's single tracked skill).
+            var meth = AssetDatabase.LoadAssetAtPath<ExperimentModuleDefinition>("Assets/PharmaSynth/ScriptableObjects/Experiments/Tutorial_Methane.asset");
+            runner.SetModule(meth); runner.StartExperiment();
+            foreach (var t in meth.graphTasks) runner.CompleteTask(t.taskId);
+            float clean = runner.OverallMastery;
+            runner.RecordMistake(LabErrorType.DroppedGlassware, "test");
+            runner.RecordMistake(LabErrorType.SpilledReagent, "test");
+            bool slipsSpared = Near(runner.OverallMastery, clean) && runner.OverallMastery >= meth.masteryThreshold;
+            runner.RecordMistake(LabErrorType.WrongReagent, "test");
+            A("forgive: a dropped tube or a spill never fails the methane mastery gate", slipsSpared);
+            A("forgive: a wrong reagent still counts against mastery", runner.OverallMastery < clean);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(rg); UnityEngine.Object.DestroyImmediate(vg); UnityEngine.Object.DestroyImmediate(shelf);
+            UnityEngine.Object.DestroyImmediate(module); UnityEngine.Object.DestroyImmediate(chem); UnityEngine.Object.DestroyImmediate(other);
+        }
+    }
+
+    // Focused checklist for the single holo procedures board:
     // full-detail text overflowed the pads — collapse everything but the active phase).
     static void ChecklistPagerSuite()
     {
@@ -6463,7 +6803,7 @@ public static class PharmaSelfTests
         A("pager: folded output is compact", lines.Length <= 6);
     }
 
-    // Demo Mode config/save isolation (user 2026-07-10: panelists get a fast
+    // Demo Mode config/save isolation (panelists get a fast
     // auto-complete run-through; study participants' real save is never touched).
     static void DemoModeSuite()
     {
@@ -6489,10 +6829,10 @@ public static class PharmaSelfTests
         A("demo: pass state stays honest", !demoFlow.IsPassed("tutorial-methane") && demoFlow.PassedCount() == 0);
         A("demo: normal flow unaffected", !normalFlow.IsPeriodUnlocked(ExperimentPeriod.Final));
 
-        // A ready-made GOAL destroys the experiment (user 2026-07-16), so a product
-        // is hidden while ITS OWN module runs — and the four PURE products, which no
-        // procedure ever names as a reagent, were deleted from the shelf outright.
-        // Only the dual-role three survive: each is also a manuscript reagent.
+        // A ready-made GOAL destroys the experiment, so a product
+        // is hidden while ITS OWN module runs, and the four PURE products, which no
+        // procedure ever names as a reagent, are not on the shelf at all.
+        // Only the dual-role three remain: each is also a manuscript reagent.
         A("endproduct: ethanol is dual-role (goal of Exp 3, reagent in Exp 2/6)",
             DemoMode.IsEndProduct("Ethanol"));
         A("endproduct: acetone is dual-role (goal of Exp 6, reagent in Exp 2/7)",
@@ -6515,9 +6855,9 @@ public static class PharmaSelfTests
             EndProductVisibility.HiddenProductFor("prelim-ethyl-alcohol", false) == "Ethanol");
         A("gate: acetone hides while Exp 6 synthesises it",
             EndProductVisibility.HiddenProductFor("midterm-acetone", false) == "Acetone");
-        // The bug this whole design exists to prevent: Exp 2 runs BEFORE Exp 3/6 and
+        // What this design prevents: Exp 2 runs BEFORE Exp 3/6 and
         // needs ethanol (enol sample, ester) + acetone (Tollen's contrast). A global
-        // per-chemical hide stripped them and made Exp 2 unplayable outside demo.
+        // per-chemical hide would strip them and make Exp 2 unplayable outside demo.
         A("gate: Exp 2 hides NOTHING — it is an ID lab and needs ethanol + acetone",
             EndProductVisibility.HiddenProductFor("prelim-chemical-compounding", false) == null);
         A("gate: a demo session hides nothing",
@@ -6526,7 +6866,7 @@ public static class PharmaSelfTests
             EndProductVisibility.HiddenProductFor(null, false) == null);
     }
 
-    // Consumable dispenser (user 2026-07-11: grab the box → pull a single piece;
+    // Consumable dispenser (grab the box → pull a single piece;
     // it refills; used pieces clean themselves up).
     static void DispenserSuite()
     {
@@ -6589,8 +6929,8 @@ public static class PharmaSelfTests
         }
     }
 
-    // Hazardous-mix consequences (user 2026-07-10: wrong mixtures now smoke,
-    // ignite, spatter or fizz — and cost the right rubric category).
+    // Hazardous-mix consequences (wrong mixtures smoke,
+    // ignite, spatter or fizz, and cost the right rubric category).
     static void HazardousMixSuite()
     {
         ChemicalData Make(string name, float ph = 7f, HazardType hz = HazardType.None,
@@ -6673,7 +7013,7 @@ public static class PharmaSelfTests
         }
     }
 
-    // NPC voice-over pipeline (user 2026-07-10: Pharmee + Dr. Jimenez speak) —
+    // NPC voice-over pipeline (Pharmee + Dr. Jimenez speak) —
     // hash-keyed clip lookup with graceful blip fallback.
     static void VoiceSuite()
     {
@@ -6722,7 +7062,7 @@ public static class PharmaSelfTests
         }
     }
 
-    // The manuscript materials catalog + consumable behaviours (user 2026-07-10:
+    // The manuscript materials catalog + consumable behaviours:
     // ~54 raw materials stocked in nature-appropriate labware).
     static void RawReagentSuite()
     {
@@ -6748,8 +7088,8 @@ public static class PharmaSelfTests
             && RawReagentCatalog.Find("Benzaldehyde").labware == RawReagentCatalog.LabwareKind.AmberBottle
             && RawReagentCatalog.Find("Silver Nitrate").labware == RawReagentCatalog.LabwareKind.AmberBottle
             && RawReagentCatalog.Find("Bromine Water").labware == RawReagentCatalog.LabwareKind.AmberBottle);
-        // Manuscript audit 2026-07-17: the hood is demanded in exactly ONE step
-        // (Exp 5 §A — aniline + acetyl chloride). Everything else works the bench.
+        // The manuscript demands the hood in exactly ONE step
+        // (Exp 5 §A, aniline + acetyl chloride). Everything else works the bench.
         A("raw: fume-hood set = the manuscript's two, no more",
             RawReagentCatalog.Find("Aniline").fumeHood && RawReagentCatalog.Find("Acetyl Chloride").fumeHood
             && !RawReagentCatalog.Find("Benzoyl Chloride").fumeHood
@@ -6761,14 +7101,14 @@ public static class PharmaSelfTests
             && RawReagentCatalog.Find("Cotton Swabs") != null && RawReagentCatalog.Find("Filter Paper") != null
             && RawReagentCatalog.Find("Ice") != null && RawReagentCatalog.Find("Anhydrous Calcium Chloride") != null);
         // Exp 2 §D hydrolyses aspirin, so it MUST be a bench reagent, not a demo-only
-        // end product — the pairing that made Exp 2 unplayable outside demo (2026-07-16).
+        // end product — the pairing that made Exp 2 unplayable outside demo.
         A("raw: aspirin is a bench reagent for Exp 2 §D",
             RawReagentCatalog.Find("Aspirin") != null
             && RawReagentCatalog.Find("Aspirin").state == PhysicalState.Powder
             && !DemoMode.IsEndProduct("Aspirin"));
-        // KMnO4 is POURED as "2 ml of 0.1% solution" (Exp 2 A.II) — it was marked Solid,
-        // which LiquidPourer cannot pour, so Exp 2's oxidation tubes were unbuildable.
-        // The manuscript never uses it solid at the bench (2026-07-16).
+        // KMnO4 is POURED as "2 ml of 0.1% solution" (Exp 2 A.II). Marked Solid,
+        // LiquidPourer cannot pour it and Exp 2's oxidation tubes are unbuildable.
+        // The manuscript never uses it solid at the bench.
         {
             var kmno4 = RawReagentCatalog.Find("Potassium Permanganate 0.1%");
             var kchem = AssetDatabase.LoadAssetAtPath<ChemicalData>(
@@ -6809,12 +7149,11 @@ public static class PharmaSelfTests
         A("match: lit/spent never re-ignite", !Matchstick.ShouldIgnite(0.1f, 120f, true, false)
             && !Matchstick.ShouldIgnite(0.1f, 120f, false, true));
 
-        // ⛔ THE SCENE WIRING, not just the math (2026-07-16). A "Build Reagent Cabinets"
-        // run destroyed + recreated Raw_Matchsticks and took its MatchStrikerSurface with
-        // it (git HEAD had 5, the scene had 4). Striking the box then did NOTHING — the
-        // methane splint test and every burner light were dead — and it went unnoticed for
-        // hours because the pure ShouldStrike/ShouldIgnite tests above still passed.
-        // Pure math cannot see a missing component; pin the actual objects.
+        // ⛔ THE SCENE WIRING, not just the math. A "Build Reagent Cabinets"
+        // run destroys + recreates Raw_Matchsticks, and can take its MatchStrikerSurface
+        // with it. Striking the box then does NOTHING (the methane splint test and every
+        // burner light are dead) while the pure ShouldStrike/ShouldIgnite tests above
+        // still pass. Pure math cannot see a missing component; pin the actual objects.
         {
             var matches = UnityEngine.Object.FindObjectsByType<Matchstick>(
                 FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -6837,9 +7176,8 @@ public static class PharmaSelfTests
         // Product per module — the chemical each one exists to make, which is what
         // EndProductVisibility hides while that module runs.
         // Chemical Compounding is EXCLUDED: it is an identification lab and
-        // synthesises nothing. (It returned "Ethanol" until 2026-07-16 — a leftover
-        // from the retired single-substrate battery — which would have hidden
-        // ethanol during the very experiment that needs it as a sample.)
+        // synthesises nothing. Returning "Ethanol" for it would hide ethanol during
+        // the very experiment that needs it as a sample.
         string[] ids = { "tutorial-methane", "prelim-ethyl-alcohol",
                          "midterm-benzoic-acid", "midterm-acetanilide", "midterm-acetone", "midterm-chloroform",
                          "final-benzamide", "final-winemaking" };
@@ -6851,7 +7189,7 @@ public static class PharmaSelfTests
         A("demo: unknown module has none", DemoMode.ProductFor("nope") == null);
     }
 
-    // Center-table merge geometry (user 2026-07-10: one wide landscape table,
+    // Center-table merge geometry (one wide landscape table,
     // centered — a rigid remap shared by the island object and the baked layouts).
     static void CenterTableMathSuite()
     {
@@ -6882,7 +7220,7 @@ public static class PharmaSelfTests
         A("table: mirror across x", Near(CenterTableMath.MirrorAcrossX(new Vector3(1.4f, 0f, -3f), 0f).x, -1.4f));
     }
 
-    // Post-experiment review flow seams (user 2026-07-11: congrats → Jimenez
+    // Post-experiment review flow seams (congrats → Jimenez
     // briefing → quiz → score remarks → entrance debrief).
     static void ReviewFlowSuite()
     {
@@ -6922,7 +7260,7 @@ public static class PharmaSelfTests
             && PharmeeLines.DebriefCongrats.Length >= 3);
     }
 
-    // ILO opening dialogue (user 2026-07-10: Pharmee states each experiment's
+    // ILO opening dialogue (Pharmee states each experiment's
     // learning outcomes — verbatim Appendix C copy — in the intro cutscene).
     static void IloCopySuite()
     {
@@ -6972,16 +7310,16 @@ public static class PharmaSelfTests
         A("fxmat: no zwrite", m != null && m.GetInt("_ZWrite") == 0);
         A("fxmat: resources-loadable", Resources.Load<Material>("FxParticleUnlit") != null);
     }
-    // The VISUAL autopilot's judge (W5.45): pure rules over what the probe saw, so a
+    // The VISUAL autopilot's judge: pure rules over what the probe saw, so a
     // FAIL in Logs/visual-sweep-report.txt means what it says. Thresholds are the ones the
     // sweep uses — a 4% fill is invisible in VR (SimulatedRun's rule), 0.08 RGB is a change
     // a headset shows, and a gas outcome must have a live emitter or it is text-only.
     static void VisualSweepSuite()
     {
         // A vessel emptied after a test keeps its settled precipitate but loses its liquid
-        // identity — it must still adopt the next thing poured in, or FindReaction(null, x)
-        // misses forever and the glass fills with nameless liquid (W5.45: two experiments
-        // were unplayable this way).
+        // identity. It must still adopt the next thing poured in, or FindReaction(null, x)
+        // misses forever and the glass fills with nameless liquid, leaving the
+        // experiment unplayable.
         var residue = new GameObject("selftest-residue-vessel");
         try
         {
@@ -7008,9 +7346,9 @@ public static class PharmaSelfTests
         var gas = o; gas.particles = 1; gas.particleNames = "EffectVfx_Smoke(20)";
         A("visual: gas with a live emitter passes", !VisualSweep.Judge(VisualSweep.Expect.Gas, gas, null, 0f, 100f).Fail);
 
-        // ⛔ Four of the 63 swept steps used to report SKIP "the photo is the evidence"
-        // — photographed and judged against NOTHING, which reads as coverage on the
-        // report line while proving nothing at all. Their evidence is not inside a vessel:
+        // ⛔ No swept step may report SKIP "the photo is the evidence": photographed and
+        // judged against NOTHING, it reads as coverage on the report line while proving
+        // nothing at all. These four steps' evidence is not inside a vessel:
         // a flame, a gas column, an assembled rig.
         A("visual: the methane rig and the flame test now have contracts",
             VisualSweep.ExpectFor("flame", null) == VisualSweep.Expect.Flame
@@ -7025,9 +7363,9 @@ public static class PharmaSelfTests
                 VisualSweep.Judge(VisualSweep.Expect.Flame, none, null, 0f, 100f).Fail
                 && !VisualSweep.Judge(VisualSweep.Expect.Flame, lit, null, 0f, 100f).Fail);
 
-            // ⛔ The flame is transient: by the final capture the match is out. The first run
-            // of the flame contract failed a step the game had judged correctly for exactly
-            // that reason. The latch carries the mid-verb sighting to the verdict, then clears.
+            // ⛔ The flame is transient: by the final capture the match is out, so judging
+            // there fails a step the game judged correctly. The latch carries the
+            // mid-verb sighting to the verdict, then clears.
             VisualSweep.ClearFlameLatch();
             VisualSweep.NoteFlame(false);
             A("visual: an unlit moment does not latch a flame", !VisualSweep.FlameLatched);
@@ -7041,7 +7379,7 @@ public static class PharmaSelfTests
                 VisualSweep.Judge(VisualSweep.Expect.GasFill, none, null, 0f, 100f).Fail
                 && !VisualSweep.Judge(VisualSweep.Expect.GasFill, full, null, 0f, 100f).Fail);
         }
-        // ---- W5.45b: the visual gaps the sweep found, pinned so they cannot come back ----
+        // ---- visual gaps, pinned so they cannot come back ----
         // A couple of millilitres in a big flask must still DRAW as something (Exp 5 puts
         // 2 ml of aniline in a 250 ml Florence flask = 0.8% of its height).
         A("fill: a small volume is floored to a readable column",
@@ -7086,7 +7424,7 @@ public static class PharmaSelfTests
         }
         finally { UnityEngine.Object.DestroyImmediate(gasRule); }
         // The silver mirror is the headline observation of Exp 2's aldehyde test, so the
-        // rule must actually deposit something (it declared Precipitate and had none).
+        // rule must actually deposit something, not just declare a Precipitate.
         var tollens = AssetDatabase.LoadAssetAtPath<ReactionRule>(
             "Assets/PharmaSynth/ScriptableObjects/Reactions/Test_TollensAldehyde.asset");
         A("content: the Tollens test deposits a visible silver mirror",
@@ -7132,13 +7470,13 @@ public static class PharmaSelfTests
         finally { UnityEngine.Object.DestroyImmediate(rule); }
         A("visual: no rule — a heat step expects temperature", VisualSweep.ExpectFor("heat", null) == VisualSweep.Expect.Heat);
         A("visual: no rule — a solid delivery expects a mound", VisualSweep.ExpectFor("solid", null) == VisualSweep.Expect.Powder);
-        // Superseded in W5.49: a flame confirm used to be judged against NOTHING ("the photo
-        // is the evidence"), which is a picture nobody looks at rather than a check.
+        // A flame confirm must be judged against something: "the photo is the evidence"
+        // is a picture nobody looks at rather than a check.
         A("visual: no rule — a flame confirm checks for an actual flame",
             VisualSweep.ExpectFor("flame", null) == VisualSweep.Expect.Flame);
     }
 
-    // W5.46: Pharmee's light and voice (user 2026-09-05: "like a broken machine", "too flashy").
+    // Pharmee's light and voice (not machine-like, not too flashy).
     static void PharmeePolishSuite()
     {
         // The FBX's Blue_Light material blazes at 8x on the body panels and hover rings;
@@ -7149,8 +7487,8 @@ public static class PharmaSelfTests
         A("glow: the eyes and mouth belong to the face, not the glow",
             !PharmeeGlowMath.IsGlowPart("Eyes_Blue_Light_0") && !PharmeeGlowMath.IsGlowPart("Mouth_Blue_Light_0"));
         var e = PharmeeGlowMath.Emission(new Color(0.06f, 0.35f, 1f), PharmeeGlowMath.DefaultIntensity);
-        // ⛔ UNDER the scene's Bloom threshold (1.0). At 1.45 she still fed bloom and read as
-        // a glowing ball; this is the property that actually removes the halo.
+        // ⛔ UNDER the scene's Bloom threshold (1.0). At 1.45 she still feeds bloom and reads
+        // as a glowing ball; this is the property that removes the halo.
         A("glow: the default emissive cannot feed bloom",
             !PharmeeGlowMath.Blooms(e) && e.maxColorComponent > 0.5f && Near(e.a, 1f));
         A("glow: an 8x emissive would bloom", PharmeeGlowMath.Blooms(PharmeeGlowMath.Emission(Color.white, 8f)));
@@ -7251,8 +7589,8 @@ public static class PharmaSelfTests
             && JimenezRigMath.IsTwistBone("R_ForearmTwist01")
             && !JimenezRigMath.IsTwistBone("L_Upperarm") && !JimenezRigMath.IsTwistBone("Spine02"));
         // ⛔ The radius is in the MESH's own units. Jimenez's mesh is ~0.5 units tall and the
-        // prefab scales it to a 1.75 m man, so a radius picked in metres was half his width
-        // and classified the whole coat as sleeve — the first run freed 43 of 6992 vertices.
+        // prefab scales it to a 1.75 m man, so a radius picked in metres is half his width
+        // and classifies the whole coat as sleeve (only a handful of vertices freed).
         {
             float r = JimenezRigMath.SleeveRadiusFor(0.5f);
             A("rig: the sleeve radius scales with the model, not with metres",
@@ -7300,11 +7638,10 @@ public static class PharmaSelfTests
         // ⛔ A vessel whose RESTING pose already reads as "tipped" pours itself forever:
         // LiquidPourer.Update fires on Vector3.Angle(Vector3.up, transform.up) > pourThreshold,
         // so it empties every drop put into it AND runs its looping pour AudioSource under
-        // everything else. Both Distilling Flasks sat at 90 deg, which drained Exp 7's
-        // redistillation and put a continuous spilling noise under Pharmee's dialogue
-        // (user 2026-09-05: "sounds broken for every dialog"). Measured in WORLD space,
-        // exactly as LiquidPourer measures it — an earlier fix set the LOCAL rotation,
-        // verified the local value, and the bug survived.
+        // everything else (a tipped Distilling Flask drains Exp 7's redistillation and puts a
+        // continuous spilling noise under every dialogue line). Measured in WORLD space,
+        // exactly as LiquidPourer measures it: a correct LOCAL rotation under a tilted
+        // parent still pours.
         {
             int selfPouring = 0; string worst = "";
             foreach (var pr in UnityEngine.Object.FindObjectsByType<LiquidPourer>(
@@ -7320,8 +7657,8 @@ public static class PharmaSelfTests
         }
 
         // A vessel's BAKED HOME must be upright too, or DropRespawn.ResetAllHome puts the
-        // tilt straight back at the start of every run — which is why straightening the
-        // transform alone did not stick.
+        // tilt straight back at the start of every run, so straightening the
+        // transform alone does not stick.
         {
             int tiltedHome = 0; string worstHome = "";
             foreach (var dr in UnityEngine.Object.FindObjectsByType<DropRespawn>(
@@ -7340,10 +7677,10 @@ public static class PharmaSelfTests
         }
 
         // ⛔ A vessel hanging in mid-air reads as a bug to the player and pours onto
-        // nothing. Both distilling flasks lost their hand placement TWICE the same way: a
-        // simulator restored every item to its baked home, a re-home pass then adopted that
-        // revert, and the flasks ended up 26 cm above the shelf they belonged on. The pose
-        // was self-consistent, so nothing in the suite could see it — until this.
+        // nothing. A simulator restores every item to its baked home, and a re-home pass
+        // run afterwards adopts that revert, which can leave the distilling flasks 26 cm
+        // above the shelf they belong on. The pose is self-consistent, so only this pin
+        // sees it.
         // SolidWorldBounds, never a raw renderer sweep: LiquidPourer's world-space stream
         // children outlive a pour pointing at the floor (→ Gotchas).
         {
@@ -7377,12 +7714,12 @@ public static class PharmaSelfTests
                                                           : " by " + (gap * 100f).ToString("0") + " cm");
                 }
             }
-        // ⛔ The pivot has to be ON the mesh, not just the collider (W5.57). The runtime reads
-        // transform.position — Matchstick's strike distance, VaporCollectController's receiver
-        // radius, DropRespawn — so an item whose glass sits 1.9 m from its pivot is "held" 1.9 m
-        // from the player's hand. Four Tripo/USD imports were: the matchstick (no burner could
-        // be lit in VR), the ice bucket, both distilling flasks. Found by measuring, never by a
-        // simulator, which all drive the APIs directly. Slack of 10 cm: a tall vessel's pivot
+        // ⛔ The pivot has to be ON the mesh, not just the collider. The runtime reads
+        // transform.position (Matchstick's strike distance, VaporCollectController's receiver
+        // radius, DropRespawn), so an item whose glass sits 1.9 m from its pivot is "held" 1.9 m
+        // from the player's hand. Tripo/USD imports are prone to it (the matchstick, the ice
+        // bucket, both distilling flasks). Only measuring finds it: the simulators all drive
+        // the APIs directly. Slack of 10 cm: a tall vessel's pivot
         // may sit at its base or its centre, both fine; a metre is not.
         {
             int offPivot = 0, offCollider = 0; string worstPivot = "", worstCol = "";
@@ -7413,9 +7750,36 @@ public static class PharmaSelfTests
               + (worstCol.Length > 0 ? ", e.g. " + worstCol : "") + ")", offCollider == 0);
         }
 
+        // ⛔ The methane tutorial's charge jar is scene DATA (an added LiquidPhysics on a hand-staged
+        // prop), and the suite's own simrun pins drain it in edit mode. A scene save made straight
+        // after a suite run bakes 0 ml into the file and the tutorial's setup step starves.
+        // Nothing but this pin can see it: every simulator drives the
+        // APIs, and the sweep runs in Play mode where a fresh load recharges it.
+        // APIs, and the sweep runs in Play mode where a fresh load recharges it.
+        {
+            var chargeJar = GameObject.Find("Prop_reagent-jar");
+            var chargeLp = chargeJar != null ? chargeJar.GetComponent<LiquidPhysics>() : null;
+            A("bench: the methane charge jar holds its mixture ("
+              + (chargeLp != null ? chargeLp.currentLiquidVolume.ToString("0") + " ml" : "no LiquidPhysics") + ")",
+              chargeLp != null && chargeLp.currentChemical != null && chargeLp.currentLiquidVolume >= 4f);
+
+            // A scene save after a suite run can also empty all five wash bottles (500 ml
+            // of distilled water each). A wash bottle is a SOURCE (it never carries a binding),
+            // so nothing in the game notices it is empty until a rinse does nothing.
+            int washBottles = 0, dryWash = 0;
+            foreach (var wlp in UnityEngine.Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (wlp == null || (wlp.name != "Eq_WashBottle" && wlp.name != "WashBottleWater")) continue;
+                washBottles++;
+                if (wlp.currentChemical == null || wlp.currentLiquidVolume < 50f) dryWash++;
+            }
+            A("bench: the wash bottles hold distilled water (" + washBottles + " bottles, " + dryWash + " dry)",
+              washBottles > 0 && dryWash == 0);
+        }
+
         // Furniture is scenery: a stool the player can pick up and carry off is a toy, and
-        // nothing in any experiment asks them to move one. The Environment prefab shipped all
-        // six with a grab, so a re-import would put them back — hence a scene pin, not just
+        // nothing in any experiment asks them to move one. The Environment prefab gives all
+        // six a grab, so a re-import would put them back; hence a scene pin, not just
         // a menu. The COLLIDER must survive: the stool still has to block and still has to
         // hold whatever rests on it.
         {
@@ -7444,8 +7808,8 @@ public static class PharmaSelfTests
         A("noise: a broken heat gate is never noise",
             !PlaytestAutopilot.IsCompletionNoise("Kit_TestTube_5: Iodoform fired at 25 C but needs 40 C — the heat gate is broken"));
 
-        // Every line the corpus can speak must have a clip — the pin that would have caught
-        // the campaign finale playing as blips for weeks (both DebriefRemark overloads).
+        // Every line the corpus can speak must have a clip (e.g. the campaign finale,
+        // both DebriefRemark overloads, would otherwise play as blips).
         var bank = AssetDatabase.LoadAssetAtPath<VoiceBank>("Assets/PharmaSynth/ScriptableObjects/VoiceBank.asset");
         int unvoiced = 0; string first = "";
         if (bank != null)
@@ -7454,10 +7818,10 @@ public static class PharmaSelfTests
         A("voice: every corpus line has a clip (" + unvoiced + " unvoiced" + (first.Length > 0 ? ", e.g. \"" + first + "\"" : "") + ")",
             bank != null && unvoiced == 0);
 
-        // ⛔ That pin ran over CodeLines() ALONE and was green while Dr. Jimenez spoke six
-        // lines in blips — the "broken machine" sound the user reported. Task time-skip
-        // narration ("One week later...") is authored in the MODULE ASSETS, so the corpus
-        // could not see it, the manifest never exported it, and no clip was ever bought.
+        // ⛔ Checking CodeLines() ALONE is not enough: task time-skip
+        // narration ("One week later...") is authored in the MODULE ASSETS, so a code-only
+        // corpus cannot see it, the manifest never exports it, and no clip is bought;
+        // Dr. Jimenez then speaks six lines in blips.
         // A corpus that only knows about code lines is not a corpus.
         {
             var lib = AssetDatabase.LoadAssetAtPath<ExperimentLibrary>(
@@ -7484,15 +7848,15 @@ public static class PharmaSelfTests
               + (firstData.Length > 0 ? ", e.g. \"" + firstData + "\"" : "") + ")",
                 dataUnvoiced == 0);
             // ⛔ An entry whose clip Unity never imported reads as a healthy bank and
-            // speaks in blips. The import tool wrote 6 such rows because the generator had
-            // just created the mp3s OUTSIDE Unity and nothing refreshed the AssetDatabase.
+            // speaks in blips. It happens when the generator creates the mp3s OUTSIDE
+            // Unity and nothing refreshes the AssetDatabase before import.
             A("voice: no bank entry points at a clip that was never imported ("
               + (bank != null ? bank.BrokenEntries() : -1) + " broken)",
                 bank != null && bank.BrokenEntries() == 0);
         }
 
-        // Exp 2's two ferric-chloride tests promise violet; the rules used to have no product,
-        // so nothing in the tube ever changed colour.
+        // Exp 2's two ferric-chloride tests promise violet, so the rules need a product
+        // or nothing in the tube changes colour.
         foreach (var name in new[] { "Test_EnolPhenolFeCl3", "Test_HydrolysateFeCl3" })
         {
             var rule = AssetDatabase.LoadAssetAtPath<ReactionRule>("Assets/PharmaSynth/ScriptableObjects/Reactions/" + name + ".asset");

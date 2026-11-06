@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// Gentle hover animation for a floating character/prop (Pharmee): sinusoidal
 /// vertical bob plus a slight sway tilt and a bounded Perlin jitter ("alive"
-/// wiggle, client request 2026-07-09), around a movable home pose. Local-space so
+/// wiggle), around a movable home pose. Local-space so
 /// it composes with any parent motion; a mover may drive the home via SetHome.
 public class FloatBob : MonoBehaviour
 {

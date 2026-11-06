@@ -5,9 +5,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// W5.12: wires the distillation-completion apparatus into the game — the 6
-/// AI-generated pieces (Condenser, RubberStopper, DeliveryTube, WaterBath,
-/// UtilityClamp, Aspirator) plus the 3 that existed only as raw models
+/// Wires the distillation-completion apparatus into the game: the 6
+/// generated pieces (Condenser, RubberStopper, DeliveryTube, WaterBath,
+/// UtilityClamp, Aspirator) plus the 3 that exist only as raw models
 /// (Pipette, Thermometer, FlorenceFlask). Each is prefabbed if needed,
 /// registered in the SceneAssetLibrary, and one instance is spawned + fully
 /// wired + placed in a tidy row beside the distilling flask (the user then
@@ -37,8 +37,8 @@ public static class DistillationApparatusWiring
         new Spec("UtilityClamp",  "Utility Clamp",  Refs+"UtilityClamp.prefab",  Refs+"UtilityClamp.prefab",  false),
         new Spec("Aspirator",     "Aspirator",      Refs+"Aspirator.prefab",     Refs+"Aspirator.prefab",     false),
         // Existing raw models — prefab them here, then register + place.
-        // (Pipette dropped 2026-07-13 — modern micropipette; Dropper + graduated
-        //  cylinder cover the manuscript's drops/ml role.)
+        // (Pipette is left out: it models a modern micropipette, and the Dropper +
+        //  graduated cylinder cover the manuscript's drops/ml role.)
         new Spec("Thermometer",   "Thermometer",    "Assets/PharmaSynth/Art/Equipment/Thermometer/thermometer.glb",
                                                     "Assets/PharmaSynth/Art/Equipment/Thermometer/Thermometer.prefab", false),
         new Spec("FlorenceFlask", "Florence Flask", Refs+"FlorenceFlask.glb", Refs+"FlorenceFlask.prefab", true),
@@ -48,9 +48,9 @@ public static class DistillationApparatusWiring
     public static void Wire()
     {
         if (Application.isPlaying) { Debug.LogWarning("[DistApparatus] exit Play mode first."); return; }
-        // NEVER clobber a hand-placed layout (user 2026-07-13: a re-run reset
-        // manually moved + duplicated apparatus). Same guard the shelf/kits
-        // builders use — once the layout is manual, this menu is one-shot-done.
+        // NEVER clobber a hand-placed layout, since a re-run resets manually
+        // moved + duplicated apparatus. Same guard the shelf/kits builders use;
+        // once the layout is manual, this menu is one-shot-done.
         if (ManualLayoutAdopter.LayoutIsManual())
         {
             Debug.LogError("[DistApparatus] the scene layout is HAND-PLACED (ManualLayout_W512 marker) — "

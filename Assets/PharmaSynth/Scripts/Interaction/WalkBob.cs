@@ -36,7 +36,7 @@ public class WalkBob : MonoBehaviour
         // If the fixed-eye-height component drives the SAME Camera Offset, bob
         // relative to ITS offset instead of a stale cached home Y — otherwise this
         // LateUpdate overwrites the fixed height every frame and the player floats
-        // at their real head height (2026-07-11 headset bug).
+        // at their real head height.
         _height = originRoot.GetComponent<SeatedHeightBoost>();
     }
 

@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-/// One-shot rising/fading world-space text (W5.8 feedback layer) — the "what
+/// One-shot rising/fading world-space text — the "what
 /// did my mix produce" popup, "Vessel full!", stir progress, etc. EffectVfx
 /// style: static entry point, procedural, self-destroying, runtime-only.
 public static class FloatingText
@@ -31,28 +31,5 @@ public static class FloatingText
         }
         go.AddComponent<FaceCamera>();
         go.AddComponent<FloatingTextFx>().Bind(tmp);
-    }
-}
-
-/// Rise + fade driver for FloatingText (component so it survives the frame).
-public class FloatingTextFx : MonoBehaviour
-{
-    private TextMeshPro _tmp;
-    private float _age;
-    private const float Life = 2.5f;
-    private const float Rise = 0.15f;
-
-    public void Bind(TextMeshPro tmp) => _tmp = tmp;
-
-    private void Update()
-    {
-        _age += Time.deltaTime;
-        transform.position += Vector3.up * (Rise / Life) * Time.deltaTime;
-        if (_tmp != null)
-        {
-            float a = 1f - Mathf.SmoothStep(0.55f, 1f, _age / Life);
-            var c = _tmp.color; c.a = a; _tmp.color = c;
-        }
-        if (_age >= Life) Destroy(gameObject);
     }
 }

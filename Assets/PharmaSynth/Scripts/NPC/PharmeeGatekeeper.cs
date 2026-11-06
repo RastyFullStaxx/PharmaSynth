@@ -10,16 +10,15 @@ public class PharmeeGatekeeper : MonoBehaviour
     [Serializable]
     public class GateLines
     {
-        // "Episode" was legacy vocabulary (2026-07-27): the picker actually shows
-        // PERIODS and the EXPERIMENTS inside them, and every other line in the game
-        // says "experiment". Hearing a third word for the same thing at the one
-        // moment the player is choosing is exactly where it confuses.
+        // "Episode" is the old name: the picker shows PERIODS and the EXPERIMENTS inside
+        // them, and every other line in the game says "experiment". A third word for the
+        // same thing confuses the player at the moment of choosing.
         [TextArea] public string approach = "Not so fast — the lab's still locked! What would you like to do today?";
         [TextArea] public string labTour = "Lab Tour it is! Roam freely and try the tools and reagents. Come back to me when you want to take on a campaign.";
         [TextArea] public string campaignExplain = "The Campaign takes you through the class periods. Pass every experiment with 90% or better to unlock the next. Ready to pick one?";
         [TextArea] public string episodePrompt = "Which experiment will it be?";
         [TextArea] public string lockedEpisode = "That one's still locked — clear the earlier experiments first!";
-        // No ALL-CAPS in spoken copy (2026-07-27): TTS reads capitalised words as
+        // No ALL-CAPS in spoken copy: TTS reads capitalised words as
         // shouting, so "AND" came out as a jarring bark in the middle of the one
         // line every player hears before every experiment. "all three" carries the
         // same emphasis in the subtitle without the artefact.
@@ -28,11 +27,10 @@ public class PharmeeGatekeeper : MonoBehaviour
         [TextArea] public string thresholdWarn = "The period will start as soon as you walk in. Step through when you're ready!";
         [TextArea] public string congrats = "Congratulations! You handled that experiment brilliantly. Let's head back outside.";
         [TextArea] public string supplyWarn = "Oh no — there isn't enough reagent left to finish the experiment. We'll have to restart the period.";
-        // These two used to interpolate ppe.MissingSummary() into the spoken text,
-        // which made them unvoiceable — a clip is keyed by the hash of the whole
-        // string, so a line assembled at runtime matches nothing and drops to
-        // placeholder blips (user 2026-07-28). The locker itself shows which pieces
-        // are still missing, so the spoken line does not need to enumerate them.
+        // These two must not interpolate ppe.MissingSummary() into the spoken text: a clip
+        // is keyed by the hash of the whole string, so a line assembled at runtime matches
+        // nothing and drops to placeholder blips. The locker itself shows which pieces are
+        // still missing.
         [TextArea] public string ppePartial = "Almost there — you're still missing a piece of your gear. Check the locker.";
         [TextArea] public string ppeBlocked = "Hold on — I can't let you in without your full protective gear. The locker is right beside you.";
         [TextArea] public string welcome = "Welcome to the lab! I'm Pharmee. Come talk to me at the door whenever you're ready to begin.";
@@ -43,9 +41,8 @@ public class PharmeeGatekeeper : MonoBehaviour
     [SerializeField] private ChoicePanelController panel;
     [SerializeField] private PPEController ppe;
 
-    /// Where the player has to GO next while the gate is still running the show (W5.55,
-    /// user: "add arrow as well for when pharmee wants me to wear the lab gears before
-    /// entering. also for entering the door after wearing what is needed"). Null once a run
+    /// Where the player has to GO next while the gate is still running the show: the PPE
+    /// locker when Pharmee asks for lab gear, then the door once it is worn. Null once a run
     /// owns the guidance, so the step arrows take over cleanly. The door anchor is the
     /// controller, not the leaf: the leaf swings aside when it opens, and an arrow that
     /// suddenly points at the wall beside the doorway is worse than no arrow.
@@ -159,7 +156,7 @@ public class PharmeeGatekeeper : MonoBehaviour
             t += Time.deltaTime;
             yield return null;
         }
-        // W5.9: if calibration outlasted the start fade-in, the snap would be
+        // If calibration outlasted the start fade-in, the snap would be
         // visible — re-wrap the teleport in its own fade in that case.
         if (ScreenFader.Instance != null && ScreenFader.Instance.State.Alpha < 0.5f)
             DoFaded(TeleportToFrontDoor);
@@ -200,7 +197,7 @@ public class PharmeeGatekeeper : MonoBehaviour
         _subscribed = false;
     }
 
-    // ---- post-experiment review flow (user 2026-07-11) ----------------------
+    // ---- post-experiment review flow ----------------------
 
     private void OnRunnerStarted(ExperimentModuleDefinition m) => _lastResult = null;
 
@@ -238,8 +235,8 @@ public class PharmeeGatekeeper : MonoBehaviour
         var card = UnityEngine.Object.FindFirstObjectByType<GradeScreenController>(FindObjectsInactive.Include);
         if (card != null && coach != null)
         {
-            // Hold the panel until the player dismisses it. Announcing and teleporting
-            // in the same breath meant the summary was gone before it was read.
+            // Hold the panel until the player dismisses it; announcing and teleporting at once
+            // would remove the summary before it is read.
             runner?.FreezeClock();
             card.ShowPractice(coach.StepsDone, coach.Corrections, ResetToEntrance);
             return;
@@ -267,13 +264,13 @@ public class PharmeeGatekeeper : MonoBehaviour
 
     /// Poking Pharmee re-opens the conversation (e.g. to end a Lab Tour).
     /// Ignored while the wrist-watch gesture is active — the flipping hand can
-    /// brush his interactable and must not reopen the gate talk (user 2026-07-12).
+    /// brush his interactable and must not reopen the gate talk.
     public void OnPharmeeTalk()
     {
         if (WristWatchController.SuppressNpcPokes) return;
 
         // Tutorial Mode: poking him mid-run means "help me", not "let's renegotiate"
-        // (W5.39). He points at the step's target, mimes the motion and says the hint.
+        // He points at the step's target, mimes the motion and says the hint.
         //
         // Deliberately handled HERE and not as an FSM transition: GateState.Running has
         // never accepted TalkRequested, so the poke is currently a no-op and campaign
@@ -338,10 +335,9 @@ public class PharmeeGatekeeper : MonoBehaviour
             case GateState.SupplyPrompt:
                 if (index == 0)
                 {
-                    // Penalty: the starved attempt is recorded as failed (grade screen
-                    // suppressed, W5.9: failure OUTRO suppressed too — it used to play
-                    // over the restart), the player returns to the door inside the
-                    // Loading fade (W5.9: this was the one unfaded restart teleport).
+                    // Penalty: the starved attempt is recorded as failed (grade screen and failure
+                    // OUTRO suppressed so nothing plays over the restart), and the player returns to
+                    // the door inside the Loading fade.
                     if (runner != null && runner.IsRunning)
                     {
                         var director = UnityEngine.Object.FindFirstObjectByType<CutsceneDirector>(FindObjectsInactive.Include);
@@ -355,7 +351,7 @@ public class PharmeeGatekeeper : MonoBehaviour
                 }
                 else
                 {
-                    // W5.9: "Keep trying" re-arms the monitor after a grace window —
+                    // "Keep trying" re-arms the monitor after a grace window —
                     // a genuine shortfall re-prompts instead of dead-ending.
                     supplyMonitor?.Unlatch();
                     Model.Fire(GateEvent.Dismiss);
@@ -391,7 +387,7 @@ public class PharmeeGatekeeper : MonoBehaviour
     // ---- state application --------------------------------------------------
 
     /// Guided lab tour (storyboard): Pharmee narrates each area in sequence, one
-    /// beat auto-advancing to the next, instead of the old single free-roam line.
+    /// beat auto-advancing to the next.
     /// Stops the moment the player leaves the tour (poke → ModeChoice).
     private void StartLabTour() { _tourIndex = 0; SpeakTourBeat(); }
 
@@ -404,7 +400,7 @@ public class PharmeeGatekeeper : MonoBehaviour
         After(lineSeconds + 1.5f, SpeakTourBeat);                 // gentle auto-advance
     }
 
-    /// The scripted review window is live (W5.9): ambient chatter + demo skip
+    /// The scripted review window is live: ambient chatter + demo skip
     /// buttons consult this (static like DemoSession.Active — no wiring needed).
     public static bool ReviewFlowActive { get; private set; }
 
@@ -413,7 +409,7 @@ public class PharmeeGatekeeper : MonoBehaviour
         if (from == GateState.LabTour && to != GateState.LabTour) tourGuide?.End();
         ReviewFlowActive = GatekeeperModel.IsReviewState(to);
         ApplyDoor(to);
-        // W5.9: Dismiss from an open-door state closes the door — but never trap a
+        // Dismiss from an open-door state closes the door — but never trap a
         // player already inside the lab behind it.
         if (to == GateState.ModeChoice && PlayerInsideLab())
         {
@@ -472,10 +468,10 @@ public class PharmeeGatekeeper : MonoBehaviour
             case GateState.Loading:
                 panel?.Hide();
                 // ⭐ Every run path crosses Loading (first run, Retry, Restart), so this is the one
-                // place the APPARATUS is restored: empty, cool, unlabelled, unclaimed (W5.59).
+                // place the APPARATUS is restored: empty, cool, unlabelled, unclaimed.
                 LabReset.ResetApparatus();
                 LoadSelected();
-                // W5.9 watchdog: Loading's only exit is the fade callback firing
+                // Watchdog: Loading's only exit is the fade callback firing
                 // Loaded — if a concurrent fade ever swallowed it, force the exit
                 // instead of wedging the single-exit state.
                 After(5f, () =>
@@ -489,7 +485,7 @@ public class PharmeeGatekeeper : MonoBehaviour
             case GateState.ThresholdWarn:
                 Say(lines.thresholdWarn);
                 panel?.Show("The period will start as soon as you walk in.", new List<string> { "Proceed", "Not yet" });
-                // Tutorial Mode: show the whole procedure before the door opens (W5.39).
+                // Tutorial Mode: show the whole procedure before the door opens.
                 // The stage is already built ARMED by now, so runner.Graph exists and the
                 // board renders the real step list rather than a written-out copy of it.
                 if (TutorialSession.Active)
@@ -501,7 +497,7 @@ public class PharmeeGatekeeper : MonoBehaviour
 
             case GateState.DoorArmed:
                 panel?.Hide();
-                // The PPE locker sits just INSIDE the lab (2026-07-11), so the
+                // The PPE locker sits just INSIDE the lab, so the
                 // player may already be past the threshold when the timer arms —
                 // the walk-in trigger would never fire. Auto-start in that case.
                 After(0.8f, () =>
@@ -548,14 +544,14 @@ public class PharmeeGatekeeper : MonoBehaviour
 
             case GateState.Returning:
                 // One fade: full lab reset (props re-seated, wearables back on their
-                // pegs) + teleport home — the user-approved return sequence.
+                // pegs) + teleport home.
                 DoFaded(() => { ResetLabForReturn(); Model.Fire(GateEvent.TeleportDone); });
                 break;
 
             case GateState.Debrief:
                 // Now AT the entrance, after the return teleport: quiz-completion
                 // congrats + a banded performance remark, then the unlock announce.
-                // W5.9: the line starts AFTER the fade-in reveals the scene (it used
+                // The line starts AFTER the fade-in reveals the scene (it used
                 // to begin while the screen was still black), and a final-campaign
                 // pass gets the campaign-flavoured remark.
                 panel?.Hide();
@@ -592,10 +588,9 @@ public class PharmeeGatekeeper : MonoBehaviour
     /// GradeScreen Continue (pass-gated) — begin the debrief + return home.
     public void OnContinueAfterPass() => Model.Fire(GateEvent.ContinueAfterPass);
 
-    /// GradeScreen "Choose Another" (fail path, W5.9): the review used to trap a
-    /// failed player in a Retry-only loop — this returns them to the entrance
+    /// GradeScreen "Choose Another" (fail path): returns a failed player to the entrance
     /// (full lab reset, no congratulatory debrief) so they can pick any unlocked
-    /// experiment at the door.
+    /// experiment at the door, not only Retry.
     public void OnAbandonAfterFail()
     {
         if (Model.State != GateState.ScoreReview) return;
@@ -613,7 +608,7 @@ public class PharmeeGatekeeper : MonoBehaviour
     /// Pharmee's spawn/entrance greeting (scene load + after a HUD reset).
     public void SpeakWelcome()
     {
-        Say(lines.welcome);   // the greeting is voiced — no buzzer under it (2026-09-05)
+        Say(lines.welcome);   // the greeting is voiced — no buzzer under it
 
         // Tutorial Mode drops the player into the SAME lab with no sign anything is
         // different — glowing bottles and a floating arrow read as a bug until someone
@@ -622,7 +617,7 @@ public class PharmeeGatekeeper : MonoBehaviour
             After(lineSeconds * 0.9f, () => Say(PharmeeLines.TutorialOrientation));
     }
 
-    /// HUD Reset (user 2026-07-10): everything in the lab returns to its original
+    /// HUD Reset: everything in the lab returns to its original
     /// spawn — props/bottles re-seated, the wearables taken off — the player is
     /// teleported back to the entrance where Pharmee waits, the gate re-closes, and
     /// Pharmee greets. Wrapped in the black fade like every other transition.
@@ -630,9 +625,9 @@ public class PharmeeGatekeeper : MonoBehaviour
     {
         void Do()
         {
-            // W5.9: actually END the attempt (the confirm text promises it) — a
-            // mid-run reset used to leave a zombie run ticking; a mid-review one
-            // left the grade card / quiz tablet floating at the entrance.
+            // Actually END the attempt (the confirm text promises it). Otherwise a mid-run reset
+            // leaves a zombie run ticking and a mid-review one leaves the grade card / quiz
+            // tablet floating at the entrance.
             if (runner != null && runner.IsRunning) runner.Abort();
             var grade = UnityEngine.Object.FindFirstObjectByType<GradeScreenController>(FindObjectsInactive.Include);
             if (grade != null) grade.Hide();
@@ -679,10 +674,9 @@ public class PharmeeGatekeeper : MonoBehaviour
             Relaunch();
     }
 
-    /// Put Dr. Jimenez back at his authored review position, facing the player, and
-    /// stop him roaming (user 2026-07-15: he was "positioned elsewhere, and not
-    /// facing"). The quiz begins while the run is STILL live — Finish only lands on
-    /// submit — so ProctorRoamer's own come-home-on-finish hook fires far too late.
+    /// Put Dr. Jimenez back at his authored review position, facing the player, and stop
+    /// him roaming. The quiz begins while the run is STILL live (Finish only lands on
+    /// submit), so ProctorRoamer's own come-home-on-finish hook fires far too late.
     private void StageExaminerForReview()
     {
         var roamer = examiner != null ? examiner.GetComponent<ProctorRoamer>() : null;
@@ -693,10 +687,8 @@ public class PharmeeGatekeeper : MonoBehaviour
         roamer.ReturnHomeAndHold(cam != null ? cam.transform : playerRig);
     }
 
-    /// Pharmee stood squarely between the player and the quiz tablet during the
-    /// review (user 2026-07-19: "move pharmee about to the left so I could
-    /// clearly see the exam tablet"). Park him off to the PLAYER'S LEFT of the
-    /// tablet, still facing them so he reads as present, and remember where he
+    /// Park Pharmee off to the PLAYER'S LEFT of the quiz tablet so he never blocks it,
+    /// still facing them so he reads as present, and remember where he
     /// was so the lab reset puts him back on door duty.
     private Vector3 _pharmeeHomePos;
     private Quaternion _pharmeeHomeRot;
@@ -738,12 +730,9 @@ public class PharmeeGatekeeper : MonoBehaviour
     private Transform PharmeeBody() => pharmeeBody != null ? pharmeeBody : transform;
 
     /// Jimenez's quiz briefing at the review corner, then the quiz opens.
-    /// Beats 0-1 = the generic brief; then he RECAPS this module's manuscript
-    /// objectives before the questions (user 2026-07-19: "ensure pharmee and dr
-    /// load the important things written in the manuscript like learning
-    /// outcomes"). Jimenez's pools are module-blind, so this is the one place he
-    /// says something specific to the experiment just performed — and it lands
-    /// exactly where a "here is what you were meant to learn" recap belongs.
+    /// Beats 0-1 = the generic brief; then he RECAPS this module's manuscript learning
+    /// outcomes before the questions. Jimenez's pools are module-blind, so this is the
+    /// one place he says something specific to the experiment just performed.
     private void SpeakJimenezBrief(int beat)
     {
         if (Model.State != GateState.QuizIntro) return;
@@ -763,11 +752,10 @@ public class PharmeeGatekeeper : MonoBehaviour
         SpeakAsJimenez(PharmeeLines.Pick(PharmeeLines.JimenezQuizBrief, beat), beat);
     }
 
-    /// Speak one of Jimenez's review beats and schedule the next off the line's
-    /// REAL duration. A fixed `lineSeconds` under-scheduled anything longer than
-    /// (lineSeconds x reveal-speed) characters — his ILO recap lines are ~140
-    /// chars, so the following beat used to start while he was still mid-sentence
-    /// (user 2026-07-19: dialogue overlapping during the quiz cutscene).
+    /// Speak one of Jimenez's review beats and schedule the next off the line's REAL
+    /// duration. A fixed `lineSeconds` under-schedules anything longer than
+    /// (lineSeconds x reveal-speed) characters; his ILO recap lines are ~140 chars, so
+    /// the next beat would start while he is still mid-sentence.
     private void SpeakAsJimenez(string line, int beat)
     {
         float wait = lineSeconds;
@@ -825,13 +813,13 @@ public class PharmeeGatekeeper : MonoBehaviour
         });
     }
 
-    /// The user-approved return: props/bottles re-seated, wearables back on their
+    /// The return sequence: props/bottles re-seated, wearables back on their
     /// pegs, player at the entrance — all inside the Returning fade.
     private void ResetLabForReturn()
     {
         string id = runner != null && runner.Module != null ? runner.Module.moduleId : GameFlow.SelectedModuleId;
         TaskTargetRegistry.Clear();
-        LabReset.ResetApparatus();                     // contents, temperature, residue, labels (W5.59)
+        LabReset.ResetApparatus();                     // contents, temperature, residue, labels
         launcher?.Launch(id, LaunchMode.StageOnly);
         DropRespawn.ResetAllHome();                    // hand-placed apparatus + reagents back home
         RestorePharmeeHome();                          // off the review spot, back on door duty
@@ -874,7 +862,7 @@ public class PharmeeGatekeeper : MonoBehaviour
     {
         if (marker == null || playerRig == null) return;
         // Being moved across the room with no sound is disorienting in VR — the
-        // fade covered it visually but nothing covered it audibly (2026-07-29).
+        // fade covered it visually but nothing covered it audibly.
         AudioService.TryPlayFirst("teleport-whoosh", "socket-snap");
         var cam = cameraOverride != null ? cameraOverride : Camera.main;
         Vector3 camPos = cam != null ? cam.transform.position : playerRig.position;
@@ -894,9 +882,8 @@ public class PharmeeGatekeeper : MonoBehaviour
         var svc = new ProgressionService();
         svc.Load();
         var flow = ProgressionFlow.Create(svc);
-        // W5.9: passing the LAST experiment used to promise "the next challenge"
-        // — which didn't exist. The whole-campaign finish now gets a real
-        // celebration: dedicated lines + confetti + the pass sting.
+        // The LAST experiment has no "next challenge", so the whole-campaign finish gets
+        // its own celebration: dedicated lines + confetti + the pass sting.
         if (flow.AllComplete())
         {
             Say(PharmeeLines.Pick(PharmeeLines.CampaignComplete, _remarkVariant++));
@@ -940,9 +927,8 @@ public class PharmeeGatekeeper : MonoBehaviour
         panel?.Show("Choose your episode", labels, selectable);
     }
 
-    /// The picker's SECOND level: the chosen period's experiments (user 2026-07-16 —
-    /// picking Prelim used to auto-start Exp 2, so its two modules were never shown).
-    /// A trailing "Back" row returns to the period list.
+    /// The picker's SECOND level: the chosen period's experiments, so every module in a
+    /// period is shown. A trailing "Back" row returns to the period list.
     private void ShowModulePicker()
     {
         var svc = new ProgressionService();
@@ -976,7 +962,7 @@ public class PharmeeGatekeeper : MonoBehaviour
     private void ApplyDoor(GateState s)
     {
         bool open = GatekeeperModel.DoorOpen(s);
-        // Hard PPE gate (user 2026-07-14): the physical door must NOT open for a
+        // Hard PPE gate: the physical door must NOT open for a
         // campaign entry unless all three PPE pieces are actually worn — even if
         // the FSM somehow advanced. Self-heals: donning the last piece fires
         // OnPPEWorn → ApplyDoor again.

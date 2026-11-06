@@ -25,9 +25,9 @@ public class ImpactSound : MonoBehaviour
         if (_rb == null || _rb.isKinematic) return;
         if (Time.time < _readyAt) return;
         float v = c.relativeVelocity.magnitude;
-        // A CAREFUL placement never cleared minSpeed, so setting glassware down
-        // gently — the most common thing a player does — made no sound at all
-        // (2026-07-29 audit). Below the threshold now gets a soft set-down cue
+        // A CAREFUL placement never clears minSpeed, so setting glassware down
+        // gently — the most common thing a player does — would make no sound at all.
+        // Below the threshold it gets a soft set-down cue
         // instead of silence; above it keeps the material-correct impact.
         if (v < minSpeed)
         {
@@ -42,7 +42,7 @@ public class ImpactSound : MonoBehaviour
         _readyAt = Time.time + cooldownSeconds;
         // Positional: the clatter comes from where the item actually landed.
         // Loudness scales with impact speed so a gentle set-down whispers and
-        // only a real drop clatters at full volume (user 2026-07-12).
+        // only a real drop clatters at full volume.
         var at = c.contactCount > 0 ? c.GetContact(0).point : transform.position;
         AudioService.TryPlayAt(key, at, Mishandling.ImpactVolume01(v));
     }

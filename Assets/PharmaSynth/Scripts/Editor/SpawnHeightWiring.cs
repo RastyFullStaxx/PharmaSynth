@@ -2,15 +2,13 @@
 using UnityEditor;
 using UnityEngine;
 
-/// Wires the fixed per-scene eye height onto the open scene's XR rig (user
-/// 2026-07-11: menu room and lab need DIFFERENT fixed heights, not relative to
-/// the player's real height). Run once per scene (MainMenu + SampleScene).
-/// Idempotent. Tune the two constants below and re-run to adjust.
+/// Wires the fixed eye height onto the open scene's XR rig (fixed, not
+/// relative to the player's real height). Run once per scene (MainMenu +
+/// SampleScene). Idempotent. Tune the constants below and re-run to adjust.
 public static class SpawnHeightWiring
 {
-    /// ONE eye height everywhere (user 2026-07-11: "take the lab's height and
-    /// apply it to the cube room" — per-scene divergence kept confusing tests;
-    /// the cube room's furnishings were lowered to suit instead).
+    /// ONE eye height everywhere: per-scene heights made tests diverge, so the
+    /// cube room's furnishings are lowered to suit the lab's height instead.
     public const float EyeHeight = 1.45f;
 
     [MenuItem("Tools/PharmaSynth/Wire Spawn Height (Fixed Per Scene)")]

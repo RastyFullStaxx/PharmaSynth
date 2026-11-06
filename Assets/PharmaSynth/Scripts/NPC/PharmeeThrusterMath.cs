@@ -2,17 +2,16 @@
 
 /// Pure motion for Pharmee's hover rings, read as THRUSTER EXHAUST (suite-pinned).
 ///
-/// ⛔ What they used to do: `scale = 1 + 0.12 * sin(t * 2.2 * 30)`. That is a ±12% LATERAL
-/// pulse at about 10 Hz on a flat horizontal ring — a sideways shimmy, which is what the
-/// user saw ("they shake sideways, which a thruster shouldn't"). Nothing ever translated
-/// them, so nothing ever flowed anywhere.
+/// ⛔ A scale pulse (`scale = 1 + 0.12 * sin(t * 2.2 * 30)`) is a ±12% LATERAL pulse at
+/// about 10 Hz on a flat horizontal ring: a sideways shake, which a thruster never does,
+/// and nothing flows anywhere.
 ///
-/// What they do now: each ring is a puff of exhaust. It is born at the emitter, travels
+/// Each ring is a puff of exhaust. It is born at the emitter, travels
 /// DOWN, spreads slightly as it goes, and fades out at the bottom while the next one is
 /// already on its way — so the four rings read as one continuous jet.
 public static class PharmeeThrusterMath
 {
-    /// Cycles per second. ~1.2 reads as a steady hover jet; the old 30x multiplier was a blur.
+    /// Cycles per second. ~1.2 reads as a steady hover jet; 30x is a blur.
     public const float DefaultFlowSpeed = 1.2f;
     /// How far a ring travels before it dies, in WORLD METRES.
     ///

@@ -44,9 +44,9 @@ public class ZoneSimStation : MonoBehaviour
     /// Optional particle effect (steam/frost/drip/bubbles), driven like the audio loop.
     public void SetVfx(StationVfx vfx) => _vfx = vfx;
 
-    /// Optional ignition gate (W5.8): a Heat station whose required prop is a
+    /// Optional ignition gate: a Heat station whose required prop is a
     /// burner only heats while the burner is LIT (light it with a match). Null
-    /// gate = legacy occupancy-only behaviour.
+    /// gate = occupancy-only behaviour.
     private System.Func<bool> _ignitionGate;
     public void SetIgnitionGate(System.Func<bool> gate) => _ignitionGate = gate;
 

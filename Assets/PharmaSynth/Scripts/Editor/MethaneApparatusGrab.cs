@@ -5,7 +5,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// Guarantee the methane apparatus is pick-up-able (user 2026-07-15: "I can't pick
+/// Guarantee the methane apparatus is pick-up-able ("I can't pick
 /// up the draw tubes"). Normalises every common grab-blocker on the hard-glass
 /// tube, collection tube and burner: active, on the Default layer, with an
 /// XRGrabInteractable (velocity-tracked + two-handed), a Rigidbody, a live convex
@@ -33,7 +33,7 @@ public static class MethaneApparatusGrab
             SetLayer(go, 0);   // Default — the hand ray/poke masks include it
 
             // The hard-glass tube must RECEIVE the ground mixture scooped from the
-            // mortar (user 2026-07-15: load the tube, then heat it). It's a solid
+            // mortar (load the tube, then heat it). It's a solid
             // receiver; LiquidPhysics.Start won't touch its own mesh (opaque host).
             if (li.itemId == "glass-tube" && go.GetComponent<LiquidPhysics>() == null)
             {

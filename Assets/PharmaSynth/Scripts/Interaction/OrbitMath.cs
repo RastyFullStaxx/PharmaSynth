@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// Pure circular-motion accumulator shared by the STIR and GRIND verbs (W5.8):
+/// Pure circular-motion accumulator shared by the STIR and GRIND verbs:
 /// feed it the tool tip's XZ offset from the vessel/bowl axis each frame; while
 /// the tip stays inside the working radius the swept angle accumulates
 /// (direction-agnostic, per-sample clamped so teleports/jitter can't cheat).

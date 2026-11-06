@@ -1,8 +1,8 @@
 using UnityEngine;
 
-/// Pure display rules for grades (W5.9): the pass gate compares RAW values
+/// Pure display rules for grades: the pass gate compares RAW values
 /// (Total >= 90), so displayed percentages must FLOOR — rounding 89.6 up to
-/// "90%" beside a TRY AGAIN verdict read as a contradiction. Suite-pinned.
+/// "90%" beside a TRY AGAIN verdict reads as a contradiction. Suite-pinned.
 public static class GradeDisplay
 {
     /// Gate-relevant percent for display: floored, clamped to [0,100].

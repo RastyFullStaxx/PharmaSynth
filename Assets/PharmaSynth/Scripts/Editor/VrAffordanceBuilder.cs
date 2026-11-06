@@ -9,7 +9,7 @@ using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractab
 using HapticPlayer = UnityEngine.XR.Interaction.Toolkit.Inputs.Haptics.HapticImpulsePlayer;
 using SHF = UnityEngine.XR.Interaction.Toolkit.Feedback.SimpleHapticFeedback;
 
-/// Wires the 2026-07-10 VR affordance batch into the open scene:
+/// Wires the VR affordance batch into the open scene:
 ///   1. HAPTICS — every hand interactor (NearFar + Poke) gets a HapticImpulsePlayer
 ///      + SimpleHapticFeedback so grabbing, socket-snapping and poking UI buzz.
 ///   2. HOVER HIGHLIGHT — every grabbable gets a HoverHighlight so it brightens +

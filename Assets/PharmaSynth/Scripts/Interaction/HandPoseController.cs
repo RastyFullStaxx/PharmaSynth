@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
-/// The hand's three display poses (user 2026-07-11): FREE (open), GRAB (holding
+/// The hand's three display poses: FREE (open), GRAB (holding
 /// something), POINT (index extended while the ray hovers an interactable —
 /// Pharmee, tools, reagents, buttons).
 public enum HandPoseKind { Free, Grab, Point }
@@ -130,7 +130,7 @@ public class HandPoseController : MonoBehaviour
         }
 
         // Pose: Grab while selecting, Point while hovering an interactable OR a
-        // UI element (menu/HUD buttons count — user 2026-07-11), else Free.
+        // UI element (menu/HUD buttons count), else Free.
         bool selecting = false, hovering = false;
         if (interactors != null)
             for (int i = 0; i < interactors.Length; i++)

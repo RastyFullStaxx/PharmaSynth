@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// Grabbable affordance (user 2026-07-10: prop readability): when a hand/ray
+/// Grabbable affordance (prop readability): when a hand/ray
 /// hovers a real-scale lab tool, it brightens (base-colour tint via a
 /// MaterialPropertyBlock — no per-material keyword or shader needed) and pops
 /// slightly larger, so small items are easy to spot and grab; it restores on
@@ -24,7 +24,7 @@ public class HoverHighlight : MonoBehaviour
     private Vector3 _baseScale;
     private bool _cached;
 
-    // TWO independent sources, not one bool (2026-08-07). Tutorial Mode lights an
+    // TWO independent sources, not one bool. Tutorial Mode lights an
     // object because it is the next step; hover lights it because a ray is on it.
     // With a single flag, waving the ray past a guided object and off again would
     // silently switch the guidance glow off.
@@ -120,9 +120,9 @@ public class HoverHighlight : MonoBehaviour
         if (Application.isPlaying) AudioService.TryPlay("grab");   // universal grab/hold cue
     }
 
-    /// The universal RELEASE cue. `selectExited` had no listener anywhere in the
-    /// project, so letting go of anything — every grab in the game has one — was
-    /// completely silent while picking it up chirped (2026-07-29 audit). Played
+    /// The universal RELEASE cue. Nothing else listens to `selectExited`,
+    /// so without this, letting go of anything is
+    /// silent while picking it up chirps. Played
     /// centrally here for the same reason "grab" is: exactly once, on everything
     /// grabbable, without each verb having to remember.
     private void OnRelease(SelectExitEventArgs _)

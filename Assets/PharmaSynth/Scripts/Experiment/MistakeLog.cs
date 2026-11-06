@@ -18,12 +18,8 @@ public enum LabErrorType
     SpilledReagent      // un-held bottle tipped past ~60° while holding liquid
 }
 
-/// Records mistakes during an experiment attempt and exposes counts.
-/// (Audit gap: the legacy FlowManager fired a MistakeRecorded event but never
-/// kept a count — the grade screen needs "Number of Mistakes".)
-///
-/// Plain C# so it is unit-testable and reusable by both the legacy FlowManager
-/// and the new experiment runner.
+/// Records mistakes during an experiment attempt and exposes counts (the grade screen
+/// needs "Number of Mistakes"). Plain C# so it is unit-testable.
 public class MistakeLog
 {
     private readonly struct Entry
@@ -85,6 +81,13 @@ public class MistakeLog
     }
 
     /// Which competency a mistake reflects poorly on, for the BKT observation.
+    /// Mastery measures KNOWLEDGE, so dexterity slips don't feed it: a dropped tube or a
+    /// knocked-over bottle is an imprecise hand, not a wrong idea, and the grade already
+    /// charges it (Sanitation). Counting it twice let one late drop fail the methane
+    /// tutorial's single-skill mastery gate at a 95% grade.
+    public static bool AffectsMastery(LabErrorType type)
+        => type != LabErrorType.DroppedGlassware && type != LabErrorType.SpilledReagent;
+
     public static LabSkill SkillFor(LabErrorType type)
     {
         switch (type)

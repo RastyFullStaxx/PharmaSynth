@@ -4,13 +4,13 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
-/// v4 (user 2026-07-11): controllers are REPLACED by skinned hands — XR Hands
+/// Controllers are REPLACED by skinned hands: XR Hands
 /// sample meshes (Art/Hands/LeftHand.fbx + RightHand.fbx, real finger bones).
 /// Two skins: bare (HandSkin.mat) / nitrile blue (HandNitrile.mat) driven by the
 /// PPE gloves state; two poses: free / grab (finger curl while selecting) driven
-/// by HandPoseController. Retires the old procedural mittens, HandVisualKeeper
-/// AND the FPGlove_* first-person glove clones (PPE visuals rebound to the
-/// mirror gloves only — first-person gloving is now the material swap).
+/// by HandPoseController. Removes any procedural mittens, HandVisualKeeper
+/// AND FPGlove_* first-person glove clones (PPE visuals bind to the
+/// mirror gloves only; first-person gloving is the material swap).
 ///
 /// Tools ▸ PharmaSynth ▸ Build Hand Visuals — run per scene, edit mode.
 public static class HandVisualsBuilder
@@ -44,7 +44,7 @@ public static class HandVisualsBuilder
         foreach (var k in Object.FindObjectsByType<HandVisualKeeper>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             Object.DestroyImmediate(k);
 
-        // PPE: first-person gloving is now the hand-material swap, so the glove
+        // PPE: first-person gloving is the hand-material swap, so the glove
         // visual arrays keep only the mirror-avatar clones.
         var ppe = Object.FindFirstObjectByType<PPEController>(FindObjectsInactive.Include);
         if (ppe != null)
@@ -65,9 +65,9 @@ public static class HandVisualsBuilder
         if (BuildHand(xr, "Left Controller", LeftFbx, HandL, "Left Controller Visual", skin, nitrile, ppe)) made++;
         if (BuildHand(xr, "Right Controller", RightFbx, HandR, "Right Controller Visual", skin, nitrile, ppe)) made++;
 
-        // Mount the wrist watch at the hand's wrist (user 2026-07-11: "place the
-        // watch to the wrist properly"). Parent to the HAND ROOT, not the wrist
-        // BONE — skinned-rig bone axes are twisted (X-along-bone), which put the
+        // Mount the wrist watch at the hand's wrist.
+        // Parent to the HAND ROOT, not the wrist
+        // BONE: skinned-rig bone axes are twisted (X-along-bone), which puts the
         // watch on the back of the hand; the root has clean controller axes.
         if (watch != null)
         {
@@ -128,8 +128,8 @@ public static class HandVisualsBuilder
 
     const string BandMeshPath = "Assets/PharmaSynth/Art/Generated/WatchBandMesh.asset";
 
-    /// Measured fitted watch (user 2026-07-11: "neat and wrapped like a real
-    /// watch"). The solid Tripo WatchModel physically cannot encircle a wrist,
+    /// Measured fitted watch, wrapped neatly round the wrist like a real
+    /// watch. The solid Tripo WatchModel physically cannot encircle a wrist,
     /// so: bake the hand's skinned mesh, measure the wrist cross-section at the
     /// band z, generate an elliptical torus band around it, and cap it with a
     /// disc face + rim + crown. WatchModel is deactivated (kept as fallback).
@@ -154,8 +154,8 @@ public static class HandVisualsBuilder
         Object.DestroyImmediate(baked);
 
         // Scan thin slabs along the arm stub and take the NARROWEST cross-section
-        // (the true wrist neck) — single-slab measurements kept catching the palm
-        // flare and produced a loose band.
+        // (the true wrist neck). A single slab can catch the palm flare and give
+        // a loose band.
         float sliceZ = watch.transform.localPosition.z;
         var slice = default(WatchMath.WristSlice);
         float bandZ = sliceZ, bestWidth = float.MaxValue;

@@ -16,11 +16,11 @@ public struct TaskTarget
     /// answer while you're carrying it.
     public bool stayLitWhenHeld;
 
-    /// The motion this step is asking for, for VerbDemoPlayer (W5.39). Derived from
+    /// The motion this step is asking for, for VerbDemoPlayer. Derived from
     /// the component that registered the target, so it cannot disagree with the
     /// binding for the same reason the target itself cannot.
     public VerbKind verb;
-    /// One of several interchangeable tubes that could ALL take this step (W5.53). Pool
+    /// One of several interchangeable tubes that could ALL take this step. Pool
     /// targets are collapsed to ONE at read time — the tube in the player's hand, else
     /// the nearest — so the arrow, the beacon and the glow never disagree, and the whole
     /// rack does not light up.
@@ -29,12 +29,9 @@ public struct TaskTarget
 
 /// taskId → the scene objects that step involves.
 ///
-/// Formerly ExperimentStationRegistry, which mapped ONE Transform per task and was
-/// fed only by ExperimentTaskStation.OnEnable. Since the zone-free conversion
-/// (2026-07-17) no module stages a station, so nothing ever registered and every
-/// consumer silently got null — WaypointGuide has been calling Hide() every frame in
-/// all 9 modules ever since. Widened to a list and fed by the TutorialTargets sweep,
-/// which is the single source of truth: components no longer self-register, so there
+/// Fed by the TutorialTargets sweep, the single source of truth (no module stages an
+/// ExperimentTaskStation, so station self-registration would find nothing).
+/// Components do not self-register, so there
 /// is no second lifetime to keep in sync.
 public static class TaskTargetRegistry
 {
@@ -55,7 +52,7 @@ public static class TaskTargetRegistry
         list.Add(new TaskTarget { transform = t, role = role, stayLitWhenHeld = stayLitWhenHeld, verb = verb, pool = pool });
     }
 
-    /// The ONE pool member a cue should use right now (W5.53): the member the player is
+    /// The ONE pool member a cue should use right now: the member the player is
     /// HOLDING if any is, else the nearest to `from`. Pure over the target list so the
     /// suite can pin the preference order without a scene. Returns null when no target is
     /// pool-flagged, so non-pool steps are untouched.
@@ -106,7 +103,7 @@ public static class TaskTargetRegistry
     /// The ONE object a navigation cue should point at for this step.
     ///
     /// Source first ("go fetch that"), hopping to the destination once the source is in
-    /// hand ("now put it here"). Extracted from WaypointGuide (W5.44) so the floor path
+    /// hand ("now put it here"). Extracted from WaypointGuide so the floor path
     /// and the beacon cannot pick different targets — two cues disagreeing about where to
     /// go is worse than either one alone.
     public static Transform PickTarget(string taskId)
@@ -124,7 +121,7 @@ public static class TaskTargetRegistry
 ///
 /// Deliberately DERIVED from the components that actually complete each task rather
 /// than from an authored per-task list. An authored list can drift from the binding
-/// it describes — exactly the bug class the W5.34 clueless-player audit was spent on
+/// it describes — the bug class of
 /// (a hint whose ACTION line contradicted the binding it had to satisfy). Deriving
 /// makes that disagreement structurally impossible: if the sweep points at it, it is
 /// the thing that completes the step.
@@ -150,7 +147,7 @@ public static class TutorialTargets
             if (b == null) continue;
 
             // A POOL member that has not committed to a role is a valid destination for
-            // every task any of its surviving roles could serve (W5.53). Registered with
+            // every task any of its surviving roles could serve. Registered with
             // pool=true so the consumers collapse the set to held-or-nearest.
             if (b.IsPoolMember)
                 foreach (var task in b.CandidateTasks())
@@ -177,7 +174,7 @@ public static class TutorialTargets
 
         // --- Verb components: each already owns the taskId it satisfies.
         //
-        //     The zone-free conversion (2026-07-17) put the taskId on a per-VESSEL
+        //     The zone-free conversion put the taskId on a per-VESSEL
         //     companion (VesselHeatTask, VesselChillTask, …) rather than on the
         //     apparatus controller — the bath/bucket/strip are shared bench tools and
         //     cannot know whose step is running. So sweep the Vessel*Task components:
@@ -234,10 +231,9 @@ public static class TutorialTargets
     /// switched off DELIBERATELY for the module being played: the module's own end product
     /// (`EndProductVisibility`, so you must synthesise it), the methane-only staged props
     /// (`MethaneStageVisibility`), and the consumable dispensers' hidden `Template_*` clone
-    /// sources. Registering those made Tutorial Mode glow, ghost and aim a waypoint at an
-    /// invisible object — `Raw_Ethanol` during ethyl-alcohol, `Raw_BenzoicAcid` during
-    /// benzoic-acid, `Raw_Acetone` during acetone, `Prop_reagent-jar` during acetone
-    /// (play-mode autopilot, 2026-09-02).
+    /// sources. Registering those would make Tutorial Mode glow, ghost and aim a waypoint at an
+    /// invisible object (`Raw_Ethanol` during ethyl-alcohol, `Raw_BenzoicAcid` during
+    /// benzoic-acid, `Raw_Acetone` during acetone, `Prop_reagent-jar` during acetone).
     ///
     /// Safe for coverage by construction: the pour branch registers the DESTINATION before
     /// it ever looks for a source, and the verb branch registers the station before the

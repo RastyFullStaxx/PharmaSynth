@@ -7,7 +7,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// Demo Mode scene wiring (user 2026-07-10). Three menus:
+/// Demo Mode scene wiring. Three menus:
 ///   • Build Demo Menu Button — MainMenu scene: clones the Laboratory button into
 ///     a config-gated "Demo Mode" button wired to MainMenuController.OnDemoLaboratory.
 ///   • Build Demo HUD — SampleScene: a Skip Step / Finish Experiment / Auto-Answer

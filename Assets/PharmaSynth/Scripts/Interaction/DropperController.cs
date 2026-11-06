@@ -1,7 +1,7 @@
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// Pure rules for the dropper/pipette verb (user 2026-07-16). The liquid twin of
+/// Pure rules for the dropper/pipette verb. The liquid twin of
 /// ScoopMath: VR cannot hit an accurate volume, so the ACTION is discretised and
 /// the accuracy problem disappears — the student still prepares every tube.
 ///
@@ -32,9 +32,9 @@ public static class DropperMath
     /// Draw only from a LIQUID SUPPLY with something left, and only into an empty
     /// dropper (no topping up a partial charge — the count would be ambiguous).
     ///
-    /// isTaskVessel guards the 2026-07-17 playtest bug: after the last squeeze the
-    /// now-empty dropper was still hovering over the test tube, and the very next
-    /// frame the draw branch SUCKED THE DELIVERED REAGENT BACK OUT of it. A task
+    /// isTaskVessel: right after the last squeeze the
+    /// now-empty dropper is still over the test tube, and without this guard the next
+    /// frame the draw branch would suck the delivered reagent back out. A task
     /// vessel (anything carrying a LiquidTaskBinding) is a destination, never a
     /// source — draws come from the shelf bottles only.
     public static bool CanFill(float loadedMl, PhysicalState state, float availableMl,
@@ -51,9 +51,8 @@ public static class DropperMath
         => loadedMl > 0.001f && overTarget && !sameAsSource;
 
     /// A loaded squeeze over NOTHING wastes the drop onto the floor. Deliberate:
-    /// it is how the student empties a dropper (user 2026-07-17: "I can't waste
-    /// droplets to the ground, it appears it only activates when a container is
-    /// nearby"). The wasted reagent is simply gone — that is its own small lesson.
+    /// it is how the student empties a dropper.
+    /// The wasted reagent is simply gone — that is its own small lesson.
     public static bool CanWaste(float loadedMl, bool overTarget)
         => loadedMl > 0.001f && !overTarget;
 
@@ -79,10 +78,9 @@ public static class DropperMath
     public static string FillLabel(string chem, float chargeMl)
         => chem + "  ·  " + SqueezesLeft(chargeMl) + " drops loaded";
 
-    // ---- charge-drain geometry (2026-07-17, user: the shrinking charge was
-    // "nailed to the middle") ------------------------------------------------
+    // ---- charge-drain geometry --------------------------------------------
     // Scaling a capsule shrinks it symmetrically about its pivot, so both ends
-    // receded toward the centre. Physically the liquid POOLS AT THE TIP and the
+    // recede toward the centre. Physically the liquid POOLS AT THE TIP and the
     // empty space grows at the bulb — so the capsule also shifts toward the tip
     // by exactly the half-length it lost, keeping the tip end anchored.
 
@@ -132,8 +130,8 @@ public class DropperController : MonoBehaviour
         if (_grab == null) Bind(GetComponent<XRGrab>());
         // Hide the hand-fitted charge capsule IMMEDIATELY — it is a fitting aid
         // in the editor and "the actual contents" in play; an empty dropper must
-        // never show it (user 2026-07-17). Without this it stayed visible from
-        // scene load until the first draw finally called RefreshFill.
+        // never show it. Without this it stays visible from
+        // scene load until the first draw calls RefreshFill.
         CacheLiquid();
     }
 
@@ -197,10 +195,11 @@ public class DropperController : MonoBehaviour
             if (col == null || col.transform.IsChildOf(transform)) continue;
             var lp = col.GetComponentInParent<LiquidPhysics>();
             if (lp == null || lp == _lastSource) continue;
+            if (LabReset.RefusesTransfer(lp, _loaded)) continue;   // never contaminate shelf stock
             target = lp; break;
         }
         // A loaded squeeze over nothing WASTES the drop to the floor — that is how
-        // the student deliberately empties a dropper (2026-07-17).
+        // the student deliberately empties a dropper.
         if (DropperMath.CanWaste(_loadedMl, target != null))
         {
             float wasted = DropperMath.SqueezeCharge(_loadedMl);
@@ -238,15 +237,14 @@ public class DropperController : MonoBehaviour
     }
 
     // ---- charge visuals -------------------------------------------------------
-    // 2026-07-17, take three. Take one sized a capsule off the mesh bounds → a
-    // blob bigger than the tool. Take two hung a pendant bead at ProbeCenter() —
-    // but the dropper is a SKINNED mesh, and SkinnedMeshRenderer.bounds come from
-    // the bind pose, so the "tip" landed nowhere near the visible glass and the
-    // bead floated in mid-air ("it's a small blob of circle outside").
+    // Bounds-based fitting does not work here: mesh bounds give a
+    // blob bigger than the tool, and a pendant bead at ProbeCenter() fails
+    // because the dropper is a SKINNED mesh, and SkinnedMeshRenderer.bounds come from
+    // the bind pose, so the "tip" lands nowhere near the visible glass.
     //
-    // The fix is the house pattern, not more bounds math: HAND-FITTED children,
+    // So the charge uses HAND-FITTED children,
     // exactly like FlameAnchor on the match head and the ghost-tube slots.
-    //   • "DropperLiquid" — a capsule the user scales INSIDE the stem once, in
+    //   • "DropperLiquid" — a capsule scaled by hand INSIDE the stem once, in
     //     the editor. Runtime only toggles it, tints it, and shortens it toward
     //     the bulb as the charge drains. Created by Add Placement Anchors.
     //   • "DropperTip"   — dragged onto the real tip; ProbeCenter() already
@@ -307,7 +305,7 @@ public class DropperController : MonoBehaviour
             // fully vanishes while loaded — a sliver of charge stays readable.
             // The capsule also SHIFTS toward the tip by the half-length it lost,
             // so the charge stays pooled AT THE TIP instead of shrinking about
-            // its own centre ("nailed to the middle", user 2026-07-17).
+            // its own centre.
             float frac = Mathf.Clamp01(_loadedMl / DropperMath.Capacity);
             var s = _liquidScale;
             s.y = DropperMath.DrainScaleY(_liquidScale.y, frac);
@@ -349,8 +347,8 @@ public class DropperController : MonoBehaviour
         FollowFill();
     }
 
-    /// Tint the glass barrel itself with the loaded chemical (user 2026-07-17:
-    /// "add the barrel tint too"). Via MaterialPropertyBlock, NEVER the material:
+    /// Tint the glass barrel itself with the loaded chemical.
+    /// Via MaterialPropertyBlock, NEVER the material:
     /// all four droppers (and other glassware) share GlassMat, so touching
     /// sharedMaterial would tint the whole set — and renderer.material would
     /// leak an instance. The MPB blends the chemical colour over the glass base

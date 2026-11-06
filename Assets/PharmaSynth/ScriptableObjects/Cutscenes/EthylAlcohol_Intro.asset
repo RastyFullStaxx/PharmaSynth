@@ -18,19 +18,67 @@ MonoBehaviour:
   - subtitle: 'Welcome back! Today: Ethyl Alcohol Synthesis.'
     seconds: 3.5
     face: 1
+    shot:
+      camera: Cam_PharmeeClose
+      moveTo: 
+      blend: 1
+      look: 1
+      lookMarker: 
+      fov: 45
+      pharmeePopIn: 1
   - subtitle: 'Here''s what you''ll be able to do by the end of this session:'
     seconds: 2.8
     face: 1
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: 'Objective 1: Synthesize ethyl alcohol.'
     seconds: 2.5
     face: 0
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: 'Objective 2: Determine its identity through chemical tests.'
     seconds: 3.6875
     face: 0
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: Ferment sugar to ethanol, confirm carbon dioxide with limewater, then
       distil the fraction that comes over between 70 and 80 degrees.
     seconds: 4.5
     face: 0
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: Check your wrist panel for each step. I'll guide you.
     seconds: 4
     face: 1
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 1
+      look: 2
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0

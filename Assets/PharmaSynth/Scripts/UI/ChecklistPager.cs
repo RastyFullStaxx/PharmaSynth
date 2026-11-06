@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-/// Focused checklist text for the holo procedures board (user 2026-07-10: the
+/// Focused checklist text for the holo procedures board (the
 /// flat pads rendered every phase at full detail into a fixed rect, so long
 /// checklists overflowed and overlaid the reaction footer — unreadable).
 /// Instead of shrinking text to fit, collapse what the player doesn't need:
@@ -24,13 +24,9 @@ public static class ChecklistPager
         return null;
     }
 
-    /// OBJECTIVES header — the manuscript's Intended Learning Outcomes, on the
-    /// wrist board for the WHOLE run (user 2026-07-19: "ensure pharmee and dr
-    /// load the important things written in the manuscript like learning
-    /// outcomes"). Until 2026-07-19 `intendedLearningOutcomes` was DEAD DATA: its
-    /// only reader was the legacy ExperimentFlowManager, which was in no scene and
-    /// has since been deleted (2026-08-07) — so the objectives were spoken once in
-    /// the intro cutscene and never readable again. This is now that reader.
+    /// OBJECTIVES header — the manuscript's Intended Learning Outcomes, on the wrist
+    /// board for the WHOLE run. This is the only reader of `intendedLearningOutcomes`
+    /// after the intro cutscene speaks them once.
     /// Sits ABOVE materials: why you're here, then what to grab.
     public static string BuildObjectivesHeader(ExperimentModuleDefinition module)
     {
@@ -49,7 +45,7 @@ public static class ChecklistPager
         return sb.ToString();
     }
 
-    /// MATERIALS header for the top of the holo board (user 2026-07-17): everything
+    /// MATERIALS header for the top of the holo board: everything
     /// the experiment will need — reagents WITH totals, apparatus with counts — so
     /// the player can assemble the bench BEFORE starting. Deliberately not part of
     /// the checklist: it completes nothing and stays fully visible for the whole
@@ -61,7 +57,7 @@ public static class ChecklistPager
         bool anyA = module.materialApparatus != null && module.materialApparatus.Count > 0;
         if (!anyR && !anyA) return string.Empty;
 
-        // One BULLET ROW per item (user 2026-07-17) — the dot-joined single line
+        // One BULLET ROW per item — the dot-joined single line
         // wrapped mid-name and made totals hard to scan against the bench.
         var sb = new StringBuilder(256);
         sb.Append("<b>MATERIALS</b> <size=78%><color=#AEB9CC>— gather these before you start</color></size>\n");
@@ -117,7 +113,7 @@ public static class ChecklistPager
                                 : "<color=#7C8AA5>□</color>");
                     sb.Append(mark).Append(' ').Append(GlyphSafe.Sanitize(t.label)).Append('\n');
                     // The CURRENT step also shows its how-to hint so the board tells
-                    // the player exactly what to do (user 2026-07-15).
+                    // the player exactly what to do.
                     if (graph.IsAvailable(t.taskId) && !string.IsNullOrWhiteSpace(t.hint))
                         sb.Append("    <size=78%><color=#AEB9CC>").Append(GlyphSafe.Sanitize(t.hint))
                           .Append("</color></size>\n");
@@ -137,9 +133,9 @@ public static class ChecklistPager
         return sb.ToString().TrimEnd();
     }
 
-    /// Status header for the holo board — absorbs the retired wrist mini-panel's
-    /// summary. TWO lines (W5.12): the step label gets its own wrapped line so a
-    /// long instruction never renders as one unreadable row; stats sit below.
+    /// Status header for the holo board (the single procedures panel). TWO lines: the
+    /// step label gets its own wrapped line so a long instruction never renders as one
+    /// unreadable row; stats sit below.
     public static string BuildHeader(ExperimentRunner runner)
     {
         if (runner == null || runner.Graph == null) return "";

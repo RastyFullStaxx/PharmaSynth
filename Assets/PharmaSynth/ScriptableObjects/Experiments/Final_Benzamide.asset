@@ -25,26 +25,32 @@ MonoBehaviour:
   - "Sodium Nitrite 10% \u2014 3 squeezes (the manual's 'nitrate' typo)"
   - "Benzamide \u2014 your own crystals, 5 spatula dips per test"
   materialApparatus:
-  - "Beaker 100 mL (the 50-ml reaction flask)"
-  - "Ice bucket (controls the vigorous reaction)"
-  - "Glass rod (shake/stir while adding)"
-  - "Funnel + Watch Glass (filter, wash, oven-dry)"
+  - Beaker 100 mL (the 50-ml reaction flask)
+  - Ice bucket (controls the vigorous reaction)
+  - Glass rod (shake/stir while adding)
+  - Funnel + Watch Glass (filter, wash, oven-dry)
   - "Test Tubes 15\u201317 (alkali / acid / nitrous)"
-  - "Water bath + burner \u00B7 Balance \u00B7 Litmus strips"
-  - "Dropper + porcelain spatula"
+  - "Water bath + burner \xB7 Balance \xB7 Litmus strips"
+  - Dropper + porcelain spatula
   tasks: []
   graphTasks:
   - taskId: measure-ammonia
-    label: "Place 5 mL concentrated ammonia in the reaction beaker"
+    label: Place 5 mL concentrated ammonia in the reaction beaker
     phase: 0
     prerequisites: []
     progressWeight: 1
     skill: 0
     rubricCategory: 0
     required: 1
-    hint: "5 ml of concentrated ammonia is the amide's nitrogen source \u2014 sharp vapour, recap fast.\n\u2192 Beaker 100 mL - the reaction vessel: 5 squeezes of ammonia solution."
+    hint: "5 ml of concentrated ammonia is the amide's nitrogen source \u2014 sharp
+      vapour, recap fast.\n\u2192 Beaker 100 mL - the reaction vessel: 5 squeezes
+      of ammonia solution."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: ice-bath
-    label: "Cool the flask in an ice bath"
+    label: Cool the flask in an ice bath
     phase: 0
     prerequisites:
     - measure-ammonia
@@ -52,9 +58,15 @@ MonoBehaviour:
     skill: 2
     rubricCategory: 0
     required: 1
-    hint: "Benzoyl chloride reacts VIOLENTLY with ammonia \u2014 the ice keeps it under control.\n\u2192 Set the beaker in the ice bucket until its label reads 5 \u00B0C."
+    hint: "Benzoyl chloride reacts VIOLENTLY with ammonia \u2014 the ice keeps it
+      under control.\n\u2192 Set the beaker in the ice bucket until its label reads
+      5 \xB0C."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: add-benzoyl
-    label: "Add 1 mL benzoyl chloride drop by drop"
+    label: Add 1 mL benzoyl chloride drop by drop
     phase: 1
     prerequisites:
     - ice-bath
@@ -62,7 +74,13 @@ MonoBehaviour:
     skill: 3
     rubricCategory: 0
     required: 1
-    hint: "One millilitre of benzoyl chloride, drop by drop into the COLD ammonia \u2014 white benzamide forms at once.\n\u2192 Dropper 1 squeeze of benzoyl chloride into the chilled beaker."
+    hint: "One millilitre of benzoyl chloride, drop by drop into the COLD ammonia
+      \u2014 white benzamide forms at once.\n\u2192 Dropper 1 squeeze of benzoyl
+      chloride into the chilled beaker."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: stir-stand
     label: "Shake while adding, then let stand 10\u201315 minutes"
     phase: 1
@@ -72,11 +90,16 @@ MonoBehaviour:
     skill: 1
     rubricCategory: 0
     required: 1
-    hint: "The manual says shake frequently while dropping, then stand 10\u201315 minutes to crystallise fully.\n\u2192 Circle the GLASS ROD inside the beaker until 'Well stirred!' \u2014 then time passes."
+    hint: "The manual says shake frequently while dropping, then stand 10\u201315
+      minutes to crystallise fully.\n\u2192 Circle the GLASS ROD inside the beaker
+      until 'Well stirred!' \u2014 then time passes."
+    autoCompleteWhenOthersDone: 0
     longProcess: 1
-    longProcessMessage: "Fifteen minutes later \u2014 the beaker is packed with white benzamide crystals."
+    longProcessMessage: "Fifteen minutes later \u2014 the beaker is packed with white
+      benzamide crystals."
+    timelapseHours: 0.25
   - taskId: filter-dry
-    label: "Filter, wash with cold water, oven-dry"
+    label: Filter, wash with cold water, oven-dry
     phase: 1
     prerequisites:
     - stir-stand
@@ -84,11 +107,16 @@ MonoBehaviour:
     skill: 2
     rubricCategory: 0
     required: 1
-    hint: "Filtering traps the crystals; a cold-water wash rinses off the mother liquor before the oven.\n\u2192 Tilt-pour 4 ml from the beaker through the funnel onto the Watch Glass."
+    hint: "Filtering traps the crystals; a cold-water wash rinses off the mother
+      liquor before the oven.\n\u2192 Tilt-pour 4 ml from the beaker through the
+      funnel onto the Watch Glass."
+    autoCompleteWhenOthersDone: 0
     longProcess: 1
-    longProcessMessage: "Filtered, washed with cold water and oven-dried \u2014 your benzamide is a dry white powder."
+    longProcessMessage: "Filtered, washed with cold water and oven-dried \u2014 your
+      benzamide is a dry white powder."
+    timelapseHours: 0
   - taskId: weigh-product
-    label: "Weigh your benzamide crystals"
+    label: Weigh your benzamide crystals
     phase: 1
     prerequisites:
     - filter-dry
@@ -96,7 +124,12 @@ MonoBehaviour:
     skill: 0
     rubricCategory: 0
     required: 1
-    hint: "The data sheet needs your product's crystal mass.\n\u2192 Set the Watch Glass on the balance and let the reading settle."
+    hint: "The data sheet needs your product's crystal mass.\n\u2192 Set the Watch
+      Glass on the balance and let the reading settle."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: test-alkali
     label: "Alkaline hydrolysis \u2014 ammonia turns red litmus BLUE"
     phase: 2
@@ -106,7 +139,14 @@ MonoBehaviour:
     skill: 5
     rubricCategory: 1
     required: 1
-    hint: "Boiling with 10% NaOH hydrolyses the amide \u2014 the ammonia vapour turns RED litmus BLUE.\n\u2192 In a clean test tube: 5 spatula dips of your benzamide + 2 squeezes of sodium hydroxide 10%, warm it at the water bath, then touch a litmus strip to the tube."
+    hint: "Boiling with 10% NaOH hydrolyses the amide \u2014 the ammonia vapour turns
+      RED litmus BLUE.\n\u2192 In a clean test tube: 5 spatula dips of your benzamide
+      + 2 squeezes of sodium hydroxide 10%, warm it at the water bath, then touch
+      a litmus strip to the tube."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: test-acid
     label: "Acid hydrolysis \u2014 the tube reads ACID"
     phase: 2
@@ -116,7 +156,14 @@ MonoBehaviour:
     skill: 5
     rubricCategory: 1
     required: 1
-    hint: "Boiling with dilute HCl hydrolyses it the other way \u2014 benzoic acid crystals separate and blue litmus turns RED.\n\u2192 In a clean test tube: 5 spatula dips of your benzamide + 2 squeezes of diluted hydrochloric acid, warm it at the bath, then touch a litmus strip."
+    hint: "Boiling with dilute HCl hydrolyses it the other way \u2014 benzoic acid
+      crystals separate and blue litmus turns RED.\n\u2192 In a clean test tube:
+      5 spatula dips of your benzamide + 2 squeezes of diluted hydrochloric acid,
+      warm it at the bath, then touch a litmus strip."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: test-nitrous
     label: "Nitrous-acid test \u2014 brisk N2 effervescence"
     phase: 2
@@ -126,9 +173,17 @@ MonoBehaviour:
     skill: 5
     rubricCategory: 1
     required: 1
-    hint: "Nitrous acid forms IN the tube from dilute HCl + sodium nitrite and deaminates the amide \u2014 brisk nitrogen effervescence. (The manual's 'nitrate' is a typo: NITRITE.)\n\u2192 In a clean test tube: 5 spatula dips of your benzamide + 2 squeezes of diluted HCl, then 3 squeezes of sodium nitrite \u2014 watch it fizz."
+    hint: "Nitrous acid forms IN the tube from dilute HCl + sodium nitrite and deaminates
+      the amide \u2014 brisk nitrogen effervescence. (The manual's 'nitrate' is a
+      typo: NITRITE.)\n\u2192 In a clean test tube: 5 spatula dips of your benzamide
+      + 2 squeezes of diluted HCl, then 3 squeezes of sodium nitrite \u2014 watch
+      it fizz."
+    autoCompleteWhenOthersDone: 0
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   - taskId: record-yield
-    label: "Record your observations"
+    label: Record your observations
     phase: 3
     prerequisites:
     - weigh-product
@@ -139,8 +194,12 @@ MonoBehaviour:
     skill: 0
     rubricCategory: 5
     required: 1
-    hint: "Crystal mass and all three test results go on the data sheet.\n\u2192 Review your observations, then answer on the data sheet."
+    hint: "Crystal mass and all three test results go on the data sheet.\n\u2192
+      Review your observations, then answer on the data sheet."
     autoCompleteWhenOthersDone: 1
+    longProcess: 0
+    longProcessMessage: 
+    timelapseHours: 0
   assessmentMode: 0
   masteryThreshold: 0.9
   bkt:
@@ -148,10 +207,7 @@ MonoBehaviour:
     pTransit: 0.3
     pSlip: 0.1
     pGuess: 0.2
-  trackedSkills:
-  - 0
-  - 5
-  - 2
+  trackedSkills: 000000000500000002000000
   rubricWeights:
     procedure: 0.4
     chemicalTests: 0.2

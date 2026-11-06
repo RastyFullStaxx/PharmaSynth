@@ -3,8 +3,8 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// Adds UiButtonSounds (hover blip + click) to every UI Button in the OPEN scene
-/// (user 2026-07-10). Run it once per scene — MainMenu (cube room) and SampleScene
+/// Adds UiButtonSounds (hover blip + click) to every UI Button in the OPEN scene.
+/// Run it once per scene — MainMenu (cube room) and SampleScene
 /// (HUD / choice panels / settings / grade / post-lab). Idempotent.
 ///
 /// Tools ▸ PharmaSynth ▸ Wire Button Sounds (edit mode).

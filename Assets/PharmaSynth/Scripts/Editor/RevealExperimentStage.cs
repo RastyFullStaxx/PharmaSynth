@@ -7,29 +7,27 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// Builds a module's DynamicStage IN EDIT MODE and prints an inventory of every
-/// object it spawned, grouped by WHO spawned it — so the stage can be reviewed and
-/// pruned by hand (user 2026-07-16: "I just seen a floating kit that this prelim
-/// mode only shown. dont remove any yet, I'll remove it myself. just show all
-/// prelims tools we have currently in edit mode as well").
+/// object it spawned, grouped by WHO spawned it, so the stage can be reviewed and
+/// pruned by hand.
 ///
 /// ⛔ DELETES NOTHING. Same intent as RevealMethaneStage: the stage normally only
 /// exists at runtime, so there is no way to see what an experiment litters the bench
 /// with until you are inside VR. This makes it visible and named.
 ///
-/// Why the grouping matters: the spawn sources are independent, and only ONE of them
-/// is the layout's fault —
+/// The grouping matters because the spawn sources are independent, and only ONE of
+/// them is the layout's fault:
 ///   • LAYOUT VESSELS   — authored per experiment (Exp 2's 20 tubes duplicate the bench)
 ///   • SpawnRackKit     — a rack + 6 tubes, EVERY module, predates the permanent bench
 ///   • SpawnSpares      — 2 spare beakers + a flask, EVERY module
 ///   • StageConsumables — matches + a "Striker" cube at Heat experiments. The cube is
-///                        redundant: since W5.8 the matchbox itself is the striker.
+///                        redundant: the matchbox itself is the striker.
 /// Re-run after a rebuild; the builder clears the stage each time, so it is idempotent.
 public static class RevealExperimentStage
 {
-    // One entry per module — a MenuItem can't take an argument, and defaulting to
-    // whatever the runner happens to hold just reveals the wrong experiment (it held
-    // tutorial-methane, which builds no dynamic stage at all, so the first run showed
-    // an empty list). Ordered like the campaign.
+    // One entry per module: a MenuItem can't take an argument, and defaulting to
+    // whatever the runner happens to hold can reveal the wrong experiment (e.g.
+    // tutorial-methane, which builds no dynamic stage at all, so the list is empty).
+    // Ordered like the campaign.
     [MenuItem("Tools/PharmaSynth/Reveal Stage/Prelim 1 — Chemical Compounding")]
     public static void RevealCompounding() => Reveal("prelim-chemical-compounding");
     [MenuItem("Tools/PharmaSynth/Reveal Stage/Prelim 2 — Ethyl Alcohol")]
@@ -57,9 +55,9 @@ public static class RevealExperimentStage
         int roots = builder.Build(moduleId);
 
         // Take the FULLEST DynamicStage: Transform.Find returns the first match, and the
-        // scene had two siblings (one orphaned + empty), so the first run reported "0
-        // objects" while 46 sat in the other. Stage() now collapses duplicates, but stay
-        // defensive — reporting an empty stage as "clean" is exactly the wrong answer.
+        // scene can hold two siblings (one orphaned + empty), so the first match may report
+        // "0 objects" while 46 sit in the other. Stage() collapses duplicates, but stay
+        // defensive: reporting an empty stage as "clean" is exactly the wrong answer.
         Transform stage = null;
         for (int i = 0; i < builder.transform.childCount; i++)
         {

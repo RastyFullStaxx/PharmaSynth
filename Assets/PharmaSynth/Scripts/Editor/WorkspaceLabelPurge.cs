@@ -5,11 +5,10 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// Removes the stale Methane-tutorial text labels that float over the center
-/// workspace (user 2026-07-12: "delete the texts still floating around the main
-/// workspace"). They were authored directly under WorldLabels (NOT under
-/// MethaneStage), so toggling the Methane stage never hid them, and the
-/// table-merge left them orphaned at the old x≈1.15 position. Pure scene
-/// leftovers — no script references them. Landmark labels (PPE locker, fume
+/// workspace. They sit directly under WorldLabels (NOT under
+/// MethaneStage), so toggling the Methane stage never hides them, and they are
+/// orphaned at the x≈1.15 position. Pure scene
+/// leftovers: no script references them. Landmark labels (PPE locker, fume
 /// hood) and runtime DynLabel_* are kept. Idempotent + re-runnable.
 public static class WorkspaceLabelPurge
 {
@@ -24,7 +23,7 @@ public static class WorkspaceLabelPurge
         foreach (Transform c in root.transform)
         {
             string n = c.name;
-            // The methane station labels, the old Begin button, and every prop
+            // The methane station labels, the Begin button, and every prop
             // tag — but never the PPE-locker / fume-hood landmark labels or any
             // runtime DynLabel_*.
             if (n.StartsWith("Label_Station_") || n.StartsWith("Tag_") || n == "Label_BeginButton")

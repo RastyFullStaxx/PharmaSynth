@@ -3,8 +3,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Seals the skybox seams the user reported at BOTH entrances (front corridor
-/// door + interior lab door, 2026-07-10). Each doorway's frame doesn't quite
+/// Seals the skybox seams at BOTH entrances (front corridor
+/// door + interior lab door). Each doorway's frame doesn't quite
 /// meet the surrounding wall, so the skybox shows through thin cracks at the
 /// jambs/lintel. This wraps each doorway with opaque trim strips (top lintel +
 /// two jambs) centred on the wall plane and standing slightly proud on both

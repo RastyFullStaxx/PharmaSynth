@@ -4,9 +4,9 @@ using TMPro;
 using UnityEditor;
 using UnityEngine;
 
-/// Reagent-label compositor (§3, client style pick: MODERN). For every
+/// Reagent-label compositor (style: MODERN). For every
 /// Reagent_* bottle on the shelf: renders LabelBase_Modern + the chemical's
-/// name (crisp TMP text — never AI typography) to a PNG, builds a material,
+/// name (crisp TMP text) to a PNG, builds a material,
 /// and mounts a label quad on the bottle facing the aisle.
 /// Tools ▸ PharmaSynth ▸ Generate Reagent Labels — idempotent, re-run anytime.
 public static class LabelForge
@@ -24,10 +24,9 @@ public static class LabelForge
         Directory.CreateDirectory(OutDir);
 
         int made = 0;
-        // The legacy west cubby was emptied into the east cabinets (2026-07-16), so
-        // a missing/empty ReagentShelf is now NORMAL — it must not abort the run
-        // before the cabinets below get their labels (that early return is part of
-        // why the shelf ended up with no name tags at all, user 2026-07-27).
+        // The west cubby (ReagentShelf) is empty, its stock lives in the east cabinets, so
+        // a missing/empty ReagentShelf is NORMAL. It must not abort the run
+        // before the cabinets below get their labels.
         var shelf = GameObject.Find("ReagentShelf");
         if (shelf != null)
             foreach (Transform bottle in shelf.transform)
@@ -39,14 +38,14 @@ public static class LabelForge
                 made++;
             }
 
-        // Raw-reagent cabinets (user 2026-07-11): the same crisp labels on every
+        // Raw-reagent cabinets: the same crisp labels on every
         // stocked bottle/jar; boxes and the ice bucket (not tubular) get a FLAT
         // label plate on their open face instead of a curved band. Tiny singles
         // (matchsticks, litmus strips) stay label-free — the hover card names them.
         // BOTH roots: the cabinets hold the bottles, and LabConsumables holds the
-        // hand-placed ice bucket + paper/stick boxes, which are NOT reagents and were
-        // moved out of the cabinet (user 2026-07-16). Scanning only "ReagentCabinets"
-        // silently left every consumable card-less the moment they moved.
+        // hand-placed ice bucket + paper/stick boxes, which are NOT reagents and live
+        // outside the cabinets. Scanning only "ReagentCabinets"
+        // silently leaves every consumable card-less.
         foreach (var rootName in new[] { "ReagentCabinets", "LabConsumables" })
         {
             var cabinets = GameObject.Find(rootName);
@@ -195,9 +194,9 @@ public static class LabelForge
         finally { Object.DestroyImmediate(root); }
     }
 
-    /// Curved label band hugging the bottle (user 2026-07-10: flat quads read
+    /// Curved label band hugging the bottle (flat quads read
     /// as pasted nameplates). Thin tubes get a small PORTRAIT band (the modern
-    /// base is portrait anyway) — user wants every reagent named on the glass.
+    /// base is portrait anyway) — every reagent is named on the glass.
     const float MinLabelRadius = 0.005f;
 
     static void MountQuad(Transform bottle, Material mat, Vector3 outward)
@@ -209,7 +208,13 @@ public static class LabelForge
         Bounds b = rs[0].bounds;
         foreach (var r in rs) b.Encapsulate(r.bounds);
 
-        float radius = Mathf.Max(b.extents.x, b.extents.z);
+        // Measure the GLASS where the band sits, not the whole object: the bounds of every
+        // child (spout lip, shoulder, fill layers) float the band off the bottle and past
+        // the beakers' sides. Body = the largest mesh; slice its vertices at band height.
+        float bandY = b.center.y - b.size.y * 0.08f;
+        Vector3 axis; float radius;
+        if (!GlassSlice(bottle, bandY, b.size.y * 0.42f, out axis, out radius))
+        { axis = b.center; radius = Mathf.Max(b.extents.x, b.extents.z); }
         if (radius < MinLabelRadius) return;                     // thin tube: skip
 
         outward.y = 0f; outward = outward.normalized;
@@ -221,10 +226,9 @@ public static class LabelForge
 
         // Sit the band JUST PROUD of the glass, never inside it. Because the
         // vessels are transparent, a band tucked at <100% radius reads as
-        // embedded/"half-buried" (user 2026-07-11) — the wider cabinet beakers
-        // showed the text sunk into the body. Float it a hair outside the widest
+        // embedded/"half-buried". Float it a hair outside the widest
         // extent so the whole 140° arc clears the surface all along its length.
-        float bandRadius = radius * 1.0f + 0.006f;
+        float bandRadius = radius + 0.003f;
         // Wide vessels: squat band; thin tubes: small portrait band (min 3.5 cm
         // so the name stays legible up close).
         float bandHeight = Mathf.Min(b.size.y * 0.42f, Mathf.Max(bandRadius * 2.4f, 0.035f));
@@ -233,22 +237,57 @@ public static class LabelForge
         band.transform.localScale = new Vector3(bandRadius / Mathf.Max(ls.x, 1e-4f),
                                                 bandHeight / Mathf.Max(ls.y, 1e-4f),
                                                 bandRadius / Mathf.Max(ls.z, 1e-4f));
-        band.transform.position = new Vector3(b.center.x, b.center.y - b.size.y * 0.08f, b.center.z);
+        band.transform.position = new Vector3(axis.x, bandY, axis.z);
         band.transform.rotation = Quaternion.LookRotation(-outward);        // arc centre (-Z) toward the room
+    }
+
+    /// Fit the band to the glass body (the largest mesh), not to every child: the axis is
+    /// the body's own bounds centre, and the radius the 90th-percentile vertex distance at
+    /// band height — the outer wall. The vial model carries a modelled label plate on one
+    /// side; a max-distance or min/max-centre fit follows that bulge ~2 cm off axis, so
+    /// the percentile deliberately ignores its few vertices.
+    static bool GlassSlice(Transform bottle, float y, float height, out Vector3 axis, out float radius)
+    {
+        axis = Vector3.zero; radius = 0f;
+        MeshFilter body = null; float best = 0f;
+        foreach (var mf in bottle.GetComponentsInChildren<MeshFilter>())
+        {
+            if (mf.sharedMesh == null || mf.name == "NameLabel") continue;
+            var r = mf.GetComponent<Renderer>();
+            if (r == null) continue;
+            float vol = r.bounds.size.x * r.bounds.size.y * r.bounds.size.z;
+            if (vol > best) { best = vol; body = mf; }
+        }
+        if (body == null) return false;
+        var bb = body.GetComponent<Renderer>().bounds;
+        axis = new Vector3(bb.center.x, y, bb.center.z);
+        var m = body.transform.localToWorldMatrix;
+        float lo = y - height * 0.5f, hi = y + height * 0.5f;
+        var d = new System.Collections.Generic.List<float>();
+        foreach (var v in body.sharedMesh.vertices)
+        {
+            var w = m.MultiplyPoint3x4(v);
+            if (w.y < lo || w.y > hi) continue;
+            d.Add(new Vector2(w.x - axis.x, w.z - axis.z).magnitude);
+        }
+        if (d.Count < 8) return false;
+        d.Sort();
+        radius = d[Mathf.Clamp(Mathf.RoundToInt(d.Count * 0.9f), 0, d.Count - 1)];
+        return true;
     }
 
     static Mesh _arc;
 
-    /// Shared unit arc mesh: radius 1, height 1, 140° facing -Z. Saved as an
+    /// Shared unit arc mesh: radius 1, height 1, 120° facing -Z. Saved as an
     /// asset so scene references survive; scaled per bottle by the transform.
     static Mesh ArcMesh()
     {
-        string path = OutDir + "/LabelArc.asset";
+        string path = OutDir + "/LabelArc120.asset";   // 140° wrapped names round the sides
         if (_arc == null) _arc = AssetDatabase.LoadAssetAtPath<Mesh>(path);
         if (_arc != null) return _arc;
 
         const int SEG = 16;
-        const float ARC = 140f * Mathf.Deg2Rad;
+        const float ARC = 120f * Mathf.Deg2Rad;
         var verts = new Vector3[(SEG + 1) * 2];
         var uvs = new Vector2[verts.Length];
         var norms = new Vector3[verts.Length];

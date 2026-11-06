@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
-/// Live contents readout on a vessel's existing ProximityLabel (W5.8: "track
-/// the contents — texts that show when we hover or get near"). Throttled and
+/// Live contents readout on a vessel's existing ProximityLabel:
+/// contents text on hover or when near. Throttled and
 /// change-gated so the TMP mesh only rebuilds when the state actually moves.
 public class VesselStatus : MonoBehaviour
 {
@@ -9,9 +9,9 @@ public class VesselStatus : MonoBehaviour
     private ProximityLabel _label;
     private string _displayName;
 
-    /// " — Tollen's test" once a pooled tube has claimed a role (W5.53), so the tube the
+    /// " — Tollen's test" once a pooled tube has claimed a role, so the tube the
     /// player chose says what it has become. Derived from the claimed role's task LABEL —
-    /// never the layout's internal role name, which the 2026-07-17 rule keeps off the bench.
+    /// never the layout's internal role name, which never appears on the bench.
     private string _roleSuffix = "";
     public void SetRoleSuffix(string suffix) => _roleSuffix = string.IsNullOrEmpty(suffix) ? "" : " — " + suffix;
     private float _showDist = 1.6f;
@@ -26,8 +26,8 @@ public class VesselStatus : MonoBehaviour
     }
 
     /// Every ref here is PRIVATE and unserialized, so a hand-placed bench vessel
-    /// that nobody calls Bind() on stayed mute forever — the contents text simply
-    /// "wasn't showing at all in some test tubes" (user 2026-07-27). Adopt the
+    /// that nobody calls Bind() on would stay mute forever.
+    /// Adopt the
     /// vessel's own components at Awake; a later Bind() still wins.
     private void Awake()
     {
@@ -52,25 +52,24 @@ public class VesselStatus : MonoBehaviour
     public void Refresh()
     {
         if (_lp == null || _label == null) return;
-        // ⛔ No "Dirty " / "Clean " prefix (W5.59, user: "remove the requirement of cleaning the
-        // apparatus, it just must become empty"). Residue never gated or graded anything; the
-        // stamp was its ONLY effect, and to a player a label that says Dirty IS a requirement.
-        // Worse, nothing reset it, so it survived every restart. The brush and rinse still
+        // ⛔ No "Dirty " / "Clean " prefix. Cleaning is not a requirement;
+        // a vessel just has to become empty. Residue gates and grades nothing; the
+        // stamp would be its ONLY effect, and to a player a label that says Dirty IS a requirement.
+        // Nothing resets it either. The brush and rinse still
         // work as a flourish; the label just never asks for them.
         string name = _displayName + _roleSuffix;
         // A vessel holding a MIX names every element and its amount (the ledger
         // story) — "Ethanol 1 ml + Distilled Water 10 ml"; a single chemical
-        // keeps the short form (user 2026-07-17).
+        // keeps the short form.
         string s = _lp.Ledger.Count > 1 && !_lp.IsEmpty
             ? VesselStatusMath.ComposeMixed(name, _lp.Ledger.Summary(VesselLedger.All))
             : VesselStatusMath.Compose(name,
                 _lp.currentChemical != null ? _lp.currentChemical.chemicalName : null,
                 _lp.currentLiquidVolume + _lp.currentPptVolume);
         // Zone-free heat/chill steps get a live temperature goal on the tag
-        // itself (2026-07-18) — queried fresh each refresh because the builder's
+        // itself — queried fresh each refresh because the builder's
         // teardown strips these components between modules. Only while the
-        // owning step is the player's CURRENT concern (Relevant): Exp 5's flask
-        // used to read "chill to 8 C" from step 1.
+        // owning step is the player's CURRENT concern (Relevant).
         var heat = GetComponent<VesselHeatTask>();
         var chill = GetComponent<VesselChillTask>();
         string goal = heat != null && heat.Relevant
@@ -78,9 +77,9 @@ public class VesselStatus : MonoBehaviour
                     : chill != null && chill.Relevant
                         ? VesselStatusMath.TempGoalLine(_lp.currentTempC, chill.RequiredC, true) : "";
         if (goal.Length > 0) s += "\n" + goal;
-        // What this vessel still wants, and why a pour bounced (W5.44, widened W5.55 on the
-        // user's ask: "give a hint to what is still needed or what is wrong ... dynamically
-        // to any apparatus as players can use anything"). Queried fresh each refresh for the
+        // What this vessel still wants, and why a pour bounced, shown on
+        // any apparatus, since players can use anything.
+        // Queried fresh each refresh for the
         // same reason the heat/chill goals are — the builder's teardown strips the binding
         // between modules. Shown only on the glass actually in use (DetailWanted), or the
         // bench becomes a wall of numbers at arm's length.
@@ -111,8 +110,8 @@ public class VesselStatus : MonoBehaviour
 
     /// Is this the glass the player is actually using? Held, being looked at from within
     /// label range, or bound to the step being guided. Anything else keeps the short
-    /// contents line — the W5.52 lesson was that a bench of vessels all advertising numbers
-    /// is what sent the player to the wrong tube in the first place.
+    /// contents line, because a bench of vessels all advertising numbers
+    /// sends the player to the wrong tube.
     private bool DetailWanted()
     {
         if (TutorialHighlighter.IsHeld(transform)) return true;
@@ -158,11 +157,11 @@ public class VesselStatus : MonoBehaviour
         var runner = FindAnyObjectByType<ExperimentRunner>();
         if (runner == null || runner.Graph == null || !runner.IsRunning) return "";
 
-        // ⛔ The GUIDED task only - not every AVAILABLE one. This used to walk the whole
-        // AvailableTasks() list, so with Exp 2's prep steps running in parallel the four
-        // alkaline tubes advertised "Potassium Permanganate 0 / 2 ml" while the player was
-        // still on the ethanol step, and one of them read as the tube being asked for. That
-        // is what sent the player to the wrong tube in the headset (2026-09-05). GuidePath
+        // ⛔ The GUIDED task only - not every AVAILABLE one. Walking the whole
+        // AvailableTasks() list with Exp 2's prep steps running in parallel makes the four
+        // alkaline tubes advertise "Potassium Permanganate 0 / 2 ml" while the player is
+        // still on the ethanol step, and one of them reads as the tube being asked for.
+        // GuidePath
         // already treats the FIRST available task as the guided one; reuse that rather than
         // inventing a second notion of "the current step".
         string guided = GuidedTask();

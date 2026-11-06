@@ -46,9 +46,6 @@ public struct GradeBreakdown
 }
 
 /// Turns per-criterion sub-scores (each 0..1) into a weight-normalized grade %.
-/// Split out of the original flow god-class as the audit asked; that class
-/// (ExperimentFlowManager) was finally deleted in 2026-08-07 once the split was
-/// complete and nothing in any scene referenced it.
 public class ScoreCalculator
 {
     private readonly RubricWeights _w;
@@ -87,12 +84,17 @@ public class ScoreCalculator
     }
 
     /// Time-management sub-score: full credit at or under par, decaying to 0 at 2x par.
+    /// Full marks up to GraceFactor × par, then linear to 0 at ZeroFactor × par.
+    /// Par is an experienced pace; a careful first-time VR player runs slower, and the
+    /// old "0 at 2× par" cost the whole 10-point pass margin on its own.
+    public const float GraceFactor = 1.5f, ZeroFactor = 3f;
+
     public static float TimeSubScore(float elapsedSeconds, float parSeconds)
     {
         if (parSeconds <= 0f) return 1f;
-        if (elapsedSeconds <= parSeconds) return 1f;
-        float over = (elapsedSeconds - parSeconds) / parSeconds; // 0..1 across the second par-window
-        return Clamp01(1f - over);
+        float grace = parSeconds * GraceFactor, zero = parSeconds * ZeroFactor;
+        if (elapsedSeconds <= grace) return 1f;
+        return Clamp01(1f - (elapsedSeconds - grace) / (zero - grace));
     }
 
     private static float Clamp01(float v) => v < 0f ? 0f : (v > 1f ? 1f : v);

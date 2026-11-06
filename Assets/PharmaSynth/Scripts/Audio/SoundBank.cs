@@ -29,7 +29,7 @@ public class SoundBank : ScriptableObject
     }
 
     /// True when this key exists AND has a real clip — lets callers pick a sensible
-    /// fallback instead of playing the wrong material's sound (user 2026-07-15:
+    /// fallback instead of playing the wrong material's sound (e.g.
     /// scooping powder must never sound like pouring liquid).
     public bool HasClip(string key)
     {
@@ -45,7 +45,7 @@ public class SoundBank : ScriptableObject
         "ui-click", "ui-confirm", "ui-error", "task-complete", "grade-pass", "grade-fail",
         "pharmee-greet", "pharmee-instruct", "pharmee-warn", "pharmee-celebrate",
         "ambient-lab", "music-menu", "music-lab",
-        // Solids (user 2026-07-15): powder must sound granular, never like liquid.
+        // Solids: powder must sound granular, never like liquid.
         "scoop",        // blade digging into a powder/crystal charge
         "powder-pour",  // tipping a scoopful of solid into a vessel
     };

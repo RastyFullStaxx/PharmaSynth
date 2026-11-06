@@ -2,11 +2,11 @@
 using UnityEditor;
 using UnityEngine;
 
-/// Builds the futuristic CUBE SPAWN ROOM in the MainMenu scene (user 2026-07-10):
+/// Builds the futuristic CUBE SPAWN ROOM in the MainMenu scene:
 /// a fully-enclosed, solid, dark room with cyan/teal emissive trim, a couple of
 /// soft lights and a glowing floor launch-pad under the menu panel. Sealed on all
-/// six sides so no skybox leaks. Re-runnable and idempotent — deletes the prior
-/// "MenuCubeRoom" and rebuilds it, and hides the old open "MenuRoom" dressing.
+/// six sides so no skybox leaks. Re-runnable and idempotent: deletes the prior
+/// "MenuCubeRoom" and rebuilds it, and hides the legacy open "MenuRoom" dressing.
 ///
 /// Tools ▸ PharmaSynth ▸ Build Menu Cube Room. Run with the MainMenu scene open.
 public static class MenuCubeRoomBuilder
@@ -33,7 +33,7 @@ public static class MenuCubeRoomBuilder
         var prev = GameObject.Find("MenuCubeRoom");
         if (prev != null) Object.DestroyImmediate(prev);
 
-        // Hide the old open room dressing so it can't leak skybox behind the cube.
+        // Hide the legacy open room dressing so it can't leak skybox behind the cube.
         var oldRoom = GameObject.Find("MenuRoom");
         if (oldRoom != null && oldRoom.activeSelf)
         {
@@ -75,7 +75,7 @@ public static class MenuCubeRoomBuilder
         Box(root, "Trim_BaseS", new Vector3(0, y0, -Depth * 0.5f + 0.04f), new Vector3(Width - 0.2f, 0.05f, 0.03f), trimMat);
 
         // --- accent panels on the side walls ---------------------------------
-        // Centres at 1.25 to suit the unified 1.40 m eye height (2026-07-11).
+        // Centres at 1.25 to suit the unified 1.40 m eye height.
         Box(root, "Panel_W", new Vector3(-Width * 0.5f + 0.09f, 1.25f, -1.2f), new Vector3(0.03f, 1.4f, 1.6f), panelMat);
         Box(root, "Panel_E", new Vector3(Width * 0.5f - 0.09f, 1.25f, -1.2f), new Vector3(0.03f, 1.4f, 1.6f), panelMat);
 

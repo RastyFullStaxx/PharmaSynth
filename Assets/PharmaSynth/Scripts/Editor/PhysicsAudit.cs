@@ -4,7 +4,7 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-/// Physics-attributes / resting-pose audit (task #78).
+/// Physics-attributes / resting-pose audit.
 /// Tools ▸ PharmaSynth ▸ Physics Audit (Report)   — non-destructive scan of the
 ///   scene apparatus + SceneAssetLibrary prefabs: colliders present/degenerate,
 ///   Rigidbody settings, profile coverage. Writes Temp/physics-audit.md.
@@ -91,7 +91,7 @@ public static class PhysicsAudit
         Debug.Log($"[PhysicsAudit] applied profiles to {fixedCount} scene item(s) — save the scene to keep them.");
     }
 
-    /// The full W5.8/W5.12 interaction treatment for ONE hand-built scene item:
+    /// The full interaction treatment for ONE hand-built scene item:
     /// physics profile, grab policy, drop respawn, nature-correct breakability +
     /// impact audio, spill grading, scoop verb. Idempotent; shared with the
     /// workspace-kits builder so shelf stock and audited items wire identically.
@@ -112,9 +112,9 @@ public static class PhysicsAudit
         }
         bool breakable = Mishandling.IsBreakable(prefabName)
             || (prefabName.StartsWith("Reagent_") || go.name.StartsWith("Reagent_"));   // shelf bottles are glass
-        // Material-nature cleanup (user 2026-07-12: the scale/burner shattered
-        // like glass — an earlier unconditional pass left BreakableGlassware on
-        // non-glass items, and the component breaks whatever it's attached to).
+        // Material-nature cleanup: BreakableGlassware breaks whatever it is attached
+        // to, so strip it from non-glass items (a scale or burner must not shatter
+        // like glass).
         var stale = go.GetComponent<BreakableGlassware>();
         if (!breakable && stale != null) { Object.DestroyImmediate(stale); }
         if (breakable)
@@ -122,8 +122,8 @@ public static class PhysicsAudit
             var bg = go.GetComponent<BreakableGlassware>()
                      ?? go.AddComponent<BreakableGlassware>();
             bg.Bind(runner, go.GetComponent<DropRespawn>(), rb, Mishandling.DisplayNameFor(go));
-            // The threshold is a SERIALIZED field — stale scene components keep
-            // the old 4.5; re-pin every glass item to the current default.
+            // The threshold is a SERIALIZED field, so scene components keep a stale
+            // value (e.g. 4.5); re-pin every glass item to the current default.
             var bgSo = new SerializedObject(bg);
             var thr = bgSo.FindProperty("breakImpactSpeed");
             if (thr != null && !Mathf.Approximately(thr.floatValue, Mishandling.DefaultBreakSpeed))
@@ -132,17 +132,17 @@ public static class PhysicsAudit
         var lp = go.GetComponent<LiquidPhysics>();
         if (lp != null && go.GetComponent<LiquidPourer>() != null && go.GetComponent<SpillMistake>() == null)
             go.AddComponent<SpillMistake>().Bind(runner, lp, grab, Mishandling.DisplayNameFor(go));
-        // Scooping tools transfer solid reagents by the scoopful (W5.12).
+        // Scooping tools transfer solid reagents by the scoopful.
         if ((prefabName == "Scoopula" || prefabName == "Spatula")
             && go.GetComponent<ScoopController>() == null)
             go.AddComponent<ScoopController>().Bind(grab);
-        // Assembly-capable apparatus sticks together on release (W5.12).
+        // Assembly-capable apparatus sticks together on release.
         if (AssemblyMath.Participates(prefabName))
         {
             var snap = go.GetComponent<ApparatusSnap>() ?? go.AddComponent<ApparatusSnap>();
             snap.Bind(prefabName, grab, rb);
         }
-        // The test-tube brush scrubs dirty glassware clean (W5.12).
+        // The test-tube brush scrubs dirty glassware clean.
         if (prefabName == "TestTubeBrush" && go.GetComponent<BrushController>() == null)
             go.AddComponent<BrushController>().Bind(grab);
         // Re-key ImpactSound by material nature every pass (serialized — stale

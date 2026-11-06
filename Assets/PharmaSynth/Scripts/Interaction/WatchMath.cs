@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// Pure fitted-watch geometry (edit-mode testable). The authored WatchModel is a
-/// SOLID Tripo mesh — a solid object can never encircle a wrist (user 2026-07-11:
-/// "perfectly neat and wrapped" like a real watch). Instead we MEASURE the hand
+/// SOLID Tripo mesh — a solid object can never encircle a wrist
+/// the way a real watch wraps. Instead we MEASURE the hand
 /// mesh's wrist cross-section and generate an elliptical band around it, with a
 /// disc face on top. Everything here is deterministic math on plain data.
 public static class WatchMath

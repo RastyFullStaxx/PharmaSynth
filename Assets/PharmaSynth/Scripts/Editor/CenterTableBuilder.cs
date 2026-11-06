@@ -4,8 +4,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Merge Center Tables (user 2026-07-10: "remove the other table; make the
-/// current one one single wide table, placed at the center, now in landscape").
+/// Merge Center Tables: removes the second table and makes the remaining one a
+/// single wide table at the centre of the room, in landscape.
 /// The experiment layouts bake WORLD positions on the left island, so this is a
 /// one-time atomic migration:
 ///   1. discover both islands geometrically (raycast under the baked positions

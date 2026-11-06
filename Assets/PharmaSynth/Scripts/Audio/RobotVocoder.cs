@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// A channel vocoder — the technique behind essentially every convincing robot
-/// voice (user 2026-07-28: "it's now clear, but sounds so human").
+/// voice (filtering alone left it clear but far too human).
 ///
 /// WHY FILTERING PLATEAUED. Decimation, comb resonance and bit-crush change a
 /// voice's TIMBRE, but they leave its excitation intact: the pitch contour, the

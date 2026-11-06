@@ -60,8 +60,8 @@ public static class PharmeeGestureSim
             if (g == PharmeeGesture.None) continue;
 
             // SCAN for the real peak, do not sample the midpoint. Warn is an exponential-decay
-            // flinch that peaks at t~0, so a midpoint sample reported it as a 1.4-degree twitch
-            // when it is really a 10-degree recoil - the measurement was wrong, not the gesture.
+            // flinch that peaks at t~0, so a midpoint sample reads a 10-degree recoil as a
+            // 1.4-degree twitch.
             float dur = PharmeeGestureMath.DurationOf(g);
             float span = PharmeeGestureMath.IsSustained(g) ? 1.0f : dur;
             var pose = PharmeePose.Rest;

@@ -5,25 +5,23 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-/// Turns the render pipeline ON (user 2026-08-28: "make it an aesthetic lab").
+/// Turns the render pipeline ON.
 ///
-/// The lab shipped with the pipeline doing almost nothing, and most of it was waste rather
-/// than a decision:
-///   * BOTH cameras had renderPostProcessing = false - while a global Volume with Bloom,
-///     Vignette and Tonemapping sat in the scene rendering NOTHING. The stack was authored
-///     and inert.
-///   * MSAA was 1 (off). On the Adreno tile GPU 4x resolves in tile memory and is close to
+/// What it corrects in the scene defaults:
+///   * BOTH cameras have renderPostProcessing = false, so the global Volume with Bloom,
+///     Vignette and Tonemapping renders NOTHING.
+///   * MSAA 1 (off). On the Adreno tile GPU 4x resolves in tile memory and is close to
 ///     free, and this scene is nothing but thin edges - tube rims, glass rods, rack rails.
 ///     It is the largest per-pixel quality gain available.
-///   * HDR was off, so emission above 1.0 just clamped: the 16 emissive ceiling panels could
-///     never read as LIGHTS, only as white paint, and tonemapping had no range to work with.
-///   * Ambient was FLAT grey 0.45 - identical from every direction, so nothing in the room
-///     had any vertical shading and the whole space read as one plane of grey.
-///   * The skybox was the built-in PROCEDURAL SKY, in a sealed windowless room, feeding
+///   * HDR off, so emission above 1.0 just clamps: the 16 emissive ceiling panels can
+///     never read as LIGHTS, only as white paint, and tonemapping has no range to work with.
+///   * FLAT grey 0.45 ambient, identical from every direction, so nothing in the room
+///     has any vertical shading and the whole space reads as one plane of grey.
+///   * The built-in PROCEDURAL SKY, in a sealed windowless room, feeding
 ///     ambient and every reflection an outdoor gradient.
 ///
-/// Vignette is deliberately DISABLED rather than tuned down: it was active at template
-/// strength and would have switched on the moment post was enabled, and a vignette in a
+/// Vignette is deliberately DISABLED rather than tuned down: the template has it at full
+/// strength, so it switches on the moment post is enabled, and a vignette in a
 /// headset reads as a dirty lens rather than as framing.
 ///
 /// Tools > PharmaSynth > Tune Render Pipeline (edit mode, idempotent, re-runnable).
@@ -82,8 +80,8 @@ public static class LabRenderTuner
         RenderSettings.ambientEquatorColor = AmbientEquator;
         RenderSettings.ambientGroundColor  = AmbientGround;
         RenderSettings.ambientIntensity = 1f;
-        // A sealed lab has no sky. Leaving the procedural skybox in place meant every smooth
-        // surface reflected an outdoor gradient.
+        // A sealed lab has no sky. The procedural skybox makes every smooth
+        // surface reflect an outdoor gradient.
         RenderSettings.skybox = null;
     }
 

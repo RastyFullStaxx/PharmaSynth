@@ -3,10 +3,9 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Delete the wooden splint prop (user 2026-07-15, backed by a manuscript review):
-/// "splint" appears NOWHERE in the client manuscript — every combustion/flame test
-/// is run with a "lighted matchstick" (Exp 3: "apply a lighted matchstick... blue
-/// flame indicates complete combustion"). The methane gas test already fires off a
+/// Delete the wooden splint prop.
+/// "splint" appears NOWHERE in the client manuscript: every combustion/flame test
+/// is run with a "lighted matchstick" (Exp 3). The methane gas test already fires off a
 /// lit Matchstick (MethaneApparatusRig.SplintShouldFire checks Matchstick), so the
 /// splint prop is redundant. The method names keep the "splint" wording (suite-pinned);
 /// only the prop goes. Idempotent.

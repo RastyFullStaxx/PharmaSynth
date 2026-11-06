@@ -3,22 +3,22 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-/// W5.9 manuscript re-verification fixes (idempotent, one menu):
-///   M1  Benzoic Acid ester test was chemically INERT (rule = benzoic acid +
-///       sulfuric acid; no alcohol anywhere) → propyl alcohol staged + bound,
-///       rule re-pointed to it (manuscript/test intent: ester with propyl).
-///   M2  Chloroform was missing the manuscript's oxidation confirmatory test
+/// Manuscript re-verification fixes (idempotent, one menu):
+///   M1  Benzoic Acid ester test needs an alcohol (benzoic acid + sulfuric acid
+///       alone is chemically INERT) → propyl alcohol staged + bound,
+///       rule pointed at it (manuscript/test intent: ester with propyl).
+///   M2  Chloroform gets the manuscript's oxidation confirmatory test
 ///       (K-dichromate + conc H2SO4, procedure L3419-21 + results sheet) →
 ///       new task + reagent + reaction rule.
-///   M3  Wine Making fermented GRAPE juice against the manuscript's explicit
+///   M3  Wine Making ferments non-grape juice, per the manuscript's explicit
 ///       grape exclusion (L3830-31) → Chem_GrapeJuice renamed "Mixed Fruit
 ///       Juice" (GUID refs untouched; string lookups updated).
-///   M4  Reagent fidelity: Acetanilide prep-HCl 6N→0.1N; iodoform tests gain
-///       their missing KI (Ethyl Alcohol + Acetone); ester/acid tests use the
-///       manuscript's DILUTED acids — with the matching RULE inputs re-pointed
+///   M4  Reagent fidelity: Acetanilide prep-HCl 0.1N (not 6N); iodoform tests get
+///       their KI (Ethyl Alcohol + Acetone); ester/acid tests use the
+///       manuscript's DILUTED acids, with the matching RULE inputs re-pointed
 ///       (rules match by asset; a layout-only swap would kill the reactions).
-///   M5a Chemical Compounding quiz Q3 asked about unsaturation (bromine) in an
-///       all-saturated module → replaced with the manuscript's KMnO4 oxidation.
+///   M5a Chemical Compounding quiz Q3 uses the manuscript's KMnO4 oxidation
+///       (a bromine unsaturation question does not fit an all-saturated module).
 /// Run AFTER: nothing. Run BEFORE: Tidy Experiment Layouts (new props → slots).
 public static class W59ManuscriptDataApplier
 {
@@ -54,7 +54,7 @@ public static class W59ManuscriptDataApplier
         var esterRule = AssetDatabase.LoadAssetAtPath<ReactionRule>(RxDir + "Test_BenzoateEster.asset");
         if (esterRule != null && propyl != null && esterRule.inputChemicalB != propyl)
         {
-            esterRule.inputChemicalB = propyl;   // was Sulfuric Acid — no ester possible
+            esterRule.inputChemicalB = propyl;   // not Sulfuric Acid: no ester possible
             esterRule.expectedObservation = "Sweet aromatic ester odour — benzoic acid + propyl alcohol (drop of H2SO4) on warming.";
             EditorUtility.SetDirty(esterRule);
             changes++;

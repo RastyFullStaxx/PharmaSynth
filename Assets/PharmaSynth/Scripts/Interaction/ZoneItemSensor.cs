@@ -14,7 +14,7 @@ public class ZoneItemSensor : MonoBehaviour
     public bool IsOccupied => _count > 0;
     public string ItemId => itemId;
 
-    /// The matching LabItem currently in the zone (W5.8: lets the builder gate a
+    /// The matching LabItem currently in the zone (lets the builder gate a
     /// Heat station on its burner prop being LIT). Null when unoccupied.
     public LabItem Occupant { get; private set; }
 

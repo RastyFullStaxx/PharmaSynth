@@ -2,8 +2,8 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-/// Tutorial Mode's ground path (W5.44): chevrons on the floor that flow from the player's
-/// feet toward whatever the current step needs (user request, 2026-09-02).
+/// Tutorial Mode's ground path: chevrons on the floor that flow from the player's
+/// feet toward whatever the current step needs.
 ///
 /// ⛔ It routes on the NAVMESH, not in a straight line. The lab's benches sit in the middle
 /// of the room, so a straight line to a wall shelf points through solid furniture — an
@@ -82,10 +82,8 @@ public class GuidePath : MonoBehaviour
         if (_cam == null && Camera.main != null) _cam = Camera.main.transform;
         if (_cam == null) { HideAll(); return; }
 
-        // ⭐ EVERY MODE (W5.55, user: "in every mode is best"). The path used to be a
-        // Tutorial-only affordance, on the theory that finding the apparatus is part of what
-        // a graded run assesses. In the headset that only meant a player who knew the
-        // chemistry perfectly still could not find the glassware. The target map is DERIVED,
+        // ⭐ EVERY MODE, not Tutorial-only: a player who knows the chemistry
+        // perfectly still has to find the glassware. The target map is DERIVED,
         // so build it on demand instead of relying on the tutorial highlighter's build.
         Transform target = null;
         if (runner != null && runner.Graph != null && runner.IsRunning)
@@ -93,7 +91,7 @@ public class GuidePath : MonoBehaviour
             string id = null;
             foreach (var t in runner.Graph.AvailableTasks()) { id = t.taskId; break; }
             if (TaskTargetRegistry.TaskCount == 0) TutorialTargets.Build();
-            // Position-aware (W5.53): a pool of interchangeable tubes resolves to the one in
+            // Position-aware: a pool of interchangeable tubes resolves to the one in
             // the player's hand, else the nearest — the arrow follows the tube they picked up.
             target = TaskTargetRegistry.PickTarget(id, _cam.position);
         }
@@ -235,10 +233,9 @@ public class GuidePath : MonoBehaviour
     {
         PathShown = false;
         ActiveChevrons = 0;
-        // ⚠ Drop the route too. Leaving it meant a module could be asked about the path
-        // and answer with the PREVIOUS module's corners — the autopilot read "route exists"
-        // for acetone on a frame where the new route had not been computed yet, and
-        // reported a 6.1 m target as "inside the 2 m handover" (W5.44b).
+        // ⚠ Drop the route too. Otherwise a module can be asked about the path
+        // and answer with the PREVIOUS module's corners, reporting a route
+        // before the new one is computed (a 6.1 m target read as "inside the 2 m handover").
         _corners.Clear();
         for (int i = 0; i < _pool.Count; i++)
             if (_pool[i] != null && _pool[i].gameObject.activeSelf) _pool[i].gameObject.SetActive(false);

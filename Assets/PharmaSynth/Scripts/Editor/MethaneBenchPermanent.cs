@@ -4,10 +4,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// Make the methane bench TOOLS (mortar, pestle, scoopula, spatula) permanent
-/// fixtures — usable in BOTH Lab Tour and Campaign, all the time (user 2026-07-14:
-/// "the mortar must be usable for both modes all throughout"). They were parented
-/// under MethaneStage, which MethaneStageVisibility hides at play-start, so they
-/// vanished in Play. This lifts them OUT of the stage (world position preserved),
+/// fixtures, usable in BOTH Lab Tour and Campaign at all times. Parented under
+/// MethaneStage they vanish in Play, because MethaneStageVisibility hides the
+/// stage at play-start. This lifts them OUT of the stage (world position preserved),
 /// makes sure they're active + rest kinematic (won't fall through the bench), and
 /// re-homes them so a Reset keeps them put. Idempotent.
 public static class MethaneBenchPermanent

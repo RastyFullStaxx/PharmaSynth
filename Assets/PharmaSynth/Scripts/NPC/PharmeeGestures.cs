@@ -110,7 +110,7 @@ public class PharmeeGestures : MonoBehaviour
 
     /// What to point at, in the two GUIDED contexts only.
     ///
-    /// Deliberately NOT during a graded run (user 2026-08-28): the tutorial target map is
+    /// Deliberately NOT during a graded run: the tutorial target map is
     /// only populated in Tutorial Mode, and extending it to scored play would add a standing
     /// visual hint on top of the wrist checklist. That is a game-design change, not polish.
     private Transform PointTarget()

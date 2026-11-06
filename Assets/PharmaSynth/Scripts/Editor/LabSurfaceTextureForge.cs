@@ -3,17 +3,16 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-/// Generates the lab's MISSING surface textures (user 2026-08-28: "improve the textures to
-/// make it an aesthetic lab"; free-authoring route chosen, so no Unity AI credits are spent).
+/// Generates the lab's MISSING surface textures.
 ///
-/// The Laboratory pack left the two largest surfaces in the player's view with no albedo at
+/// The Laboratory pack leaves the two largest surfaces in the player's view with no albedo at
 /// all - Wall_0/Wall_1 carry a normal map and nothing else, and Ceiling_2 carries no maps
-/// whatsoever. A featureless white plane is exactly what makes the room read as an
+/// whatsoever. A featureless white plane makes the room read as an
 /// untextured grey box, and it is worst on the ceiling, which a seated VR player looks
 /// straight up into.
 ///
-/// Everything here is drawn in code and written to PNG - the same approach LabelForge already
-/// uses for reagent labels: deterministic, re-runnable, diffable, and free. All noise wraps,
+/// Everything here is drawn in code and written to PNG, as LabelForge does
+/// for reagent labels: deterministic, re-runnable, diffable, and free. All noise wraps,
 /// so the maps tile seamlessly.
 ///
 /// Tools > PharmaSynth > Generate Lab Surface Textures (edit mode, idempotent, re-runnable).
@@ -43,15 +42,14 @@ public static class LabSurfaceTextureForge
 
         // NO benchtop map here, deliberately. Table_1/Table_2/WashTable ALREADY ship a pack
         // albedo, and it is an ATLAS covering the white cabinet doors as well as the dark
-        // worktop - binding a flat epoxy tile over it turned every bench cabinet in the room
+        // worktop, so a flat epoxy tile bound over it turns every bench cabinet in the room
         // black. The benchtop reads correctly from its smoothness alone (LabSurfaceTuner).
 
         // NO floor retile, deliberately. Floor_AlbedoTransparency.png has a DEFECTIVE band of
         // vertical streaks baked along its top edge; at the pack's 1x1 mapping that band lands
-        // once, against the far wall, and reads as nothing. Tiling it 6x6 repeated the defect
-        // six times across the room as hard rectangular streaks - which then looked exactly
-        // like a bad lightmap bake and cost three rebakes before the lightmap was ruled out by
-        // detaching it and seeing the streaks survive.
+        // once, against the far wall, and reads as nothing. Tiling it 6x6 repeats the defect
+        // six times across the room as hard rectangular streaks that look exactly like a bad
+        // lightmap bake.
 
         AssetDatabase.SaveAssets();
         Debug.Log("<color=#4CD07D>[SurfaceForge] wrote 2 tiling maps to " + OutDir +

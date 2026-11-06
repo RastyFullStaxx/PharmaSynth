@@ -18,20 +18,68 @@ MonoBehaviour:
   - subtitle: 'Welcome back! Today: Chemical Compounding.'
     seconds: 3.5
     face: 1
+    shot:
+      camera: Cam_PharmeeClose
+      moveTo: 
+      blend: 1
+      look: 1
+      lookMarker: 
+      fov: 45
+      pharmeePopIn: 1
   - subtitle: 'Here''s what you''ll be able to do by the end of this session:'
     seconds: 2.8
     face: 1
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: 'Objective 1: Write chemical reactions involved in some organic compounds
       such as alcohols, aldehydes, ketones, carboxylic acids and esters.'
     seconds: 6
     face: 0
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: 'Objective 2: Differentiate tests for different organic compounds.'
     seconds: 4.0625
     face: 0
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: Identify ethanol's functional group with combustion, sodium, bromine-water
       and permanganate tests.
     seconds: 4.5
     face: 0
+    shot:
+      camera: 
+      moveTo: 
+      blend: 0
+      look: 0
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0
   - subtitle: Check your wrist panel for each step. I'll guide you.
     seconds: 4
     face: 1
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 1
+      look: 2
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0

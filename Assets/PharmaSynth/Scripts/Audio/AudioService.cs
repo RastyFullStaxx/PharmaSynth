@@ -173,7 +173,7 @@ public class AudioService : MonoBehaviour
 
     /// Play the FIRST key in `keys` that actually has a clip. Lets a caller name its
     /// ideal sound and degrade to a same-material stand-in rather than the wrong one
-    /// (user 2026-07-15: scooping powder must not fall back to the liquid "pour").
+    /// (scooping powder must not fall back to the liquid "pour").
     /// Plays nothing if none are authored yet — silence beats a misleading sound.
     public static void TryPlayFirstAt(Vector3 pos, float volumeScale, params string[] keys)
     {
@@ -191,7 +191,7 @@ public class AudioService : MonoBehaviour
     /// Non-positional twin of TryPlayFirstAt, for UI/2D cues (a HUD toast or a
     /// panel has no world position). Same degrade-gracefully rule: name the ideal
     /// key first, fall back to a stand-in, stay silent rather than play the wrong
-    /// thing. Added 2026-07-29 so newly-wired UI cues can name a not-yet-authored
+    /// thing. Exists so newly-wired UI cues can name a not-yet-authored
     /// sound without erroring.
     public static void TryPlayFirst(params string[] keys)
     {

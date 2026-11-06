@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-/// Brightens the lab so it reads as a well-lit laboratory (user 2026-07-10: "a lab must
-/// be well-lit, currently our lab-room is dim"). Quest-friendly recipe — NO extra
+/// Brightens the lab so it reads as a well-lit laboratory.
+/// Quest-friendly recipe, with NO extra
 /// shadow-casting lights:
-///   1. The 16 ceiling `Light (n)` fixture meshes get a white EMISSIVE panel material
-///      (they were unlit gray boxes).
-///   2. Flat ambient raised from the dark skybox gray (0.21) to a bright neutral.
+///   1. The 16 ceiling `Light (n)` fixture meshes get a white EMISSIVE panel material.
+///   2. Ambient is applied from LabRenderTuner (a ceiling-to-floor gradient).
 ///   3. A small grid of shadowless point lights (`LabLights` group, re-runnable) fills
 ///      the room — 6 lights, wide range, warm-white, no shadows (URP per-object cap safe).
 ///   4. The directional key light keeps shadows but drops a touch so it doesn't blow out.
@@ -53,8 +52,7 @@ public static class LabLightingBuilder
         }
 
         // 2. Ambient. Owned by LabRenderTuner so re-running THIS builder can never stomp the
-        //    gradient back to flat grey - which is exactly what a flat 0.45 here used to do,
-        //    erasing all vertical shading in the room.
+        //    gradient back to flat grey, which erases all vertical shading in the room.
         LabRenderTuner.ApplyAmbient();
 
         // 3. Shadowless fill lights (re-runnable: wipe + respawn the group).
@@ -63,10 +61,9 @@ public static class LabLightingBuilder
         var group = new GameObject(GroupName);
         Undo.RegisterCreatedObjectUndo(group, "Brighten Lab Lighting");
         // Fixture grid spans x −3.32→2.66, z −0.72→−6.65 at y 2.64 — 6 lights cover it in 2×3.
-        //    y = 2.05, NOT 2.5: at 2.5 each fill light sat 14 cm below the 2.64 m ceiling and
-        //    burned a blown-out ellipse into it (the "melting ceiling" in every capture).
-        //    Dropped to just above head height they light the room and the benches instead,
-        //    and the emissive panels supply the ceiling's own brightness.
+        //    y = 2.05, NOT 2.5: at 2.5 each fill light sits 14 cm below the 2.64 m ceiling and
+        //    burns a blown-out ellipse into it. Just above head height they light the room
+        //    and the benches instead, and the emissive panels supply the ceiling's own brightness.
         var spots = new List<Vector3>
         {
             new Vector3(-2.3f, 2.05f, -1.7f), new Vector3(1.7f, 2.05f, -1.7f),
@@ -86,7 +83,7 @@ public static class LabLightingBuilder
             l.shadows = LightShadows.None;
         }
 
-        // 4. Keep the directional key but stop it blowing out the now-bright room.
+        // 4. Keep the directional key but stop it blowing out the brightened room.
         var dir = Object.FindObjectsByType<Light>();
         foreach (var l in dir)
             if (l.type == LightType.Directional) l.intensity = 1.4f;

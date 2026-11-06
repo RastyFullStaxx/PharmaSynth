@@ -18,6 +18,22 @@ MonoBehaviour:
   - subtitle: "Nicely done \u2014 your reagent mixture is ready."
     seconds: 3
     face: 1
+    shot:
+      camera: Cam_PharmeeClose
+      moveTo: 
+      blend: 1
+      look: 1
+      lookMarker: 
+      fov: 45
+      pharmeePopIn: 1
   - subtitle: Now let's assemble the apparatus and start the reaction.
     seconds: 3.5
     face: 0
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 1
+      look: 2
+      lookMarker: 
+      fov: 50
+      pharmeePopIn: 0

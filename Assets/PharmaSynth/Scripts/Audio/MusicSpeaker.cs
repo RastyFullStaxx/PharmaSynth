@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// A physical music speaker in the lab (user 2026-07-10): a 3D positional source
+/// A physical music speaker in the lab: a 3D positional source
 /// standing in a corner that plays a PLAYLIST of background tracks — louder as you
 /// approach it (logarithmic rolloff), quieter across the room. Its volume also
 /// smoothly fades in/out with the screen fade, so moving between the menu room and

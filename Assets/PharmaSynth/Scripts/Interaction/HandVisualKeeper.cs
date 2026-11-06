@@ -8,8 +8,7 @@ public static class HandSwap
     public static bool ShowBareHand(bool gloveVisible) => !gloveVisible;
 }
 
-/// Runtime keeper on each controller (user 2026-07-11: "no hands, just
-/// controllers / hands on top of the controllers"). Every frame it:
+/// Runtime keeper on each controller. Every frame it:
 ///  - hides the default XRI controller MODEL (the hand replaces it),
 ///  - keeps the bare hand visible (other systems were toggling it off),
 ///  - swaps bare hand ↔ FPGlove when PPE gloves are donned/removed.

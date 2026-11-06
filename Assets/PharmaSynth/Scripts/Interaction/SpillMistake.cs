@@ -46,7 +46,7 @@ public class SpillMistake : MonoBehaviour
                 _armed = false;
                 if (_runner != null)
                     _runner.RecordMistake(LabErrorType.SpilledReagent, _label + " is spilling — stand bottles upright");
-                // The spilled liquid pools on the ground, lingers, then fades (user 2026-07-10).
+                // The spilled liquid pools on the ground, lingers, then fades.
                 if (Application.isPlaying)
                     SpillPuddle.Spawn(transform.position, LiquidColorOf(_liquid));
             }

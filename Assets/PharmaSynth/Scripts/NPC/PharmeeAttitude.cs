@@ -1,11 +1,11 @@
 ﻿using UnityEngine;
 
-/// Pharmee flight attitude (user 2026-07-10): lean the body into the movement
+/// Pharmee flight attitude: lean the body into the movement
 /// direction so he reads as flying through air, pulse the hover waves at his
 /// base, and add a gentle bob-nod while he talks. Composes with FaceCamera
 /// (root yaw) and FloatBob (position) by twisting only the body CHILD.
 ///
-/// W5.38: also folds in the GESTURE pose (PharmeeGestureMath) and aims the model's two hand
+/// Also folds in the GESTURE pose (PharmeeGestureMath) and aims the model's two hand
 /// pivots. Everything still lands in the ONE localRotation assignment below - this class is
 /// the sole writer of bodyRoot, and a second component writing it would silently lose or
 /// fight per-frame. The model has no skeleton (no skins, no joints, no LimbNodes in either
@@ -19,9 +19,9 @@ public class PharmeeAttitude : MonoBehaviour
     [SerializeField] private float maxLeanDeg = 14f;
     [SerializeField] private float leanPerMps = 22f;             // degrees per m/s
     [SerializeField] private float leanSharpness = 5f;
-    // ⛔ RETIRED (2026-09-05). These drove a pure SCALE pulse — on a flat horizontal ring
-    // that is a sideways shimmy, not a thruster, and at 30x it was a ~10 Hz blur. Kept only
-    // so the serialized scene values still deserialize; the rings now FLOW (see below).
+    // ⛔ UNUSED. A pure SCALE pulse on a flat horizontal ring reads as a sideways shimmy,
+    // not a thruster (a ~10 Hz blur at 30x). Kept only so the serialized scene values
+    // still deserialize; the rings now FLOW (see below).
     [SerializeField, HideInInspector] private float wavePulse = 0.12f;
     [SerializeField, HideInInspector] private float waveSpeedMultiplier = 30f;
 
@@ -63,7 +63,7 @@ public class PharmeeAttitude : MonoBehaviour
     public void Bind(Transform body, Transform[] waveRings, FloatBob b, NPCNarrationController n)
     { bodyRoot = body; waves = waveRings ?? new Transform[0]; bob = b; narration = n; _cached = false; }
 
-    /// The model's two hand pivots. Nothing had ever moved them before W5.38.
+    /// The model's two hand pivots. Nothing else moves them.
     public void BindHands(Transform left, Transform right)
     { handLeft = left; handRight = right; _handsCached = false; }
 
@@ -114,7 +114,7 @@ public class PharmeeAttitude : MonoBehaviour
             // ⛔ InverseTransformVECTOR, not InverseTransformDIRECTION. Direction ignores
             // scale, and these rings sit under a model node scaled about 24x — so a travel of
             // 0.16 became 3.9 METRES of world movement and the exhaust shot through the floor
-            // (measured 2026-09-05). Vector carries the scale, so this is one world metre of
+            // (measured). Vector carries the scale, so this is one world metre of
             // "down" expressed locally, and flowTravel is honestly in metres.
             _waveDown[i] = waves[i].parent != null
                 ? waves[i].parent.InverseTransformVector(Vector3.down)

@@ -61,18 +61,16 @@ public class ReagentSupplyMonitor : MonoBehaviour
     private void OnDisable() { if (runner != null) runner.ExperimentStarted -= OnStarted; }
     private void OnStarted(ExperimentModuleDefinition m) => _latched = false;
 
-    /// W5.9: "Keep trying" on the supply prompt used to be a soft dead-end — the
-    /// latch only cleared on a new attempt, so a genuine shortfall never
-    /// re-prompted and Running had no other exit. Dismissing the prompt now
-    /// un-latches after a grace window: if the shortfall still exists (or a new
-    /// one appears), Pharmee offers the restart again.
+    /// "Keep trying" on the supply prompt un-latches after a grace window: if the
+    /// shortfall still exists (or a new one appears), Pharmee offers the restart again.
+    /// Otherwise the latch only clears on a new attempt and Running has no other exit.
     public void Unlatch(float graceSeconds = 20f)
     {
         _latched = false;
         _next = Time.time + Mathf.Max(1f, graceSeconds);
     }
 
-    /// Test seams (W5.9).
+    /// Test seams.
     public bool Latched => _latched;
     public void ForceLatch() => _latched = true;
 
@@ -83,7 +81,7 @@ public class ReagentSupplyMonitor : MonoBehaviour
         _next = Time.time + Mathf.Max(0.5f, pollSeconds);
 
         // Tutorial Mode tops the bottles up UNCONDITIONALLY, before the shortfall
-        // analysis rather than inside it (W5.39). Demo's branch below is REACTIVE —
+        // analysis rather than inside it. Demo's branch below is REACTIVE —
         // it only refills once a step has already starved — so a bottle spilled early
         // would sit empty for the rest of the run even though nothing was short yet.
         // Practice must never be able to dead-end, so there is no shortfall to find:
@@ -118,11 +116,10 @@ public class ReagentSupplyMonitor : MonoBehaviour
             var stock = lp.currentChemical != null ? lp.currentChemical : lp.LastChemical;
             if (stock == null) continue;
             if (lp.GetComponent<LiquidTaskBinding>() != null) continue;
-            // ⛔ SOURCES only (W5.59). Outside a run no vessel carries a binding, so this used to
-            // "restock" a freshly emptied beaker with whatever it last held — the lab reset would
-            // have refilled the glassware it had just emptied. A used vessel is one the builders
-            // gave a CleanableVessel; a source (bottle, wash bottle, the methane charge jar) never
-            // has one — a NAME rule here starved the methane tutorial's charge jar.
+            // ⛔ SOURCES only. Outside a run no vessel carries a binding, so without this the lab
+            // reset would refill the glassware it had just emptied. A used vessel is one the
+            // builders gave a CleanableVessel; a source (bottle, wash bottle, the methane charge
+            // jar) never has one. Don't use a NAME rule here: it starves the methane charge jar.
             if (LabReset.IsUsedVessel(lp)) continue;
             if (lp.currentLiquidVolume < 150f) { lp.SetContents(stock, 150f); refilled++; }
             // A solid jar shows its heap, not a liquid column, and a full jar shows a full heap.
@@ -141,13 +138,11 @@ public class ReagentSupplyMonitor : MonoBehaviour
 
         // ⛔ The module's OWN PRODUCT is not a bench supply — the player SYNTHESISES it.
         //
-        // The 2026-07-16 client rule deleted ready-made bottles of Acetanilide, Chloroform,
-        // Benzamide and Wine precisely so the player must craft them. Every step that then
-        // draws from your own product (the chemical tests, the wash, the racking) looked to
-        // this monitor like a step needing a bottle that does not exist — so it declared
-        // "Not enough reagents left to finish" at 0% PROGRESS, before the player had
-        // touched anything, in exactly those four modules. Restarting could never help:
-        // the bottle is absent by design (user, 2026-09-02).
+        // There are no ready-made bottles of Acetanilide, Chloroform, Benzamide or Wine (a
+        // client rule: the player crafts them). Steps that draw from your own product (the
+        // chemical tests, the wash, the racking) would otherwise look like steps needing a
+        // bottle that does not exist, and the monitor would declare "Not enough reagents
+        // left to finish" at 0% progress in exactly those four modules.
         string ownProduct = runner != null && runner.Module != null
             ? DemoMode.ProductFor(runner.Module.moduleId) : null;
 

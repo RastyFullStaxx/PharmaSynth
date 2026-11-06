@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Re-activate every bench item that was hidden (client rule 2026-07-15: ALL tools
+/// Re-activate every bench item that was hidden (client rule: ALL tools
 /// and reagents are present across ALL experiments — nothing is ever hidden or
 /// removed per-experiment). Undoes any accidental deactivation. Idempotent.
 public static class RestoreBenchItems

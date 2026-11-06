@@ -3,17 +3,15 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-/// Prepares and runs the lab's LIGHTMAP BAKE (checklist section 3, previously blocked as
-/// "layout-lock-gated"; unblocked 2026-08-28 once all 9 modules and the campaign were done).
+/// Prepares and runs the lab's LIGHTMAP BAKE.
 ///
-/// Nothing in the lab cast a shadow onto anything else - all 21 lights were Realtime with
-/// additional-light shadows disabled in the RP asset, and only 7 of 811 objects were marked
-/// static. Every stool, cabinet and bench floated. Baked GI is also FREE at runtime, which
-/// is the whole reason it is the right tool on a Quest.
+/// Without it nothing in the lab casts a shadow onto anything else: all 21 lights are Realtime
+/// with additional-light shadows disabled in the RP asset, so every stool, cabinet and bench
+/// floats. Baked GI is also FREE at runtime, which is why it is the right tool on a Quest.
 ///
 /// The three steps that have to happen in THIS order, because each depends on the last:
 ///   1. Lightmap UVs. A mesh with no UV2 cannot receive a lightmap. 36 of the project's 107
-///      models lacked them, including the entire room shell (Wall, Floor, Ceiling_2, the
+///      models lack them, including the entire room shell (Wall, Floor, Ceiling_2, the
 ///      tables). Anything still missing UV2 after the import pass is set to receive from
 ///      LIGHT PROBES instead, so it still occludes and bounces without a broken lightmap.
 ///   2. Static flags, filtered HARD. A grabbable baked into a lightmap carries its baked
@@ -130,7 +128,7 @@ public static class LabLightingBake
                 mr.receiveGI = want;
                 EditorUtility.SetDirty(mr);
             }
-            // THE fix for the floor's rectangular streaks. A big slab auto-unwraps into many
+            // Fixes the floor's rectangular streaks. A big slab auto-unwraps into many
             // charts, and lighting solved per-chart does not agree across their shared edges,
             // so every chart boundary shows as a hard line on an otherwise flat surface.
             // Seam stitching solves the boundary texels jointly and costs bake time only.
@@ -199,12 +197,10 @@ public static class LabLightingBake
 
         s.bakedGI = true;
         s.realtimeGI = false;
-        // Resolution was NOT what caused the floor's streaks: raising it 12 -> 24 changed the
-        // artifact not at all, because at both densities the atlas still packed to 512 and the
-        // marks were SEAMS between the auto-unwrapped charts of one 10.5 x 11 m slab, not
-        // stair-stepped gradients. The actual fix is stitchLightmapSeams on the shell (see
-        // MarkStatics); resolution 40 is here so the atlas grows past 512 and the 16-texel
-        // padding stops being a large fraction of it.
+        // Resolution does not cause the floor's streaks (12 -> 24 leaves them unchanged): they are
+        // SEAMS between the auto-unwrapped charts of one 10.5 x 11 m slab, fixed by
+        // stitchLightmapSeams on the shell (see MarkStatics). Resolution 40 is here so the atlas
+        // grows past 512 and the 16-texel padding stops being a large fraction of it.
         s.lightmapResolution = 40f;
         s.lightmapMaxSize = 2048;
         s.lightmapPadding = 16;

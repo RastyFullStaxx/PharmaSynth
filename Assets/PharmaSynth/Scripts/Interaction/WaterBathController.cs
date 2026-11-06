@@ -1,8 +1,8 @@
 using UnityEngine;
 
-/// Pure rules for the ZONE-FREE water bath (user 2026-07-17: "I don't want any
-/// zone. The entire lab IS the zone. The tools themselves function when brought
-/// together ANYWHERE"). The bath is a real tool with real requirements, exactly
+/// Pure rules for the ZONE-FREE water bath (no fixed
+/// zone: the entire lab IS the zone, and tools function when brought
+/// together ANYWHERE). The bath is a real tool with real requirements, exactly
 /// like the manuscript's: fill it with water, put a lit burner under it, and it
 /// warms whatever vessel you bring to it — wherever in the lab it happens to sit.
 public static class WaterBathMath
@@ -21,8 +21,8 @@ public static class WaterBathMath
 
     public static bool IsHeating(bool hasWater, bool litBurnerNear) => hasWater && litBurnerNear;
 
-    /// Effect radius from a user-scalable ZONE ANCHOR (user 2026-07-18: "add
-    /// anchors I can manually scale perfectly"): the anchor's wire-sphere
+    /// Effect radius from a user-scalable ZONE ANCHOR:
+    /// the anchor's wire-sphere
     /// gizmo diameter == its world scale (PlacementAnchor.previewsScale
     /// convention), so radius = half its X scale — what you see in the editor
     /// IS the area of effect. Falls back to the coded constant with no anchor.
@@ -44,9 +44,9 @@ public static class WaterBathMath
 /// anywhere, it still works.
 public class WaterBathController : MonoBehaviour
 {
-    // SERIALIZED (2026-07-17): a domain reload wipes non-serialized privates, and
-    // in edit mode Awake never re-binds — the SimulatedRun then saw an unbound
-    // bath ("could not fill the water bath") after any recompile. Serialized, the
+    // SERIALIZED: a domain reload wipes non-serialized privates, and
+    // in edit mode Awake never re-binds — the SimulatedRun then sees an unbound
+    // bath after any recompile. Serialized, the
     // Apply-W5.8 Bind persists into the saved scene and survives reloads.
     [SerializeField] private LiquidPhysics _lp;
     [SerializeField] private TemperatureSim _temp;
@@ -134,60 +134,5 @@ public class WaterBathController : MonoBehaviour
         if (_temp == null) return;
         _temp.SetHeating(WaterBathMath.IsHeating(HasWater, true), 110f);
         _temp.Tick(dt);
-    }
-}
-
-/// Completes a heat step ZONE-FREE: the task is done when this vessel has been
-/// served all its reagents AND actually reached the required temperature —
-/// however and wherever the player heated it. Replaces the old fixed
-/// Station_prep-hydrolysis (deleted with its pad/label/teleport anchor).
-public class VesselHeatTask : MonoBehaviour
-{
-    private ExperimentRunner _runner;
-    private string _taskId;
-    private float _requiredC;
-    private LiquidTaskBinding _binding;
-    private LiquidPhysics _lp;
-    private bool _subscribed;
-
-    public string TaskId => _taskId;
-    public float RequiredC => _requiredC;
-
-    /// The step is the player's CURRENT concern: available and not yet done.
-    /// Gates the vessel tag's "warm to N C" line (2026-07-18 — it used to show
-    /// from the moment the module built, steps before heating was the task).
-    public bool Relevant => _runner != null && _runner.Graph != null
-        && _runner.Graph.IsAvailable(_taskId) && !_runner.Graph.IsComplete(_taskId);
-
-    /// Pure (suite-pinned): served AND hot — never one without the other.
-    public static bool ShouldComplete(bool allReagentsIn, float tempC, float requiredC)
-        => allReagentsIn && tempC >= requiredC;
-
-    public void Bind(ExperimentRunner runner, string taskId, float requiredC,
-                     LiquidTaskBinding binding, LiquidPhysics lp)
-    {
-        if (_runner != null && _subscribed) { _runner.ExperimentStarted -= OnStarted; _subscribed = false; }
-        _runner = runner; _taskId = taskId; _requiredC = requiredC; _binding = binding; _lp = lp;
-        if (_runner != null) { _runner.ExperimentStarted += OnStarted; _subscribed = true; }
-        Register();
-    }
-
-    /// Teardown seam (ClearBenchBindings) — bench items survive rebuilds.
-    public void Detach()
-    { if (_runner != null && _subscribed) { _runner.ExperimentStarted -= OnStarted; _subscribed = false; } }
-
-    private void OnDestroy() => Detach();
-    private void OnStarted(ExperimentModuleDefinition _) => Register();
-
-    private void Register()
-    {
-        if (_runner == null || _runner.Graph == null || string.IsNullOrEmpty(_taskId)) return;
-        // A null binding = the heat step has no reagents of its own (Exp 6's
-        // heat-glow: the acetates went in during the WEIGH step) — graph
-        // availability alone gates it, and served is vacuously true.
-        _runner.Graph.RegisterCondition(_taskId, () =>
-            _lp != null
-            && ShouldComplete(_binding == null || _binding.ReadyFor(_taskId),
-                              _lp.currentTempC, _requiredC));
     }
 }

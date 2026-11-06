@@ -96,7 +96,7 @@ public class ProctorRoamer : MonoBehaviour
     /// Park him back at his authored spot NOW and stop roaming — optionally turned
     /// to face someone. The review flow calls this: the quiz starts while the run is
     /// still live (Finish only lands on submit), so he was still mid-roam and the
-    /// player got teleported to a corner he wasn't standing in (user 2026-07-15).
+    /// player got teleported to a corner he wasn't standing in.
     public void ReturnHomeAndHold(Transform faceTarget = null)
     {
         _allowRoam = false;
@@ -131,8 +131,8 @@ public class ProctorRoamer : MonoBehaviour
         // GRAVITY. CharacterController.Move applies NONE, and every step below is
         // FLATTENED (Flat()), so his Y could only ever go UP: the controller's
         // stepOffset (0.15 m) let him climb a bench lip or a dropped tube, and
-        // nothing ever brought him down again — he hovered there for the rest of
-        // the run (user 2026-07-29: "sometimes he levitates"). Pull him down every
+        // nothing ever brought him down again, so he hovered for the rest of the run.
+        // Pull him down every
         // frame, unconditionally: standing on the floor the controller resolves it
         // to no movement (and it keeps isGrounded true), airborne it settles him.
         if (_cc != null && _cc.enabled) _cc.Move(Vector3.down * FallSpeed * Time.deltaTime);

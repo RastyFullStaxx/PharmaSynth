@@ -6,7 +6,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// Builds the raw-reagent storage (user 2026-07-10: the manuscript's ~54
+/// Builds the raw-reagent storage (the manuscript's ~54
 /// materials must exist in the lab): three open shelf units against the wall,
 /// stocked from RawReagentCatalog with nature-appropriate labware — reagent
 /// bottles, amber bottles for the light-sensitive, powder jars, dropper bottles,
@@ -17,13 +17,12 @@ using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractab
 public static class ReagentCabinetBuilder
 {
     const string RootName = "ReagentCabinets";
-    const float UnitW = 1.16f, UnitH = 1.95f, UnitD = 0.6f;   // depth matches the counters (user 2026-07-11)
-    const float RootY = 0.3f;            // lifted off the floor (user 2026-07-11: base overlapped it)
+    const float UnitW = 1.16f, UnitH = 1.95f, UnitD = 0.6f;   // depth matches the counters
+    const float RootY = 0.3f;            // lifted off the floor (base overlapped it)
     const int SlotsPerShelf = 7;
     /// Stocking heights. 0.11 = the top face of the Base panel (which spans y 0–0.1):
-    /// BuildUnit always made that surface and nothing ever used it, so every unit had
-    /// a whole empty bottom row — 7 wasted slots each (user 2026-07-16: "there is a
-    /// row that still isn't complete, and two more rows top and bottom").
+    /// BuildUnit always makes that surface, so it is stocked too rather than left as
+    /// an empty bottom row of 7 slots per unit.
     /// 5 shelves x 7 slots x 2 units = 70, comfortably over the catalog's 57 rows
     /// (Acids 22 → 4 rows; Organics+Tests+Consumables 35 → exactly 5).
     static readonly float[] ShelfY = { 0.11f, 0.5f, 0.9f, 1.3f, 1.65f };
@@ -32,7 +31,7 @@ public static class ReagentCabinetBuilder
     static readonly Color Board = new Color(0.3f, 0.33f, 0.4f);
 
     const string MatDir = "Assets/PharmaSynth/Art/Generated/Materials/";
-    /// AI-generated PBR materials (user 2026-07-11) — carcass laminate, cardboard
+    /// Generated PBR materials — carcass laminate, cardboard
     /// for the consumable boxes, brushed steel for the ice bucket. Load-or-null.
     static Material Laminate => Load("LabLaminate");
     static Material Cardboard => Load("Cardboard");
@@ -57,11 +56,9 @@ public static class ReagentCabinetBuilder
     {
         if (Application.isPlaying) { Debug.LogWarning("[ReagentCabinets] exit Play mode first."); return; }
 
-        // HARD GUARD (user 2026-07-27: "ensure this shelf hard saves the current
-        // position I place them at, because sometimes when you work you move these
-        // raw reagent cabinets over and over"). This menu DESTROYS and recreates
-        // every stocked item — it has already eaten hand placement and mounted
-        // labels more than once. Once the layout is adopted as manual it is
+        // HARD GUARD: the cabinets get moved by hand repeatedly, and this menu DESTROYS
+        // and recreates every stocked item, taking hand placement and mounted labels
+        // with it. Once the layout is adopted as manual it is
         // one-shot-done, exactly like the shelf/kits/distillation builders.
         if (ManualLayoutAdopter.LayoutIsManual())
         {
@@ -84,8 +81,8 @@ public static class ReagentCabinetBuilder
             foreach (var lp in shelf.GetComponentsInChildren<LiquidPhysics>(true))
                 if (lp.currentChemical != null) shelfNames.Add(lp.currentChemical.chemicalName);
 
-        // Root: rebuild, but PRESERVE manual placement (user 2026-07-11: units
-        // were repositioned by hand) — capture each existing unit's transform
+        // Root: rebuild, but PRESERVE manual placement (units
+        // are repositioned by hand): capture each existing unit's transform
         // before clearing and rebuild it exactly there. Only a unit that never
         // existed gets the computed wall-anchor default.
         var root = GameObject.Find(RootName);
@@ -110,7 +107,7 @@ public static class ReagentCabinetBuilder
             wallX = wallHit.point.x;
         float ux = wallX - UnitD * 0.5f - 0.02f;
 
-        // Two units (user 2026-07-11: the third is unnecessary — denser shelves +
+        // Two units (the third is unnecessary — denser shelves +
         // the top shelf give plenty of room, and the freed wall keeps the counter clear).
         var groups = new[]
         {
@@ -119,7 +116,7 @@ public static class ReagentCabinetBuilder
         };
         float[] uz = { -1.7f, -3.05f };
 
-        // AI-generated laminate on the carcass (falls back to flat colour if the
+        // Generated laminate on the carcass (falls back to flat colour if the
         // material asset is missing); dark board for the shelf ledges.
         var bodyMat = Laminate != null ? Laminate : MakeMat(Body);
         var boardMat = MakeMat(Board);
@@ -151,23 +148,23 @@ public static class ReagentCabinetBuilder
         RelocatePrinter();
 
         // Stocking recreates every bottle, which takes its mounted NameLabel quad
-        // with it — that is why the shelf ended up with no name tags at all (user
-        // 2026-07-27). Re-mount them in the SAME pass so they can never go missing
-        // again, instead of relying on someone remembering the second menu.
+        // with it, leaving the shelf with no name tags. Re-mount them in the SAME pass
+        // so they can never go missing, instead of relying on someone remembering the
+        // second menu.
         LabelForge.Run();
 
         EditorSceneManager.MarkAllScenesDirty();
         EditorSceneManager.SaveOpenScenes();
         Debug.Log($"[ReagentCabinets] built {groups.Length} units at x={ux:F2} (base y={RootY}): {stocked} materials stocked, " +
                   $"{skipped} already on the ReagentShelf, name labels re-mounted. Run Re-Home Scene Items next.");
-        // A rebuilt solid jar shows a heap, not a liquid column (W5.59 — six jars were
-        // drawn as brown liquid because the PowderJar prefab only carries a Liquid surface).
+        // A rebuilt solid jar shows a heap, not a liquid column (the PowderJar
+        // prefab only carries a Liquid surface).
         SolidJarFitter.FitAll(out _);
 
     }
 
-    /// The copier ('Environment/Printe') sat inside the old unit-1 footprint. Move
-    /// it onto the free right-side table and make it grabbable (user 2026-07-11).
+    /// The copier ('Environment/Printe') sits inside the unit-1 footprint. Move
+    /// it onto the free right-side table and make it grabbable.
     /// Only relocates while it still sits in the cabinet wall zone, so a manual
     /// re-arrangement is never snapped back by a re-run.
     static void RelocatePrinter()
@@ -216,15 +213,14 @@ public static class ReagentCabinetBuilder
     }
 
     /// ⛔ NEVER re-stock these: the ice bucket and the paper/stick consumable boxes
-    /// are HAND-PLACED (user 2026-07-16: "don't include the ice bucket, filter paper,
-    /// cotton, litmus and match sets — return them to their previous positions").
+    /// (filter paper, cotton, litmus, matches) are HAND-PLACED.
     ///
     /// They are not bottles and don't belong in a slotted shelf grid: the bucket sits
     /// on the floor, the boxes sit where the player can grab a match or a strip. A
     /// rebuild here destroys and recreates everything it stocks, so including them
-    /// silently wiped positions that had been placed by hand (the bucket even carried
-    /// a hand-set -88° rotation). The builder only preserves UNIT transforms, never
-    /// the items inside — so anything hand-placed must be excluded, not stocked.
+    /// silently wipes hand-set positions (the bucket carries a hand-set -88°
+    /// rotation). The builder only preserves UNIT transforms, never
+    /// the items inside, so anything hand-placed must be excluded, not stocked.
     static bool IsHandPlacedConsumable(RawReagentCatalog.Row row)
         => row.labware == RawReagentCatalog.LabwareKind.SmallBox
         || row.labware == RawReagentCatalog.LabwareKind.IceBucket;
@@ -305,7 +301,7 @@ public static class ReagentCabinetBuilder
         respawn.SetHome(inst.transform.position, inst.transform.rotation);
         ShelfPourWiring.WireBottle(inst.gameObject, runner, registry);
 
-        // Glass labware shatters when dropped hard (user 2026-07-11); dropper
+        // Glass labware shatters when dropped hard; dropper
         // bottles (WashBottle) are plastic and only clatter. Mirrors the runtime
         // ExperimentSceneBuilder wiring — the prefab names are already in the
         // Mishandling breakable policy.
@@ -327,7 +323,7 @@ public static class ReagentCabinetBuilder
         return true;
     }
 
-    /// Chemical → the Tripo prefab the user generates from the reference images
+    /// Chemical → the Tripo prefab generated from the reference images
     /// in Art/Generated/Refs (same convention as the ice bucket): once the model
     /// exists, a rebuild swaps it in automatically.
     static string TripoNameFor(string chemicalName)
@@ -354,10 +350,10 @@ public static class ReagentCabinetBuilder
             var b = CombinedBounds(rends);
             if (b.size.y > 0.001f) inst.transform.localScale *= targetH / b.size.y;
             // ⛔ Put the MESH on the pivot, never the pivot wherever the model's baked offset
-            // leaves it (W5.57). A Tripo export can carry its geometry metres from its own
-            // origin: the matchstick's stick sat 1.9 m from the root this loader positioned,
-            // and every runtime rule reads transform.position — the match was "held" 1.9 m
-            // from the hand and no burner could be lit in VR. The root lands at `pos`, and the
+            // leaves it. A Tripo export can carry its geometry metres from its own
+            // origin (the matchstick's stick is 1.9 m from its root), and every runtime rule
+            // reads transform.position, so the match would be "held" 1.9 m from the hand and
+            // light no burner. The root lands at `pos`, and the
             // children shift so the mesh's bottom-centre sits on it (base on the pivot, like
             // every hand-modelled beaker), 5 mm proud of the shelf.
             inst.transform.position = pos;
@@ -369,8 +365,8 @@ public static class ReagentCabinetBuilder
         else inst.transform.position = pos;
         if (inst.GetComponentInChildren<Collider>() == null)
         {
-            // Size the grab box from the mesh it now wraps. The old fixed targetH box gave the
-            // matchstick a 1 mm collider and left the ice bucket's box 1.9 m from the bucket.
+            // Size the grab box from the mesh it now wraps. A fixed targetH box gives the
+            // matchstick a 1 mm collider and leaves the ice bucket's box 1.9 m from the bucket.
             var col = inst.AddComponent<BoxCollider>();
             var bb = CombinedBounds(inst.GetComponentsInChildren<Renderer>(true));
             var ls = inst.transform.lossyScale;
@@ -392,7 +388,7 @@ public static class ReagentCabinetBuilder
 
     static bool StockBox(RawReagentCatalog.Row row, Vector3 pos, Transform parent)
     {
-        // The user's Tripo model wins when it exists; the cardboard cube is the fallback.
+        // The Tripo model wins when it exists; the cardboard cube is the fallback.
         var tripo = TryTripo(TripoNameFor(row.chemicalName), pos, parent, 0.06f);
         GameObject box;
         if (tripo != null)
@@ -407,10 +403,10 @@ public static class ReagentCabinetBuilder
             box.transform.SetParent(parent, false);
             box.transform.position = pos + new Vector3(0f, 0.03f, 0f);
             box.transform.localScale = new Vector3(0.12f, 0.06f, 0.085f);
-            // AI-generated kraft cardboard (falls back to the row's flat colour).
+            // Generated kraft cardboard (falls back to the row's flat colour).
             box.GetComponent<Renderer>().sharedMaterial = Cardboard != null ? Cardboard : MakeMat(row.color);
         }
-        // The box is a FIXED dispenser (user 2026-07-11): it stays on the shelf,
+        // The box is a FIXED dispenser: it stays on the shelf,
         // you pull single pieces from it — so it's not grabbable as a whole.
         MakeFixedProp(box);
         var label = box.GetComponent<ProximityLabel>();
@@ -475,8 +471,8 @@ public static class ReagentCabinetBuilder
     static bool StockBucket(RawReagentCatalog.Row row, Vector3 pos, Transform parent)
     {
         GameObject bucket;
-        // The user's Tripo P1 ice-bucket model (generated in the AI panel,
-        // 2026-07-11) — the procedural cylinder is only the fallback.
+        // The Tripo P1 ice-bucket model (generated in the AI panel)
+        // — the procedural cylinder is only the fallback.
         var tripo = AssetDatabase.LoadAssetAtPath<GameObject>(TripoBucketPath);
         if (tripo != null)
         {
@@ -501,7 +497,7 @@ public static class ReagentCabinetBuilder
             bucket.transform.SetParent(parent, false);
             bucket.transform.position = pos + new Vector3(0f, 0.06f, 0f);
             bucket.transform.localScale = new Vector3(0.16f, 0.06f, 0.16f);
-            // AI-generated brushed steel (falls back to flat metallic grey).
+            // Generated brushed steel (falls back to flat metallic grey).
             bucket.GetComponent<Renderer>().sharedMaterial = Steel != null ? Steel : MakeMat(new Color(0.75f, 0.82f, 0.88f));
             for (int i = 0; i < 4; i++)
             {
@@ -568,7 +564,7 @@ public static class ReagentCabinetBuilder
 
     static GameObject MakeLitmusStrip(Transform parent, Vector3 pos)
     {
-        // The user's Tripo single-strip model wins when it exists.
+        // The Tripo single-strip model wins when it exists.
         var strip = TryTripo("LitmusStripSingle", pos, parent, 0.004f);
         if (strip != null) strip.name = "LitmusStrip";
         else
@@ -589,7 +585,7 @@ public static class ReagentCabinetBuilder
 
     static GameObject MakeMatchstick(Transform parent, Vector3 pos)
     {
-        // The user's Tripo single-matchstick model wins when it exists.
+        // The Tripo single-matchstick model wins when it exists.
         var stick = TryTripo("MatchstickSingle", pos, parent, 0.008f);
         if (stick != null) stick.name = "Matchstick";
         else
@@ -617,7 +613,7 @@ public static class ReagentCabinetBuilder
 
     static GameObject MakeFilterPaper(Transform parent, Vector3 pos)
     {
-        // Done procedurally like the litmus strip (user 2026-07-11: no Tripo
+        // Done procedurally like the litmus strip (no Tripo
         // needed for a flat disc) — a thin cream circle you seat in the funnel.
         var disc = TryTripo("FilterPaperSingle", pos, parent, 0.004f);
         if (disc != null) disc.name = "FilterPaper";

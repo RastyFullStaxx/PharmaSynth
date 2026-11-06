@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-/// Builds the cyan "materialize" spawn burst (user 2026-07-10): a one-shot column
+/// Builds the cyan "materialize" spawn burst: a one-shot column
 /// of cyan particles that rises from the player's feet like smoke, played on every
 /// teleport / reset / spawn. Creates a shared soft-dot texture + additive material,
 /// then drops a configured `SpawnVFX` object (SpawnBurstFX + ParticleSystem) into
@@ -58,7 +58,7 @@ public static class SpawnVfxBuilder
 
         var em = ps.emission;
         em.rateOverTime = 0f;
-        // THREE waves (user 2026-07-10: "three set waves so they are more noticeable")
+        // THREE waves, so the burst is noticeable.
         em.SetBursts(new[]
         {
             new ParticleSystem.Burst(0f, (short)90),

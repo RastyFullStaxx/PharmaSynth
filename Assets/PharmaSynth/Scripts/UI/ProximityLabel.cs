@@ -18,7 +18,7 @@ public class ProximityLabel : MonoBehaviour
     private Transform _cam;
     private GameObject _tag;
 
-    /// The tag object, so LabelDeclutter can measure where it landed on screen (W5.55).
+    /// The tag object, so LabelDeclutter can measure where it landed on screen.
     public GameObject Tag => _tag;
 
     /// Extra world-space lift handed down by LabelDeclutter so two tags stop sitting on

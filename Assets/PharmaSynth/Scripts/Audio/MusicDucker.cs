@@ -1,8 +1,8 @@
 using UnityEngine;
 
 /// Pulls the background music down while an NPC is speaking, so dialogue is
-/// always clearly audible over it (user 2026-07-27: "reduce the bg music so the
-/// player can hear things clearly"), then eases it back afterwards.
+/// always clearly audible over it (the background music must never
+/// mask what the player needs to hear), then eases it back afterwards.
 ///
 /// Ducks FAST and releases SLOWLY — the standard broadcast shape. A quick duck
 /// means the first syllable is never buried; a slow release stops the music

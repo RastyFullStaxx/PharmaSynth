@@ -1,12 +1,12 @@
 using UnityEngine;
 
-/// Real-time dressing mirror (user 2026-07-10) using the canonical planar
+/// Real-time dressing mirror using the canonical planar
 /// reflection-matrix technique. Each frame a child camera is placed at the
 /// player's eye REFLECTED across the mirror plane and renders the scene with an
 /// oblique near plane clamped to the glass (so the wall the mirror hangs on
 /// never occludes the view). Rendered by hand — URP does NOT auto-render an
-/// enabled off-screen camera, which left the render texture black (user report
-/// 2026-07-10) — with inverted culling so the handedness-flipped reflected
+/// enabled off-screen camera, which would leave the render texture black
+/// — with inverted culling so the handedness-flipped reflected
 /// geometry keeps facing the right way. Distance-gated for the Quest budget.
 ///
 /// Note: a mirror can only reflect geometry that exists. The player sees the

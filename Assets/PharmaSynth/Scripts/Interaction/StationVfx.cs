@@ -1,7 +1,7 @@
 using UnityEngine;
 
-/// Per-station particle effects (user 2026-07-10: "special effects for boiling,
-/// freezing etc."), the visual twin of SimLoopAudio: while the required prop
+/// Per-station particle effects (special effects for boiling,
+/// freezing etc.), the visual twin of SimLoopAudio: while the required prop
 /// occupies a sim station the effect plays — steam for Heat (boiling), a frosty
 /// sparkle for Crystallise (freezing/ice bath), a falling drip for Filter, rising
 /// bubbles for Collect. Attached + bound by ExperimentSceneBuilder per station;

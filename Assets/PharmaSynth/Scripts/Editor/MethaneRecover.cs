@@ -4,10 +4,9 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Diagnose + recover the methane bench items (user 2026-07-14: "the mortar is
-/// still missing from the table where I placed it"). A likely cause: an item was
-/// moved AFTER the last Lock My Layout, so its respawn home was stale and a Reset
-/// teleported it away (often below the floor). This reports every methane item's
+/// Diagnose + recover the methane bench items. An item moved AFTER the last
+/// Lock My Layout has a stale respawn home, so a Reset teleports it away (often
+/// below the floor). This reports every methane item's
 /// position + active state, reactivates + lifts anything that fell, and RE-HOMES
 /// them all at their current spot so the next Reset keeps them put.
 public static class MethaneRecover

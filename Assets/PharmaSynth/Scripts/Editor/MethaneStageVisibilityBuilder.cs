@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// Wires the MethaneStageVisibility controller (user 2026-07-13: methane set
+/// Wires the MethaneStageVisibility controller (methane set
 /// present only in Lab Tour + the Methane attempt). Puts the component on
 /// ExperimentSystems (a manager that keeps running while the stage is hidden),
 /// binds the MethaneStage + runner + LabTourGuide, and re-hides the stage in the
@@ -27,7 +27,7 @@ public static class MethaneStageVisibilityBuilder
         vis.Bind(stage, runner, tour);
         EditorUtility.SetDirty(vis);
 
-        // Authored state hidden so it doesn't flash before Start() runs; the user
+        // Authored state hidden so it doesn't flash before Start() runs; you
         // can still select + relocate it from the hierarchy, or Reveal it again.
         stage.SetActive(false);
 

@@ -4,8 +4,8 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-/// Frees Dr. Jimenez's lab coat from his arms (user 2026-09-05: "when he moves his arm, the
-/// lab coat moves with it, which it is not supposed to").
+/// Frees Dr. Jimenez's lab coat from his arms, so the coat no longer moves
+/// with the arm.
 ///
 /// ⛔ There is nothing to unparent. He is a Tripo auto-rig: ONE SkinnedMeshRenderer over 41
 /// bones, with the coat baked into the body mesh. The coat follows the arm because coat

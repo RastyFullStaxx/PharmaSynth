@@ -1,5 +1,5 @@
-﻿/// Rich dialogue pools for the NPCs (user 2026-07-10: "populate more messages and
-/// interactions for Pharmee and Dr. for a rich gameplay"). Pure static data +
+﻿/// Rich dialogue pools for the NPCs (varied messages and
+/// interactions for Pharmee and the Dr.). Pure static data +
 /// a deterministic picker so the self-tests can pin variety without RNG. Pharmee
 /// rotates through these instead of repeating one canned line; Dr. Jimenez draws
 /// his stern examiner remarks from the exam pools. Client-reviewable copy (the
@@ -40,7 +40,7 @@ public static class PharmeeLines
     };
 
     // Pharmee's ambient channel is the game's only TEACHING voice for the
-    // zone-free tools (2026-07-27): there are no station pads or labels telling
+    // zone-free tools: there are no station pads or labels telling
     // you the bath needs water and a flame, or that the two scoops carry
     // different charges, so if he never mentions them the player has to guess.
     // Every line below describes a mechanic that is really in the build.
@@ -65,12 +65,11 @@ public static class PharmeeLines
         "Every tool you need is already out on the bench — picking the right one is half the skill.",
     };
 
-    // ERROR POOLS. These fire more often than any others, so they need the most
-    // variety — three lines repeated across a whole experiment stops sounding
-    // like a mentor and starts sounding like an alarm (user 2026-07-27: "error
-    // handlings... are the best"). Pharmee CORRECTS, never scolds: he names what
-    // is wrong and points at where the answer is, and he never gives the answer
-    // away — that is the assessment's job.
+    // ERROR POOLS. These fire more often than any others, so they need the most variety;
+    // three lines repeated across a whole experiment stop sounding like a mentor and start
+    // sounding like an alarm. Pharmee CORRECTS, never scolds: he names what is wrong and
+    // points at where the answer is, and never gives the answer away (that is the
+    // assessment's job).
     public static readonly string[] WrongReagent =
     {
         "Hmm, that isn't the reagent this step needs — check your wrist checklist.",
@@ -114,7 +113,7 @@ public static class PharmeeLines
     };
 
     // ---- Dr. Jimenez (stern examiner, gives NO hints) ------------------------
-    // Voice direction (2026-07-27, for the ElevenLabs pass): measured, unhurried,
+    // Voice direction (for the ElevenLabs pass): measured, unhurried,
     // lower register. Full sentences, no contractions, no exclamation marks — the
     // authority comes from restraint. He never names a reagent, a step or a tool,
     // because naming one would be a hint. Every line stands alone so the pools can
@@ -154,7 +153,7 @@ public static class PharmeeLines
         "This is practice mode. Whatever you need next will glow, and the marker points right at it. Nothing here is graded, so take your time — and you can skip a step if you get stuck.";
 
     /// Spoken at the threshold in Tutorial Mode, while the procedures board is showing
-    /// itself unprompted (W5.39). Fixed, not a pool, for the same reason as the line
+    /// itself unprompted. Fixed, not a pool, for the same reason as the line
     /// above: it explains a control, and an explanation should not vary.
     public const string TutorialPreview =
         "Here is the whole procedure before we start. Read it through, then walk in when you are ready — and poke me any time if you get stuck.";
@@ -164,7 +163,7 @@ public static class PharmeeLines
     /// clip of its own; the voice says this and the bubble shows the numbers.
     public const string PracticeComplete = "Practice complete.";
 
-    // ---- Post-experiment review flow (user 2026-07-11: congrats → Jimenez quiz
+    // ---- Post-experiment review flow (congrats → Jimenez quiz
     // briefing → score remarks → entrance debrief). Finite pools, numbers stay on
     // the grade card so every line is voice-recordable.
     public static readonly string[] TestsDoneLines =
@@ -186,7 +185,7 @@ public static class PharmeeLines
     /// Dr. Jimenez's lead-in to the module ILO recap at QuizIntro. Lives HERE, not
     /// as a literal at the call site: VoiceCorpus can only voice what it can
     /// enumerate, and a bare string in PharmeeGatekeeper was invisible to it, so
-    /// the line played as blips (2026-07-29).
+    /// the line played as blips.
     public const string JimenezIloLeadIn =
         "Before you answer — recall this session's objectives.";
 
@@ -227,7 +226,7 @@ public static class PharmeeLines
         return "A solid pass — keep practising and the tricky steps will feel natural.";
     }
 
-    /// W5.9 overload: the FINAL campaign pass swaps in a campaign-flavoured
+    /// Overload: the FINAL campaign pass swaps in a campaign-flavoured
     /// remark (the standard banded line reads oddly when nothing is left).
     public static string DebriefRemark(float gradeTotal, bool campaignComplete)
     {
@@ -236,9 +235,9 @@ public static class PharmeeLines
         return "And that was the very last experiment — you've done it!";
     }
 
-    /// Whole-campaign completion celebration (W5.9): spoken at the entrance
+    /// Whole-campaign completion celebration: spoken at the entrance
     /// instead of the unlock announcement once every catalog experiment is passed
-    /// (the chain is 9 since Aspirin + Caffeine were dropped, 2026-07-16 — the copy
+    /// (the chain is 9 since Aspirin + Caffeine were dropped — the copy
     /// deliberately names no count so it survives a roster change).
     public static readonly string[] CampaignComplete =
     {
@@ -249,7 +248,7 @@ public static class PharmeeLines
 
     // ---- Guided lab tour (storyboard beats, refined to exceed) ---------------
     // Played in order when the player picks "Lab Tour" — Pharmee walks them through
-    // each area instead of the old single free-roam line. The last beat is the closer.
+    // each area in turn. The last beat is the closer.
     public static readonly string[] TourBeats =
     {
         "Welcome to the lab! Let's take a quick tour so you feel right at home before any graded work.",

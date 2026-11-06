@@ -4,10 +4,10 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable;
 
-/// W5.12 (user 2026-07-13): the tripod is a STAND — the burner goes underneath,
-/// wire gauze + flask on top. But it was given a single CONVEX hull collider
-/// (required for a dynamic/grabbable body), which fills the open frame so nothing
-/// fits below. A tripod can't be both grabbable-dynamic AND hollow. This makes it
+/// The tripod is a STAND: the burner goes underneath,
+/// wire gauze + flask on top. A single CONVEX hull collider (required for a
+/// dynamic/grabbable body) fills the open frame so nothing fits below.
+/// A tripod can't be both grabbable-dynamic AND hollow. This makes it
 /// a KINEMATIC stand with a NON-CONVEX mesh collider that matches the real open
 /// legs+ring, so the burner fits underneath and items rest on top. Still grabbable
 /// (moves while held), but it stays where you drop it instead of tumbling.

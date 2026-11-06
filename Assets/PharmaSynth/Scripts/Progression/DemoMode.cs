@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 
-/// Backend demo-mode switch (user 2026-07-10): panelists need a fast run-through
+/// Backend demo-mode switch: panelists need a fast run-through
 /// with auto-complete controls, while Chapter-3 study participants must see the
 /// untouched normal flow. A config FILE decides whether the cube-room menu even
 /// shows the "Demo Mode" button; pressing that button starts a demo SESSION
@@ -65,17 +65,15 @@ public static class DemoMode
         catch { return null; }
     }
 
-    /// The ready-made end product each demo stage also spawns (user: "in demo
-    /// mode, these ready-made alongside these raw elements must be present").
+    /// The ready-made end product each demo stage also spawns (in demo
+    /// mode the ready-made products are present alongside the raw materials).
     public static string ProductFor(string moduleId)
     {
         switch (moduleId)
         {
             case "tutorial-methane": return "Sodium Acetate";        // gas product — show the feedstock
-            // Exp 2 is an IDENTIFICATION lab — it synthesises nothing. ("Ethanol" here
-            // was a leftover from the retired single-substrate battery, and it would
-            // have hidden ethanol during the very experiment that needs it as a
-            // sample.) 2026-07-16.
+            // Exp 2 is an IDENTIFICATION lab — it synthesises nothing, and it needs ethanol as
+            // a sample, so naming a product here would hide it.
             case "prelim-chemical-compounding": return null;
             case "prelim-ethyl-alcohol": return "Ethanol";
             case "midterm-benzoic-acid": return "Benzoic Acid";
@@ -90,24 +88,23 @@ public static class DemoMode
 
     /// Chemicals that are SOME module's end product AND still exist on the bench,
     /// so `EndProductVisibility` can hide each one WHILE ITS OWN MODULE RUNS
-    /// (user 2026-07-11: the player must synthesise them, not find them ready-made;
-    /// user 2026-07-16: a ready-made goal "loses the very meaning of the experiment").
+    /// (a client rule: the player must synthesise them, not find them ready-made;
+    /// a ready-made goal would lose the very meaning of the experiment).
     ///
     /// Only THREE remain, and only because each is also a manuscript-listed REAGENT
     /// for other experiments, so it cannot simply be deleted:
     ///     Ethanol      — goal of Exp 3, but a reagent in Exp 2 and Exp 6
     ///     Acetone      — goal of Exp 6, but a reagent in Exp 2 and Exp 7
     ///     Benzoic Acid — goal of Exp 4, and its own reference sample
-    /// Exp 2 runs BEFORE Exp 3 and Exp 6, so hiding these globally (what happened
-    /// until 2026-07-16) stripped Exp 2 of reagents it cannot proceed without.
+    /// Exp 2 runs BEFORE Exp 3 and Exp 6, so hiding these globally would strip Exp 2 of
+    /// reagents it cannot proceed without.
     ///
-    /// The four PURE products — Acetanilide, Benzamide, Chloroform, Wine — are named
-    /// as a reagent by no procedure (their own tests consume the player's synthesis),
-    /// so they were DELETED from the shelf rather than gated, along with Caffeine's
-    /// orphan. Aspirin was delisted with its module: Exp 2 §D hydrolyses it, so it is
-    /// a plain raw reagent. Sodium Acetate and Mixed Fruit Juice are FEEDSTOCKS.
+    /// The four PURE products — Acetanilide, Benzamide, Chloroform, Wine — are named as a
+    /// reagent by no procedure (their own tests consume the player's synthesis), so they
+    /// are not on the shelf at all. Aspirin is a plain raw reagent (Exp 2 §D hydrolyses
+    /// it). Sodium Acetate and Mixed Fruit Juice are FEEDSTOCKS.
     ///
-    /// NOTE this is no longer "hide whenever not in demo" — see EndProductVisibility,
+    /// NOTE this does not mean "hide whenever not in demo": see EndProductVisibility,
     /// which gates on the RUNNING module's own product via ProductFor().
     public static bool IsEndProduct(string chemicalName)
     {

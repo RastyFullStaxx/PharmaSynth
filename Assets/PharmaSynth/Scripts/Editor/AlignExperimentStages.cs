@@ -3,18 +3,16 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-/// W5.12 (user 2026-07-13): experiments spawn their stations/vessels/labels/
+/// Experiments spawn their stations/vessels/labels/
 /// waypoints as children of DynamicStage (and Methane uses MethaneStage), both
-/// authored at the ORIGINAL center-table spot. When the user moved the whole
-/// workspace table into the room, the stages stayed put — so experiment content
-/// (incl. the coloured test watch-glasses the user saw as "pads", the stale name
-/// tags, and the waypoint) appeared where the table USED to be. This shifts both
-/// stages by the table's horizontal delta so all spawns land on the moved table.
+/// authored at the center table's ORIGINAL spot. This shifts both stages by the
+/// table's horizontal offset from that spot so all spawns land on the table
+/// wherever it now stands.
 /// Idempotent (absolute set from the current table position). Re-run after any
 /// further table move.
 public static class AlignExperimentStages
 {
-    // The center table's ORIGINAL authored centre (W5.7 merge: 0, 0.91, -3.3).
+    // The center table's ORIGINAL authored centre (0, 0.91, -3.3), where both stages were authored.
     static readonly Vector3 OldTableCentre = new Vector3(0f, 0.91f, -3.3f);
 
     [MenuItem("Tools/PharmaSynth/Align Experiment Stages to Table")]

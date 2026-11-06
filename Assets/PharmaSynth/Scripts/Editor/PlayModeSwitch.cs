@@ -13,9 +13,9 @@ using UnityEngine.XR.Management;
 ///   • Headset Mode — OpenXR auto-init ON + the simulator DISABLED, so a Quest on
 ///     Quest Link / Air Link drives the view.
 /// Each mode fixes BOTH halves (the XR init setting AND the scene's simulator
-/// object) and saves, which the old "Headset Play Mode" toggle did not — that one
-/// only flipped the init setting, leaving the simulator off, so nothing drove the
-/// camera. Menu shows a checkmark for the active mode. Android is left untouched.
+/// object) and saves. Flipping only the init setting leaves the simulator off,
+/// so nothing drives the camera. Menu shows a checkmark for the active mode.
+/// Android is left untouched.
 public static class PlayModeSwitch
 {
     const string SimName = "XR Device Simulator";
@@ -45,14 +45,13 @@ public static class PlayModeSwitch
 
         // 2. XR Device Simulator active state in EVERY SCENE IN BUILD SETTINGS.
         //
-        // ⛔ Not just the open ones. This switch used to walk `SceneManager` — the loaded
-        // scenes — so running Headset Mode with only SampleScene open disabled ITS simulator
-        // and left MainMenu's ACTIVE. Play always boots MainMenu (`PlayFromMenuBootstrap`), so
-        // the simulator hijacked the HMD there: the head pose froze at local (0,0,0), and with
-        // no head height to cancel, `SeatedHeightBoost` fell back to its no-device offset while
-        // the real Quest controllers kept reporting true poses — which is why they floated
-        // ABOVE the view (user 2026-09-05, headset). Half-applied is worse than not applied,
-        // because the half that is wrong is the scene the game starts in.
+        // ⛔ Not just the open ones. Walking only the loaded scenes (`SceneManager`) would
+        // leave MainMenu's simulator ACTIVE when Headset Mode runs with only SampleScene open.
+        // Play always boots MainMenu (`PlayFromMenuBootstrap`), so the simulator would hijack
+        // the HMD there: the head pose freezes at local (0,0,0), `SeatedHeightBoost` falls back
+        // to its no-device offset, and the real Quest controllers, still reporting true poses,
+        // float ABOVE the view. Half-applied is worse than not applied, because the wrong half
+        // is the scene the game starts in.
         var open = new System.Collections.Generic.Dictionary<string, Scene>();
         for (int i = 0; i < SceneManager.sceneCount; i++)
         {

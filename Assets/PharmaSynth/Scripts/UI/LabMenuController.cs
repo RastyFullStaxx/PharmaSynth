@@ -85,7 +85,7 @@ public class LabMenuController : MonoBehaviour
 
     private void DoRestart()
     {
-        // Reset (user 2026-07-10) = full return to the entrance: props/bottles back
+        // Reset = full return to the entrance: props/bottles back
         // to spawn, wearables off, teleport to Pharmee at the door, gate re-closed,
         // Pharmee greets — all handled by the gatekeeper (fade included).
         if (gatekeeper != null) { gatekeeper.ResetToEntrance(); return; }
