@@ -86,7 +86,7 @@ Order is enforced by the runner: a wrong prop is ignored; the right prop out of 
 
 ## 3. The regression suite
 
-**Menu: `Tools ▸ PharmaSynth ▸ Run Self-Tests`** — `Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.cs`. Runs the whole suite entirely in edit mode (no Play button, no headset) across 50+ suites incl.: TaskGraph, Mastery (BKT), Score, Grader, Runner, Progression, ChemVisual, UI, W4 (cutscenes/crystallization/filtration/hazards), Interaction, ProgressionFlow, Library, and Content (loads and solves **all 9 experiment modules** to 100%).
+**Menu: `Tools ▸ PharmaSynth ▸ Run Self-Tests`** — runner in `Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.cs`, suites in `PharmaSelfTests.<Area>.cs` (Experiment, Progression, Chemistry, Interaction, NPC, UI, Scene). Runs the whole suite entirely in edit mode (no Play button, no headset) across 70+ suites incl.: TaskGraph, Mastery (BKT), Score, Grader, Runner, Progression, ChemVisual, UI, ReactionRules (cutscenes/crystallization/filtration/hazards), Interaction, ProgressionFlow, Library, and Content (loads and solves **all 9 experiment modules** to 100%).
 
 - **Green:** one console line — `PharmaSynth Self-Tests: N/N passed — ALL GREEN`, also written to `Logs/selftest-result.txt` (read that rather than wrapping the run in a capture script).
 - **Red:** an error log listing every failed assertion by name.

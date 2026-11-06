@@ -168,10 +168,10 @@ bool HasPhase(TaskPhase phase)
 bool PrerequisitesMet(string taskId)
 bool IsAvailable(string taskId)
 IEnumerable<ExperimentTask> AvailableTasks()
+ExperimentTask FirstAvailable()
 void RegisterCondition(string taskId, Func<bool> condition)
 bool HasCondition(string taskId)
 void Tick()
-TaskCompletionResult TryComplete(string taskId)
 ```
 
 ### `TaskPhase` <sub>enum</sub>
@@ -733,6 +733,7 @@ An ignitable Bunsen/alcohol burner. Bring a lit matchstick to the burner and it 
 const float MatchIgniteDistance
 bool IsLit
 static System.Collections.Generic.IReadOnlyList<BurnerController> Active
+static bool AnyLitWithin(Vector3 pos, float radius)
 static bool ShouldIgnite(bool burnerLit, bool matchLit, float distance)
 static bool ShouldBlowOut(bool lit, bool held)
 void Ignite()
@@ -2908,13 +2909,13 @@ GateLines Lines
 GatekeeperModel Model
 static readonly ExperimentPeriod[] EpisodeRows
 void SetSubtitlePace(float speed)
+static void ResetSessionState()
 static bool ShouldEnterReview()
 void OnApproachTriggerEntered()
 void OnPharmeeTalk()
 void OnThresholdTriggerEntered()
 void OnPPEWorn()
 void OnPanelOption(int index)
-static bool ReviewFlowActive
 ```
 
 ### `PharmeeGesture` <sub>enum</sub>
@@ -4530,9 +4531,44 @@ static void FixHoloScroll()
 ```
 
 ### `PharmaSelfTests` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.Chemistry.cs`</sub>
+
+Self-tests: Pouring, reactions, chemical tests, supply and shelf wiring.
+
+### `PharmaSelfTests` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.Experiment.cs`</sub>
+
+Self-tests: Task graph, scoring, grading, runner, quizzes and module content.
+
+### `PharmaSelfTests` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.Interaction.cs`</sub>
+
+Self-tests: Verbs, stage building, layouts, physics and grabbing.
+
+### `PharmaSelfTests` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.NPC.cs`</sub>
+
+Self-tests: Pharmee, the gatekeeper flow, the examiner, voice, audio and cutscenes.
+
+### `PharmaSelfTests` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.Progression.cs`</sub>
+
+Self-tests: Save data, campaign flow, settings, demo mode and result export.
+
+### `PharmaSelfTests` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.Scene.cs`</sub>
+
+Self-tests: Surface, effect-material and visual-sweep checks on the lab scene.
+
+### `PharmaSelfTests` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.UI.cs`</sub>
+
+Self-tests: HUD, fades, menus, the watch panel and text safety.
+
+### `PharmaSelfTests` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.cs`</sub>
 
-Re-runnable regression suite for the PharmaSynth engine. Run via menu: Tools ▸ PharmaSynth ▸ Run Self-Tests. One permanent, one-click check. (An Editor-menu suite rather than an NUnit asmdef, to avoid restructuring the runtime assembly; a formal EditMode asmdef migration can layer on later.)
+Re-runnable regression suite for the PharmaSynth engine. Run via menu: Tools ▸ PharmaSynth ▸ Run Self-Tests. One permanent, one-click check. (An Editor-menu suite rather than an NUnit asmdef, to avoid restructuring the runtime assembly; a formal EditMode asmdef migration can layer on later.) This file holds the runner and shared helpers; each area's suites live in PharmaSelfTests.<Area>.cs. A new suite needs a call in Run().
 
 ```csharp
 static void Run()

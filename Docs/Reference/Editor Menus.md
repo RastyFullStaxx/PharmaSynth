@@ -405,7 +405,7 @@ floats. Baked GI is also FREE at runtime, which is why it is the right tool on a
 ### `Tools/PharmaSynth/Run Self-Tests`
 <sub>`Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.cs`</sub>
 
-Re-runnable regression suite for the PharmaSynth engine. Run via menu: Tools ▸ PharmaSynth ▸ Run Self-Tests. One permanent, one-click check. (An Editor-menu suite rather than an NUnit asmdef, to avoid restructuring the runtime assembly; a formal EditMode asmdef migration can layer on later.)
+Re-runnable regression suite for the PharmaSynth engine. Run via menu: Tools ▸ PharmaSynth ▸ Run Self-Tests. One permanent, one-click check. (An Editor-menu suite rather than an NUnit asmdef, to avoid restructuring the runtime assembly; a formal EditMode asmdef migration can layer on later.) This file holds the runner and shared helpers; each area's suites live in PharmaSelfTests.<Area>.cs. A new suite needs a call in Run().
 
 ### `Tools/PharmaSynth/Seal Entrance Gaps`
 <sub>`Assets/PharmaSynth/Scripts/Editor/EntranceSealBuilder.cs`</sub>
