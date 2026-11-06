@@ -109,7 +109,8 @@ Everything still to do before the **2026-08-31** turnover, consolidated **2026-0
 
 ## 8. Process
 
-- [ ] User commits checkpoints regularly (two editor crashes have occurred); Claude commits only when asked; retire the dead `feature/asset-intake` branch.
+- [x] Checkpoint commits: a session commits each phase that passes its checks, on `main`, never pushed.
+- [ ] Retire the dead `feature/asset-intake` branch.
 
 ## 9. W5.7 "things to do" batch (2026-07-11, suite 613→751) — landed + follow-ups
 
