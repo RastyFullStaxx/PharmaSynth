@@ -17,6 +17,15 @@ public class Matchstick : MonoBehaviour
     [SerializeField] private bool headAtPositiveEnd = false;
 
     private bool _lit, _spent;
+
+    private static readonly System.Collections.Generic.List<Matchstick> s_live = new System.Collections.Generic.List<Matchstick>();
+    /// Every enabled match. Play mode reads a list kept by OnEnable/OnDisable; edit mode
+    /// (simulators, tests) searches the scene, because edit-mode AddComponent never runs OnEnable.
+    public static System.Collections.Generic.IReadOnlyList<Matchstick> Active
+        => Application.isPlaying ? (System.Collections.Generic.IReadOnlyList<Matchstick>)s_live
+                                 : FindObjectsByType<Matchstick>();
+    private void OnEnable() { if (!s_live.Contains(this)) s_live.Add(this); }
+    private void OnDisable() => s_live.Remove(this);
     private float _litAt;
     private float _nextScan;
     private GameObject _flame;

@@ -225,6 +225,12 @@ re-homing.
 
 ## Shaders
 
+> [!warning] A live list kept by OnEnable is empty in edit mode
+> `BurnerController.Active` and `Matchstick.Active` read a list that OnEnable/OnDisable keep
+> in Play mode, and fall back to a scene search in edit mode. Edit-mode `AddComponent` never
+> runs OnEnable, so the simulators would see an empty list. Any new registry needs the same
+> fallback.
+
 > [!danger] One MonoBehaviour per file, file named after the class
 > Unity links a saved component to its script by the FILE's GUID, and a file resolves to
 > the class matching its name (or its first class). A second component in another's file

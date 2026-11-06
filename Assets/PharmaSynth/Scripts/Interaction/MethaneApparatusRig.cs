@@ -279,7 +279,7 @@ public class MethaneApparatusRig : MonoBehaviour
         if (!_splintFired && collected && _collect != null)
         {
             float best = float.MaxValue; bool anyLit = false;
-            foreach (var m in FindObjectsByType<Matchstick>(FindObjectsSortMode.None))
+            foreach (var m in Matchstick.Active)
             {
                 if (m == null || !m.IsLit) continue;
                 anyLit = true;
@@ -408,7 +408,7 @@ public class MethaneApparatusRig : MonoBehaviour
 
     private bool AnyLitBurnerNear(Vector3 pos)
     {
-        foreach (var b in FindObjectsByType<BurnerController>(FindObjectsSortMode.None))
+        foreach (var b in BurnerController.Active)
             if (b != null && b.IsLit && WithinReach(Vector3.Distance(b.transform.position, pos), heatDistance))
                 return true;
         return false;

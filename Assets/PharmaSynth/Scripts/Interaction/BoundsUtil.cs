@@ -16,6 +16,45 @@ public static class BoundsUtil
         return rs.Length > 0 ? OfRenderers(rs) : new Bounds(g.transform.position, Vector3.one * fallbackSize);
     }
 
+    /// Renderer list for bounds that are measured every frame. The bounds stay live (a
+    /// renderer's bounds follow it as it moves); only the LIST is cached, re-read when the
+    /// hierarchy changes or every `refreshSeconds` in Play mode, so a per-frame check no
+    /// longer allocates a fresh array. Edit mode always re-reads.
+    public sealed class RendererCache
+    {
+        private Transform _root;
+        private int _count = -1;
+        private float _readAt = float.NegativeInfinity;
+        private Renderer[] _rs = new Renderer[0];
+        private readonly float _refreshSeconds;
+
+        public RendererCache(float refreshSeconds = 0.25f) { _refreshSeconds = refreshSeconds; }
+
+        public Renderer[] Of(Transform root)
+        {
+            if (root == null) return new Renderer[0];
+            if (!Application.isPlaying || root != _root || root.hierarchyCount != _count
+                || Time.time - _readAt >= _refreshSeconds)
+            {
+                _root = root; _count = root.hierarchyCount; _readAt = Time.time;
+                _rs = root.GetComponentsInChildren<Renderer>();
+            }
+            return _rs;
+        }
+    }
+
+    /// Union of the live renderers in `rs` (destroyed entries skipped). False when none.
+    public static bool TryUnion(Renderer[] rs, out Bounds b)
+    {
+        b = default; bool any = false;
+        for (int i = 0; i < rs.Length; i++)
+        {
+            if (rs[i] == null) continue;
+            if (!any) { b = rs[i].bounds; any = true; } else b.Encapsulate(rs[i].bounds);
+        }
+        return any;
+    }
+
     /// Union of a non-empty renderer list.
     public static Bounds OfRenderers(Renderer[] rs)
     {

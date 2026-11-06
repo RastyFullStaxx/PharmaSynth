@@ -403,14 +403,13 @@ public class DropperController : MonoBehaviour
 
     /// The dropper TIP — a hand-placed "DropperTip" child wins, else the far end
     /// of the tool's longest axis (never the transform origin: see class note).
+    private readonly BoundsUtil.RendererCache _probeRends = new BoundsUtil.RendererCache();
+
     private Vector3 ProbeCenter()
     {
         var anchor = transform.Find("DropperTip");
         if (anchor != null) return anchor.position;
-        var rs = GetComponentsInChildren<Renderer>();
-        if (rs.Length == 0) return transform.position;
-        var b = rs[0].bounds;
-        for (int i = 1; i < rs.Length; i++) b.Encapsulate(rs[i].bounds);
+        if (!BoundsUtil.TryUnion(_probeRends.Of(transform), out var b)) return transform.position;
         Vector3 axis = Matchstick.LongestLocalAxis(transform, b, out float halfLen);
         return b.center + axis * (halfLen * (tipAtPositiveEnd ? 1f : -1f));
     }

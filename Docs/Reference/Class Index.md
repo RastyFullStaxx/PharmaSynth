@@ -707,6 +707,15 @@ The plain "how big is this object" measure: the union of the renderer bounds of 
 
 ```csharp
 static Bounds OfRenderers(GameObject g, float fallbackSize
+```
+
+### `RendererCache` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/BoundsUtil.cs`</sub>
+
+Renderer list for bounds that are measured every frame. The bounds stay live (a renderer's bounds follow it as it moves); only the LIST is cached, re-read when the hierarchy changes or every `refreshSeconds` in Play mode, so a per-frame check no longer allocates a fresh array. Edit mode always re-reads.
+
+```csharp
+static bool TryUnion(Renderer[] rs, out Bounds b)
 static Bounds OfRenderers(Renderer[] rs)
 ```
 
@@ -737,6 +746,7 @@ An ignitable Bunsen/alcohol burner. Bring a lit matchstick to the burner and it 
 ```csharp
 const float MatchIgniteDistance
 bool IsLit
+static System.Collections.Generic.IReadOnlyList<BurnerController> Active
 static bool ShouldIgnite(bool burnerLit, bool matchLit, float distance)
 static bool ShouldBlowOut(bool lit, bool held)
 void Ignite()
@@ -1396,6 +1406,7 @@ A grabbable matchstick (manuscript: combustion/flammability tests, Exp 3/4/7 + t
 const float IgniteDistance
 const float IgniteTempC
 const float StrikeMinSpeed
+static System.Collections.Generic.IReadOnlyList<Matchstick> Active
 bool IsLit
 bool IsSpent
 static bool ShouldIgnite(float distance, float tempC, bool alreadyLit, bool spent)

@@ -59,6 +59,7 @@ public class GuidePath : MonoBehaviour
     private float _nextRepath;
     private Transform _cam;
     private PharmeeGatekeeper _gate;
+    private float _nextGateScan;
 
     /// Edit-mode / builder seam — AddComponent fires no Awake in edit mode (house rule).
     public void Bind(ExperimentRunner r, Material chevron) { runner = r; chevronMaterial = chevron; }
@@ -98,7 +99,8 @@ public class GuidePath : MonoBehaviour
         // Before the run starts the GATE owns the guidance: the locker, then the door.
         if (target == null)
         {
-            if (_gate == null) _gate = FindAnyObjectByType<PharmeeGatekeeper>();
+            if (_gate == null && (!Application.isPlaying || Time.time >= _nextGateScan))
+            { _nextGateScan = Time.time + 0.5f; _gate = FindAnyObjectByType<PharmeeGatekeeper>(); }
             if (_gate != null) target = _gate.GateGuideTarget;
         }
         if (target == null) { HideAll(); return; }

@@ -132,6 +132,7 @@ public class WaypointGuide : MonoBehaviour
 
     public string CurrentTargetTaskId { get; private set; }
     private PharmeeGatekeeper _gate;
+    private float _nextGateScan;
 
     private void Update()
     {
@@ -157,7 +158,8 @@ public class WaypointGuide : MonoBehaviour
         // Gear up, then the door: the gate's own destination before any run exists.
         if (station == null)
         {
-            if (_gate == null) _gate = FindAnyObjectByType<PharmeeGatekeeper>();
+            if (_gate == null && (!Application.isPlaying || Time.time >= _nextGateScan))
+            { _nextGateScan = Time.time + 0.5f; _gate = FindAnyObjectByType<PharmeeGatekeeper>(); }
             if (_gate != null) station = _gate.GateGuideTarget;
         }
         if (station == null) { Hide(); return; }

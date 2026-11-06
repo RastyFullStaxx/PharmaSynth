@@ -114,12 +114,19 @@ public class GrindController : MonoBehaviour
         return new Vector3(b.center.x, b.center.y + b.size.y * 0.12f, b.center.z);
     }
 
+    private readonly BoundsUtil.RendererCache _mortarRends = new BoundsUtil.RendererCache();
+    private readonly BoundsUtil.RendererCache _pestleRends = new BoundsUtil.RendererCache();
+    private float _nextPestleScan;
+
     private Bounds MortarBounds()
     {
-        var rends = GetComponentsInChildren<Renderer>();
-        Bounds b = rends.Length > 0 ? rends[0].bounds : new Bounds(transform.position, Vector3.one * 0.06f);
-        for (int i = 1; i < rends.Length; i++)
-            if (rends[i].name != "PowderHeap" && rends[i].name != "Powder") b.Encapsulate(rends[i].bounds);
+        var rends = _mortarRends.Of(transform);
+        int first = -1;
+        for (int i = 0; i < rends.Length && first < 0; i++) if (rends[i] != null) first = i;
+        if (first < 0) return new Bounds(transform.position, Vector3.one * 0.06f);
+        Bounds b = rends[first].bounds;
+        for (int i = first + 1; i < rends.Length; i++)
+            if (rends[i] != null && rends[i].name != "PowderHeap" && rends[i].name != "Powder") b.Encapsulate(rends[i].bounds);
         return b;
     }
 
@@ -128,10 +135,7 @@ public class GrindController : MonoBehaviour
     private Vector3 PestleTip(Vector3 to)
     {
         if (_pestle == null) return to + Vector3.up;
-        var rends = _pestle.GetComponentsInChildren<Renderer>();
-        if (rends.Length == 0) return _pestle.position;
-        var b = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
+        if (!BoundsUtil.TryUnion(_pestleRends.Of(_pestle), out var b)) return _pestle.position;
         return b.ClosestPoint(to);
     }
 
@@ -156,7 +160,9 @@ public class GrindController : MonoBehaviour
 
     private void Update()
     {
-        if (_pestle == null) AutoFindPestle();
+        // The scene-wide search only runs while nothing is bound; twice a second is enough.
+        if (_pestle == null && (!Application.isPlaying || Time.time >= _nextPestleScan))
+        { _nextPestleScan = Time.time + 0.5f; AutoFindPestle(); }
         if (_pestle == null) return;
         if (_runner != null && !string.IsNullOrEmpty(_taskId) && !_runner.IsRunning) return;
 

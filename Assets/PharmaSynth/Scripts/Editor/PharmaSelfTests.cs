@@ -6707,6 +6707,14 @@ public static class PharmaSelfTests
                 var f = BoundsUtil.OfRenderers(empty, 0.05f);
                 A("util: bounds are the union of every child renderer", Near(u.min.x, -0.5f) && Near(u.max.x, 2.5f));
                 A("util: no renderer gives a fallback cube at the object", Near(f.size.x, 0.05f) && Near(f.center.x, 5f));
+                var list = parent.GetComponentsInChildren<Renderer>();
+                var withHole = new Renderer[] { null, list[0], null, list[1] };
+                A("util: a cached renderer list skips destroyed entries",
+                    BoundsUtil.TryUnion(withHole, out var hb) && Near(hb.min.x, -0.5f) && Near(hb.max.x, 2.5f)
+                    && !BoundsUtil.TryUnion(new Renderer[] { null }, out _));
+                A("util: burners and matches are found by the scene search in edit mode",
+                    BurnerController.Active.Count == UnityEngine.Object.FindObjectsByType<BurnerController>().Length
+                    && Matchstick.Active.Count == UnityEngine.Object.FindObjectsByType<Matchstick>().Length);
             }
             finally { UnityEngine.Object.DestroyImmediate(parent); UnityEngine.Object.DestroyImmediate(empty); }
         }

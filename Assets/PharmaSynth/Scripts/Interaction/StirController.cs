@@ -71,13 +71,15 @@ public class StirController : MonoBehaviour
     /// handle end; tracking the ORIGIN missed the mouth entirely — the same
     /// latent bug that broke the grind, fixed the same way as
     /// GrindController.PestleTip; no tip anchor to place or drift).
-    private static Vector3 TipOf(Transform rod, Vector3 to)
+    private readonly System.Collections.Generic.Dictionary<Transform, BoundsUtil.RendererCache> _rodRends
+        = new System.Collections.Generic.Dictionary<Transform, BoundsUtil.RendererCache>();
+    private readonly BoundsUtil.RendererCache _vesselRends = new BoundsUtil.RendererCache();
+
+    private Vector3 TipOf(Transform rod, Vector3 to)
     {
         if (rod == null) return to + Vector3.up;
-        var rends = rod.GetComponentsInChildren<Renderer>();
-        if (rends.Length == 0) return rod.position;
-        var b = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
+        if (!_rodRends.TryGetValue(rod, out var cache)) _rodRends[rod] = cache = new BoundsUtil.RendererCache();
+        if (!BoundsUtil.TryUnion(cache.Of(rod), out var b)) return rod.position;
         return b.ClosestPoint(to);
     }
 
@@ -86,13 +88,7 @@ public class StirController : MonoBehaviour
     /// The stir axis: centre of the vessel's REAL bounds (bench glass keeps
     /// whatever pivot its model author left, rarely the body centre).
     private Vector3 MouthCenter()
-    {
-        var rends = GetComponentsInChildren<Renderer>();
-        if (rends.Length == 0) return transform.position;
-        var b = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
-        return b.center;
-    }
+        => BoundsUtil.TryUnion(_vesselRends.Of(transform), out var b) ? b.center : transform.position;
 
     /// True while the rod tip is inside the mouth band (vessel-relative).
     public bool RodInMouth()

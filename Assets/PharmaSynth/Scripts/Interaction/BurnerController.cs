@@ -16,6 +16,15 @@ public class BurnerController : MonoBehaviour
 
     public bool IsLit => _lit;
 
+    private static readonly System.Collections.Generic.List<BurnerController> s_live = new System.Collections.Generic.List<BurnerController>();
+    /// Every enabled burner. Play mode reads a list kept by OnEnable/OnDisable; edit mode
+    /// (simulators, tests) searches the scene, because edit-mode AddComponent never runs OnEnable.
+    public static System.Collections.Generic.IReadOnlyList<BurnerController> Active
+        => Application.isPlaying ? (System.Collections.Generic.IReadOnlyList<BurnerController>)s_live
+                                 : FindObjectsByType<BurnerController>();
+    private void OnEnable() { if (!s_live.Contains(this)) s_live.Add(this); }
+    private void OnDisable() => s_live.Remove(this);
+
     /// Pure ignition predicate (suite-pinned).
     public static bool ShouldIgnite(bool burnerLit, bool matchLit, float distance)
         => !burnerLit && matchLit && distance <= MatchIgniteDistance;
