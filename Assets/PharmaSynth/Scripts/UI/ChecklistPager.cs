@@ -79,7 +79,9 @@ public static class ChecklistPager
         return sb.ToString();
     }
 
-    public static string BuildFocusedText(TaskGraph graph)
+    /// `stepDetail`, when given, returns extra lines for a current step (the per-tube
+    /// rack breakdown); they print under that step's hint.
+    public static string BuildFocusedText(TaskGraph graph, System.Func<string, string> stepDetail = null)
     {
         if (graph == null) return string.Empty;
         TaskPhase? active = ActivePhase(graph);
@@ -116,6 +118,11 @@ public static class ChecklistPager
                     // the player exactly what to do.
                     if (graph.IsAvailable(t.taskId) && !string.IsNullOrWhiteSpace(t.hint))
                         sb.Append("    <size=78%><color=#AEB9CC>").Append(GlyphSafe.Sanitize(t.hint))
+                          .Append("</color></size>\n");
+                    string detail = graph.IsAvailable(t.taskId) ? stepDetail?.Invoke(t.taskId) : null;
+                    if (!string.IsNullOrWhiteSpace(detail))
+                        sb.Append("    <size=78%><color=#61D6FF>")
+                          .Append(GlyphSafe.Sanitize(detail).Replace("\n", "\n    "))
                           .Append("</color></size>\n");
                 }
             }

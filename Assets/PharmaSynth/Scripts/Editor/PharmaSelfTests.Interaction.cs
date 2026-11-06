@@ -741,10 +741,22 @@ public static partial class PharmaSelfTests
             string line = RackMath.RolesLine(named, done, 1, 3);
             A("watch: a shared step lists each tube it can name",
                 line.StartsWith("Tubes 1 of 3")
-                && line.Contains("✓ Ethanol") && line.Contains("-  n-Butyl Alcohol")
-                && !line.Contains("✓ Phenol"));
+                && line.Contains("• Ethanol") && line.Contains("□ n-Butyl Alcohol")
+                && !line.Contains("• Phenol"));
             A("watch: indistinguishable tubes fall back to the count",
                 RackMath.RolesLine(new List<string> { "", "", "", "" }, null, 2, 4) == "Tubes 2 of 4");
+
+            // The board prints the breakdown under the current step, and only there.
+            var g = new TaskGraph(new List<ExperimentTask> {
+                new ExperimentTask { taskId = "rack", label = "Add the alcohols", phase = TaskPhase.ChemicalTests,
+                                     prerequisites = new List<string>() },
+                new ExperimentTask { taskId = "later", label = "Observe", phase = TaskPhase.ChemicalTests,
+                                     prerequisites = new List<string> { "rack" } } });
+            string board = ChecklistPager.BuildFocusedText(g, id => id == "rack" || id == "later" ? line : "");
+            int at = board.IndexOf("Add the alcohols");
+            A("watch: the per-tube breakdown prints under the current step",
+                at >= 0 && board.IndexOf("Tubes 1 of 3") > at && board.IndexOf("Tubes 1 of 3") < board.IndexOf("Observe")
+                && board.IndexOf("Tubes 1 of 3") == board.LastIndexOf("Tubes 1 of 3"));
         }
 
         // ⛔ A rinsed vessel is a FREE vessel: the role goes back to the ledger and the

@@ -38,7 +38,8 @@ public static class RackMath
     /// The wrist checklist's per-tube breakdown, so the player can see which tube is
     /// still outstanding. Named roles tick off one at a time; roles that cannot be told
     /// apart (four identical permanganate tubes) honestly get the count alone. Pure so
-    /// the suite pins the text without a scene.
+    /// the suite pins the text without a scene. The marks are the checklist's own (• done,
+    /// □ outstanding) because the board's font has no check-mark glyph.
     public static string RolesLine(IReadOnlyList<string> tags, ICollection<string> served,
                                    int ready, int required)
     {
@@ -51,7 +52,7 @@ public static class RackMath
             if (string.IsNullOrEmpty(tags[i])) continue;
             named++;
             bool done = served != null && served.Contains(tags[i]);
-            sb.Append("\n  ").Append(done ? "\u2713 " : "-  ").Append(tags[i]);
+            sb.Append("\n  ").Append(done ? "\u2022 " : "\u25a1 ").Append(tags[i]);
         }
         return named > 0 ? sb.ToString() : head;
     }

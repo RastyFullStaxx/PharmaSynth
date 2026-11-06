@@ -139,9 +139,37 @@ public class WristWatchController : MonoBehaviour
             if (holoBody != null && runner.Graph != null)
                 holoBody.text = ChecklistPager.BuildObjectivesHeader(runner.Module)
                               + ChecklistPager.BuildMaterialsHeader(runner.Module)
-                              + ChecklistPager.BuildFocusedText(runner.Graph);
+                              + ChecklistPager.BuildFocusedText(runner.Graph, RackLine);
             if (holoReaction != null) holoReaction.text = GlyphSafe.Sanitize(balancedReaction);
         }
+    }
+
+    private RackTaskGroup[] _racks;
+    private float _racksReadAt = float.NegativeInfinity;
+
+    /// Per-tube breakdown for a step that a whole rack of tubes must satisfy, so the
+    /// player can see which tube is still outstanding. Empty for an ordinary step.
+    /// The board redraws every frame while open, so the rack list is re-read twice a second.
+    private string RackLine(string taskId)
+    {
+        if (_racks == null || !Application.isPlaying || Time.time - _racksReadAt > 0.5f)
+        { _racks = FindObjectsByType<RackTaskGroup>(); _racksReadAt = Time.time; }
+        foreach (var g in _racks)
+        {
+            if (g == null || g.TaskId != taskId || g.Members == null) continue;
+            var tags = new System.Collections.Generic.List<string>();
+            var served = new System.Collections.Generic.HashSet<string>();
+            foreach (var m in g.Members)
+            {
+                if (m == null) continue;
+                if (tags.Count == 0) tags = m.RoleTagsFor(taskId);
+                if (!m.ReadyFor(taskId)) continue;
+                string tag = m.ClaimedRoleTagFor(taskId);
+                if (!string.IsNullOrEmpty(tag)) served.Add(tag);
+            }
+            return RackMath.RolesLine(tags, served, RackMath.CountReady(g.Members, taskId), g.Required);
+        }
+        return "";
     }
 
     /// Park the holo board in front of the player's face, upright, readable.
