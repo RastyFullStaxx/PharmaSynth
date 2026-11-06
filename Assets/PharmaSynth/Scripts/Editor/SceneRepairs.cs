@@ -273,7 +273,7 @@ public static class SceneRepairs
         var runner = Object.FindAnyObjectByType<ExperimentRunner>(FindObjectsInactive.Include);
 
         int changed = 0;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t == null || !t.name.Contains("WashBottle")) continue;
             var host = t.gameObject;
@@ -316,7 +316,7 @@ public static class SceneRepairs
         var registry = AssetDatabase.LoadAssetAtPath<ReactionRegistry>(RegistryPath);
 
         int done = 0;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t == null || !ExperimentSceneBuilder.IsRoundBottom(t.name)) continue;
             foreach (var r in t.GetComponentsInChildren<MeshRenderer>(true))
@@ -363,7 +363,7 @@ public static class SceneRepairs
     static int FixFunnelsCore()
     {
         int n = 0;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t == null || !t.name.Contains("Funnel")) continue;
             if (t.GetComponent<LiquidPassthrough>() != null) { n++; continue; }
@@ -386,7 +386,7 @@ public static class SceneRepairs
     static int FixBalanceCore()
     {
         int changed = 0;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t == null || !t.name.Contains("Balance") || t.name.Contains("Digital")) continue;
             var go = t.gameObject;
@@ -466,7 +466,7 @@ public static class SceneRepairs
         int n = 0;
         QuizNavButtonsBuilder.Build();
 
-        var grade = Object.FindFirstObjectByType<GradeScreenController>(FindObjectsInactive.Include);
+        var grade = Object.FindAnyObjectByType<GradeScreenController>(FindObjectsInactive.Include);
         if (grade == null) return n;
         foreach (var tmp in grade.GetComponentsInChildren<TMP_Text>(true))
         {
@@ -508,7 +508,7 @@ public static class SceneRepairs
     static int FixVesselTagsCore()
     {
         int added = 0;
-        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
         {
             if (lp == null) continue;
             var go = lp.gameObject;

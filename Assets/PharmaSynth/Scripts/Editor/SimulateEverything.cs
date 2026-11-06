@@ -217,7 +217,7 @@ public static class SimulateEverything
 
         log.AppendLine("--- supply at start: can the bench satisfy each module at 0% progress? ---");
         var snapshot = new List<(LiquidPhysics lp, ChemicalData chem, float ml)>();
-        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
             snapshot.Add((lp, lp.currentChemical, lp.currentLiquidVolume));
 
         try
@@ -236,7 +236,7 @@ public static class SimulateEverything
                 foreach (var taskId in short_)
                 {
                     string chem = "?"; float need = 0f;
-                    foreach (var b in Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                    foreach (var b in Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include))
                     {
                         if (b == null || b.ExpectedSteps == null) continue;
                         foreach (var st in b.ExpectedSteps)
@@ -245,7 +245,7 @@ public static class SimulateEverything
                     }
                     // Count exactly what the monitor counts: unbound vessels of that name.
                     float avail = 0f; int bottles = 0;
-                    foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                    foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
                     {
                         if (lp == null || lp.currentChemical == null || lp.currentLiquidVolume <= 0f) continue;
                         if (lp.currentChemical.chemicalName != chem) continue;

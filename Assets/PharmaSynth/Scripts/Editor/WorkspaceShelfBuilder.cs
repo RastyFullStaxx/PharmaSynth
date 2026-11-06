@@ -28,7 +28,7 @@ public static class WorkspaceShelfBuilder
         // over the table — both the original single and the lower-row four)
         // and any previous WorkspaceShelf.
         int removed = 0;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t == null) continue;
             bool adHocPlank = (t.name.StartsWith("Shelf_1.3 (") || t.name.StartsWith("Shelf_0.5"))

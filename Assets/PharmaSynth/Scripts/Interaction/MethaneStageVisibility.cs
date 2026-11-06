@@ -83,7 +83,7 @@ public class MethaneStageVisibility : MonoBehaviour
         if (_gathered) return;
         _gathered = true;
         _looseProps.Clear();
-        foreach (var li in FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var li in FindObjectsByType<LabItem>(FindObjectsInactive.Include))
         {
             if (li == null || !PropItemIds.Contains(li.itemId)) continue;
             // Skip props already inside the stage (the stage toggle covers them);

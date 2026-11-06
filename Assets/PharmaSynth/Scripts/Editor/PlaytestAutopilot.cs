@@ -659,7 +659,7 @@ public static class PlaytestAutopilot
         // scene that plainly has two of them. Prefer an active one; say so when there is
         // none, because that is a different (and also interesting) fact.
         var manager = Object.FindAnyObjectByType<XRManager>(FindObjectsInactive.Include);
-        var all = Object.FindObjectsByType<NearFar>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var all = Object.FindObjectsByType<NearFar>(FindObjectsInactive.Include);
         NearFar interactor = null;
         foreach (var nf in all) { if (nf != null && nf.isActiveAndEnabled) { interactor = nf; break; } }
         bool usingInactive = false;
@@ -873,7 +873,7 @@ public static class PlaytestAutopilot
 
         // The distillate stream: keep the receiver at the delivery tube and the source at
         // temperature, then let VaporCollectController.Update run the condensation.
-        foreach (var v in Object.FindObjectsByType<VaporCollectController>(FindObjectsSortMode.None))
+        foreach (var v in Object.FindObjectsByType<VaporCollectController>())
         {
             if (v == null || v.VaporTaskId != id || v.Source == null) continue;
             var receiver = DestinationOf(id);
@@ -888,7 +888,7 @@ public static class PlaytestAutopilot
         }
 
         // CO2 into the limewater: the delivery tube stays in the tube.
-        foreach (var fc in Object.FindObjectsByType<FermentationController>(FindObjectsSortMode.None))
+        foreach (var fc in Object.FindObjectsByType<FermentationController>())
         {
             if (fc == null || fc.FermentTaskId != id || fc.Limewater == null) continue;
             var lime = DestinationOf(id);
@@ -898,14 +898,14 @@ public static class PlaytestAutopilot
         // The non-flammability confirm: the player keeps a lit flame at the sample until
         // it is satisfied that the liquid will not catch (Exp 7). One PollFlames inside a
         // single tick is a glance, not the act of holding it there.
-        foreach (var ft in Object.FindObjectsByType<VesselFlameTask>(FindObjectsSortMode.None))
+        foreach (var ft in Object.FindObjectsByType<VesselFlameTask>())
         {
             if (ft == null || ft.TaskId != id) continue;
             // ⛔ An ACTIVE burner only. Including inactive ones hands back the methane-only
             // Prop_burner, which is switched off in every other module — igniting it does
             // nothing and the dish gets carried to a hidden object instead of a flame.
             BurnerController burner = null;
-            foreach (var bu in Object.FindObjectsByType<BurnerController>(FindObjectsSortMode.None))
+            foreach (var bu in Object.FindObjectsByType<BurnerController>())
                 if (bu != null && bu.gameObject.activeInHierarchy) { burner = bu; break; }
             var dish = ft.GetComponent<LiquidPhysics>();
             if (burner == null || dish == null) continue;
@@ -915,9 +915,9 @@ public static class PlaytestAutopilot
         }
 
         // Heat / chill steps: the vessel stays in the bath or in the ice.
-        foreach (var h in Object.FindObjectsByType<VesselHeatTask>(FindObjectsSortMode.None))
+        foreach (var h in Object.FindObjectsByType<VesselHeatTask>())
             if (h != null && h.TaskId == id) HoldAtHeat(h.GetComponent<LiquidPhysics>(), 0.25f, h.RequiredC);
-        foreach (var c in Object.FindObjectsByType<VesselChillTask>(FindObjectsSortMode.None))
+        foreach (var c in Object.FindObjectsByType<VesselChillTask>())
             if (c != null && c.TaskId == id)
             {
                 var ice = Object.FindAnyObjectByType<IceBathController>();
@@ -1036,7 +1036,7 @@ public static class PlaytestAutopilot
 
     static void DriveGrade(PharmeeGatekeeper gate)
     {
-        var card = Object.FindFirstObjectByType<GradeScreenController>(FindObjectsInactive.Include);
+        var card = Object.FindAnyObjectByType<GradeScreenController>(FindObjectsInactive.Include);
         if (card == null) { StallCheck("ScoreReview but no GradeScreenController"); return; }
         s_reachedGrade = true;
         if (!Act("leave-grade:" + s_moduleIndex)) return;
@@ -1071,7 +1071,7 @@ public static class PlaytestAutopilot
         var es = Object.FindAnyObjectByType<EventSystem>();
         if (es == null) { Finding("no EventSystem in the scene — no UI anywhere can be clicked"); return; }
 
-        foreach (var b in Object.FindObjectsByType<Button>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        foreach (var b in Object.FindObjectsByType<Button>(FindObjectsInactive.Exclude))
         {
             if (b == null || !b.gameObject.activeInHierarchy || !b.interactable) continue;
             var canvas = b.GetComponentInParent<Canvas>();

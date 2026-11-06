@@ -27,7 +27,7 @@ public class FumeHoodStatusLabel : MonoBehaviour
         if (_label == null) _label = GetComponent<ProximityLabel>() ?? gameObject.AddComponent<ProximityLabel>();
         if (_zone == null || _label == null) return;
         string inside = null;
-        foreach (var lp in FindObjectsByType<LiquidPhysics>(FindObjectsSortMode.None))
+        foreach (var lp in FindObjectsByType<LiquidPhysics>())
             if (lp != null && _zone.Contains(lp.transform.position))
             { inside = Mishandling.DisplayNameFor(lp.gameObject); break; }
         _label.SetLabel(StatusLine(inside), 2.2f);

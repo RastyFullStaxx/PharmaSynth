@@ -96,7 +96,7 @@ public static class VoicePolish
     {
         if (Application.isPlaying) { Debug.LogWarning("[GateSync] exit Play mode first."); return; }
 
-        var gate = Object.FindFirstObjectByType<PharmeeGatekeeper>(FindObjectsInactive.Include);
+        var gate = Object.FindAnyObjectByType<PharmeeGatekeeper>(FindObjectsInactive.Include);
         if (gate == null) { Debug.LogError("[GateSync] no PharmeeGatekeeper in the open scene."); return; }
 
         var defaults = new PharmeeGatekeeper.GateLines();
@@ -148,7 +148,7 @@ public static class VoicePolish
     static List<string> SyncTourBeats()
     {
         var changes = new List<string>();
-        var guide = Object.FindFirstObjectByType<LabTourGuide>(FindObjectsInactive.Include);
+        var guide = Object.FindAnyObjectByType<LabTourGuide>(FindObjectsInactive.Include);
         if (guide == null) return changes;
 
         var so = new SerializedObject(guide);

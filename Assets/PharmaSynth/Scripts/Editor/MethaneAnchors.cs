@@ -18,26 +18,26 @@ public static class MethaneAnchors
 
         int flames = 0, scoops = 0;
 
-        foreach (var m in Object.FindObjectsByType<Matchstick>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var m in Object.FindObjectsByType<Matchstick>(FindObjectsInactive.Include))
             if (EnsureAnchor(m.gameObject, "FlameAnchor", TipGuess(m.gameObject, positiveEnd: false))) flames++;
 
-        foreach (var burner in Object.FindObjectsByType<BurnerController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var burner in Object.FindObjectsByType<BurnerController>(FindObjectsInactive.Include))
             if (EnsureAnchor(burner.gameObject, "FlameAnchor", BarrelTop(burner.gameObject))) flames++;
 
-        foreach (var s in Object.FindObjectsByType<ScoopController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var s in Object.FindObjectsByType<ScoopController>(FindObjectsInactive.Include))
             if (EnsureAnchor(s.gameObject, "ScoopAnchor", TipGuess(s.gameObject, positiveEnd: false))) scoops++;
 
         // Mortars get a BowlAnchor = where the ground powder + dust appear (you
         // drag it into the bowl so the heap sits right).
         int bowls = 0;
-        foreach (var g in Object.FindObjectsByType<GrindController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var g in Object.FindObjectsByType<GrindController>(FindObjectsInactive.Include))
             if (EnsureAnchor(g.gameObject, "BowlAnchor", BowlGuess(g.gameObject))) bowls++;
 
         // Solid RECEIVERS (the hard-glass tube) get a PowderAnchor: drag it where
         // the powder should sit AND SCALE it to set the powder's size by hand
         // Its scale = the size at a full charge.
         int powders = 0;
-        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include))
         {
             if (li == null || li.itemId != "glass-tube") continue;
             if (EnsureAnchor(li.gameObject, "PowderAnchor", BowlGuess(li.gameObject), PowderScale(li.gameObject)))
@@ -54,7 +54,7 @@ public static class MethaneAnchors
         //                   Its authored size = a FULL charge; runtime tints it
         //                   with the loaded chemical and drains it per squeeze.
         int tips = 0, liquids = 0;
-        foreach (var d in Object.FindObjectsByType<DropperController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var d in Object.FindObjectsByType<DropperController>(FindObjectsInactive.Include))
         {
             if (EnsureAnchor(d.gameObject, "DropperTip", TipGuess(d.gameObject, positiveEnd: false))) tips++;
             if (d.transform.Find("DropperLiquid") == null)

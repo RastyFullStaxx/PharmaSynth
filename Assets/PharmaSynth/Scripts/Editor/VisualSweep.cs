@@ -219,9 +219,9 @@ public static class VisualSweep
     /// Is any flame lit in the scene right now?
     public static bool AnyFlameLit()
     {
-        foreach (var b in Object.FindObjectsByType<BurnerController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var b in Object.FindObjectsByType<BurnerController>(FindObjectsInactive.Include))
             if (b != null && b.IsLit) return true;
-        foreach (var m in Object.FindObjectsByType<Matchstick>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var m in Object.FindObjectsByType<Matchstick>(FindObjectsInactive.Include))
             if (m != null && m.IsLit) return true;
         return false;
     }
@@ -231,7 +231,7 @@ public static class VisualSweep
         if (s_flameLatched) o.flameLit = true;
         if (AnyFlameLit()) o.flameLit = true;
 
-        foreach (var g in Object.FindObjectsByType<GasCollection>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var g in Object.FindObjectsByType<GasCollection>(FindObjectsInactive.Include))
             if (g != null && g.FillFraction > o.gasFill01) o.gasFill01 = g.FillFraction;
 
     }
@@ -258,7 +258,7 @@ public static class VisualSweep
                 o.powderOn = r.gameObject.activeInHierarchy && r.transform.localScale.sqrMagnitude > 1e-8f;
 
         Vector3 c = ExperimentSceneBuilder.SolidWorldBounds(lp.gameObject).center;
-        foreach (var ps in Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None))
+        foreach (var ps in Object.FindObjectsByType<ParticleSystem>())
         {
             if (ps == null || !ps.gameObject.activeInHierarchy) continue;
             if (ps.GetComponentInParent<AtmosphereVfx>() != null) continue;      // room haze is everywhere
@@ -267,13 +267,13 @@ public static class VisualSweep
             o.particles++;
             o.particleNames += ps.name + "(" + ps.particleCount + ") ";
         }
-        foreach (var fx in Object.FindObjectsByType<FloatingTextFx>(FindObjectsSortMode.None))
+        foreach (var fx in Object.FindObjectsByType<FloatingTextFx>())
         {
             if (fx == null || Vector3.Distance(fx.transform.position, c) > NearM) continue;
             var tmp = fx.GetComponent<TMPro.TMP_Text>();
             if (tmp != null && !string.IsNullOrEmpty(tmp.text)) o.popups += tmp.text + " | ";
         }
-        foreach (var sc in Object.FindObjectsByType<ScoopController>(FindObjectsSortMode.None))
+        foreach (var sc in Object.FindObjectsByType<ScoopController>())
         {
             if (sc == null || !sc.Carrying || Vector3.Distance(sc.BladeTip, c) > NearM) continue;
             var heap = sc.transform.Find("ScoopHeap");
@@ -340,7 +340,7 @@ public static class VisualSweep
         if (fastForwardFx) FastForwardFx(look);
         // A popup spawned THIS frame still faces world +Z until its LateUpdate — it
         // photographs mirrored. Turn every billboard near the vessel before rendering.
-        foreach (var fc in Object.FindObjectsByType<FaceCamera>(FindObjectsSortMode.None))
+        foreach (var fc in Object.FindObjectsByType<FaceCamera>())
             if (fc != null && fc.isActiveAndEnabled && Vector3.Distance(fc.transform.position, look) <= NearM)
                 fc.SendMessage("LateUpdate", SendMessageOptions.DontRequireReceiver);
 
@@ -381,7 +381,7 @@ public static class VisualSweep
 
     static void FastForwardFx(Vector3 near)
     {
-        foreach (var ps in Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None))
+        foreach (var ps in Object.FindObjectsByType<ParticleSystem>())
         {
             if (ps == null || !ps.gameObject.activeInHierarchy || !ps.isPlaying) continue;
             if (ps.GetComponentInParent<AtmosphereVfx>() != null) continue;

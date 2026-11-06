@@ -90,7 +90,7 @@ public class TubeRackSlots : MonoBehaviour
         if (_tubes == null || Time.time - _tubesScannedAt > 10f)
         {
             _tubes = new List<LabItem>();
-            foreach (var li in FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var li in FindObjectsByType<LabItem>(FindObjectsInactive.Include))
                 if (li != null && li.itemId == "kit-testtube") _tubes.Add(li);
             _tubesScannedAt = Time.time;
         }

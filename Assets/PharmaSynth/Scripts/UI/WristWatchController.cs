@@ -203,7 +203,7 @@ public class WristWatchController : MonoBehaviour
         foreach (var t in runner.Graph.AvailableTasks()) { guided = t.taskId; break; }
         if (string.IsNullOrEmpty(guided)) return "";
 
-        foreach (var g in Object.FindObjectsByType<RackTaskGroup>(FindObjectsSortMode.None))
+        foreach (var g in Object.FindObjectsByType<RackTaskGroup>())
         {
             if (g == null || g.TaskId != guided || g.Members == null) continue;
             var tags = new List<string>();

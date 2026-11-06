@@ -18,7 +18,7 @@ public static class HideStationPads
         if (Application.isPlaying) { Debug.LogWarning("[HidePads] exit Play mode first."); return; }
 
         int hidden = 0;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t == null || !t.name.StartsWith("Station_")) continue;
             var mr = t.GetComponent<MeshRenderer>();

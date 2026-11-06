@@ -37,7 +37,7 @@ public static class SolidJarFitter
     public static int FitAll(out string names)
     {
         int fitted = 0; names = "";
-        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
         {
             if (lp == null || !LabReset.IsReagent(lp.name) || !IsHeap(lp.currentChemical)) continue;
             bool had = lp.transform.Find("Powder") != null;

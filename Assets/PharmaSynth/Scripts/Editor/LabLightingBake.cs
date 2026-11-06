@@ -76,7 +76,7 @@ public static class LabLightingBake
     static int EnsureLightmapUVs()
     {
         var paths = new HashSet<string>();
-        foreach (var mf in Object.FindObjectsByType<MeshFilter>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var mf in Object.FindObjectsByType<MeshFilter>(FindObjectsInactive.Include))
         {
             if (mf.sharedMesh == null) continue;
             if (!IsBakeCandidate(mf.gameObject)) continue;
@@ -102,7 +102,7 @@ public static class LabLightingBake
     static void MarkStatics(out int marked, out int probeOnly)
     {
         marked = 0; probeOnly = 0;
-        foreach (var mr in Object.FindObjectsByType<MeshRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var mr in Object.FindObjectsByType<MeshRenderer>(FindObjectsInactive.Include))
         {
             var go = mr.gameObject;
             if (!IsBakeCandidate(go)) continue;
@@ -171,7 +171,7 @@ public static class LabLightingBake
     static int SetLightModes()
     {
         int n = 0;
-        foreach (var l in Object.FindObjectsByType<Light>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var l in Object.FindObjectsByType<Light>(FindObjectsInactive.Include))
         {
             if (l.GetComponentInParent<Canvas>() != null) continue;
             var want = l.type == LightType.Directional ? LightmapBakeType.Mixed : LightmapBakeType.Baked;
@@ -204,7 +204,7 @@ public static class LabLightingBake
         s.lightmapResolution = 40f;
         s.lightmapMaxSize = 2048;
         s.lightmapPadding = 16;
-        s.compressLightmaps = true;
+        s.lightmapCompression = LightmapCompression.NormalQuality;
         s.ao = true;                    // the contact darkening that actually grounds objects
         s.aoMaxDistance = 0.7f;
         s.aoExponentDirect = 0.6f;

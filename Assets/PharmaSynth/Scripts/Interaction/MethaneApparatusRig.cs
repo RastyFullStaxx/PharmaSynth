@@ -137,7 +137,7 @@ public class MethaneApparatusRig : MonoBehaviour
         Transform tube = FindByItemId("glass-tube");
         Transform collect = FindByItemId("collection-tube");
         Transform burner = FindByItemId("burner");
-        var match = FindObjectsByType<Matchstick>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var match = FindObjectsByType<Matchstick>(FindObjectsInactive.Include);
 
         // prepare-mixture lives on a mortar that only CARRIES the taskId while a
         // methane run is live — AcquireMortar stamps it on ExperimentStarted and
@@ -145,7 +145,7 @@ public class MethaneApparatusRig : MonoBehaviour
         // nothing whenever the map is built outside a run, and the very first step
         // of the tutorial would have no target. Resolve it by the same "first grind
         // verb" rule AcquireMortar uses, independent of run state.
-        foreach (var g in FindObjectsByType<GrindController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var g in FindObjectsByType<GrindController>(FindObjectsInactive.Include))
         {
             if (g == null) continue;
             Add("prepare-mixture", g.transform, TargetRole.Station, true);
@@ -182,7 +182,7 @@ public class MethaneApparatusRig : MonoBehaviour
 
     private Transform FindByItemId(string itemId)
     {
-        foreach (var li in FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var li in FindObjectsByType<LabItem>(FindObjectsInactive.Include))
             if (li != null && li.itemId == itemId) return li.transform;
         return null;
     }
@@ -192,7 +192,7 @@ public class MethaneApparatusRig : MonoBehaviour
     private void FindItems()
     {
         if (_tube != null && _collect != null) return;
-        foreach (var li in FindObjectsByType<LabItem>(FindObjectsSortMode.None))
+        foreach (var li in FindObjectsByType<LabItem>())
         {
             if (li == null) continue;
             if (_tube == null && li.itemId == "glass-tube") _tube = li.transform;
@@ -203,7 +203,7 @@ public class MethaneApparatusRig : MonoBehaviour
     private void AcquireMortar()
     {
         // The first mortar with a grind verb becomes the "prepare-mixture" mortar.
-        foreach (var g in FindObjectsByType<GrindController>(FindObjectsSortMode.None))
+        foreach (var g in FindObjectsByType<GrindController>())
         {
             if (g == null) continue;
             _mortar = g;

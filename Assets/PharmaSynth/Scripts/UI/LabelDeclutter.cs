@@ -91,7 +91,7 @@ public class LabelDeclutter : MonoBehaviour
         if (_cam == null) return;
 
         _visible.Clear(); _y.Clear(); _half.Clear(); _mpp.Clear();
-        foreach (var label in FindObjectsByType<ProximityLabel>(FindObjectsSortMode.None))
+        foreach (var label in FindObjectsByType<ProximityLabel>())
         {
             if (label == null) continue;
             var tag = label.Tag;

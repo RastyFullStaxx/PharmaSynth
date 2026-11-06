@@ -47,12 +47,12 @@ public static class VerbDataApplier
         int sceneChanges = 0;
         var runner = Object.FindAnyObjectByType<ExperimentRunner>();
         GameObject mortarGo = null, pestleGo = null, matchesBox = null;
-        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include))
         {
             if (li.itemId == "Eq_Motar" || li.name.Contains("Motar")) mortarGo = li.gameObject;
             if (li.itemId == "Eq_Pestle" || li.name.Contains("Pestle")) pestleGo = li.gameObject;
         }
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
             if (t.name.StartsWith("Raw_Matchsticks")) matchesBox = t.gameObject;
 
         if (mortarGo != null && pestleGo != null)
@@ -77,7 +77,7 @@ public static class VerbDataApplier
         // scene object carries one by default, so grabbing Eq_Dropper would do nothing.
         // Every Eq_Dropper* gets the verb: grip to hold, touch a bottle to draw,
         // TRIGGER to release exactly one counted drop.
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (!t.name.StartsWith("Eq_Dropper")) continue;
             if (t.GetComponent<DropperController>() == null)
@@ -91,7 +91,7 @@ public static class VerbDataApplier
         // Funnels are liquid PASS-THROUGH: without the marker the
         // pour ray landed ON the funnel's collider and wasted the stream as a
         // puddle there — a filter pour never reached the beaker underneath.
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (!t.name.StartsWith("Eq_Funnel") && !t.name.StartsWith("Funnel_")) continue;
             if (t.GetComponent<LiquidPassthrough>() == null)
@@ -114,7 +114,7 @@ public static class VerbDataApplier
         // water, put a lit burner beside it, and it warms any vessel brought
         // close — anywhere in the lab. Needs a liquid receiver (the water the
         // player pours), a heat model, its live label, and the controller.
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t.name != "WaterBath") continue;
             var host = t.gameObject;
@@ -156,7 +156,7 @@ public static class VerbDataApplier
         // The ICE BATH is the water bath's cold twin (Exp 4's
         // crystallisation): the hand-placed Raw_IceBucket chills any vessel
         // brought to it — zone-free, needs nothing lit or poured.
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t.name != "Raw_IceBucket") continue;
             var ilabel = t.GetComponent<ProximityLabel>() ?? t.gameObject.AddComponent<ProximityLabel>();
@@ -194,7 +194,7 @@ public static class VerbDataApplier
                     Vector3 sz = wvCol.size, cc = wvCol.center;
                     const float th = 0.03f, pad = 0.02f;
                     Vector3 benchCenter = Vector3.zero; int nb = 0;
-                    foreach (var tr in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                    foreach (var tr in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
                         if (tr.name.StartsWith("Raw_")) { benchCenter += tr.position; nb++; }
                     if (nb > 0) benchCenter /= nb;
                     float frontSign = Vector3.Dot(hood.transform.TransformDirection(Vector3.forward),
@@ -219,7 +219,7 @@ public static class VerbDataApplier
 
         // Exp 3's CO₂ delivery reach gets the same scalable zone anchor
         // (flask → limewater tube; FermentationController reads it).
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t.name != "FlorenceFlask") continue;
             sceneChanges += EnsureZoneAnchor(t, "FermentZone", FermentationMath.DeliveryRadius, new Color(0.7f, 1f, 0.5f, 0.9f));
@@ -228,7 +228,7 @@ public static class VerbDataApplier
         // NAKED FLAME (Exp 6 dry distillation): every burner heats
         // vessels held over its flame — the ONE heat source beyond the water
         // bath's 100 °C cap. That is what the hard-glass tubes exist for.
-        foreach (var bc in Object.FindObjectsByType<BurnerController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var bc in Object.FindObjectsByType<BurnerController>(FindObjectsInactive.Include))
         {
             if (bc.GetComponent<NakedFlameHeat>() == null)
             { bc.gameObject.AddComponent<NakedFlameHeat>().Bind(bc); sceneChanges++; }
@@ -236,7 +236,7 @@ public static class VerbDataApplier
 
         // THE BENCH BALANCE becomes the live weigh tool (Exp 6):
         // grams display + a pan trigger whose occupancy VesselWeighTask reads.
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t.name != "Eq_Balance") continue;
             Bounds BalBounds()

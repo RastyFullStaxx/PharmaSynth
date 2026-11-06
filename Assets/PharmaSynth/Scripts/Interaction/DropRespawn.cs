@@ -124,28 +124,28 @@ public class DropRespawn : MonoBehaviour
     public static void ResetAllHome()
     {
         // 1) Break apart any assembled apparatus so members are free to return.
-        foreach (var snap in FindObjectsByType<ApparatusSnap>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var snap in FindObjectsByType<ApparatusSnap>(FindObjectsInactive.Include))
         {
             int guard = 0;
             while (snap.DetachNewest() && guard++ < 64) { }
         }
         // 2) Every loose prop/reagent back to its home transform + home supply.
-        foreach (var dr in FindObjectsByType<DropRespawn>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var dr in FindObjectsByType<DropRespawn>(FindObjectsInactive.Include))
         {
             dr.Suspended = false;
             dr.GoHome();
         }
         // 3) PUT EVERY FLAME OUT — a burner must never still be burning after a
         //    reset, and no match may stay lit.
-        foreach (var b in FindObjectsByType<BurnerController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var b in FindObjectsByType<BurnerController>(FindObjectsInactive.Include))
             if (b != null) b.Extinguish();
-        foreach (var m in FindObjectsByType<Matchstick>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var m in FindObjectsByType<Matchstick>(FindObjectsInactive.Include))
             if (m != null && m.IsLit) m.Extinguish(true);
 
         // 4) Clear every USED consumable (struck matchsticks, litmus strips, filter
         //    paper, cotton swabs). Their dispensers immediately lay out a fresh one,
         //    so the bench returns to a clean, fully-stocked state.
-        foreach (var d in FindObjectsByType<DispensedConsumable>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var d in FindObjectsByType<DispensedConsumable>(FindObjectsInactive.Include))
             if (d != null) Destroy(d.gameObject);
     }
 

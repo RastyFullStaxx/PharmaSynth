@@ -229,7 +229,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
         var spl = striker.AddComponent<ProximityLabel>(); spl.SetLabel("Striker", 1.2f);
 
         GameObject template = null;
-        foreach (var t in FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in FindObjectsByType<Transform>(FindObjectsInactive.Include))
             if (t.name == "Template_Raw_Matchsticks") { template = t.gameObject; break; }
         if (template == null) return;
         for (int i = 0; i < 2; i++)
@@ -705,7 +705,7 @@ public class ExperimentSceneBuilder : MonoBehaviour
             list.Add(v);
         }
 
-        var allItems = FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var allItems = FindObjectsByType<LabItem>(FindObjectsInactive.Include);
 
         foreach (var kv in rolesByKey)
         {
@@ -1041,9 +1041,9 @@ public class ExperimentSceneBuilder : MonoBehaviour
     /// scene-wide because the bench lives OUTSIDE the stage — that is the whole point.
     private GameObject FindBenchItem(string name)
     {
-        foreach (var li in FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var li in FindObjectsByType<LabItem>(FindObjectsInactive.Include))
             if (li != null && li.name == name) return li.gameObject;
-        foreach (var t in FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in FindObjectsByType<Transform>(FindObjectsInactive.Include))
             if (t.name == name) return t.gameObject;
         return null;
     }
@@ -1056,60 +1056,60 @@ public class ExperimentSceneBuilder : MonoBehaviour
     /// if their wiring is torn down first.
     private void ClearBenchBindings()
     {
-        foreach (var b in FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var b in FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include))
         {
             if (b == null || (_stage != null && b.transform.IsChildOf(_stage))) continue;   // stage ones die with the stage
             b.Detach();   // DestroyImmediate skips OnDisable in edit mode → ghost subscriptions
             Kill(b);
         }
-        foreach (var g in FindObjectsByType<RackTaskGroup>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var g in FindObjectsByType<RackTaskGroup>(FindObjectsInactive.Include))
         {
             if (g == null || (_stage != null && g.transform.IsChildOf(_stage))) continue;
             Kill(g);
         }
-        foreach (var h in FindObjectsByType<VesselHeatTask>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var h in FindObjectsByType<VesselHeatTask>(FindObjectsInactive.Include))
         {
             if (h == null || (_stage != null && h.transform.IsChildOf(_stage))) continue;
             h.Detach();
             Kill(h);
         }
-        foreach (var fc in FindObjectsByType<FermentationController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var fc in FindObjectsByType<FermentationController>(FindObjectsInactive.Include))
         {
             if (fc == null || (_stage != null && fc.transform.IsChildOf(_stage))) continue;
             fc.Detach();
             Kill(fc);
         }
-        foreach (var ct in FindObjectsByType<VesselChillTask>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var ct in FindObjectsByType<VesselChillTask>(FindObjectsInactive.Include))
         {
             if (ct == null || (_stage != null && ct.transform.IsChildOf(_stage))) continue;
             ct.Detach();
             Kill(ct);
         }
-        foreach (var lt in FindObjectsByType<VesselLitmusTask>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var lt in FindObjectsByType<VesselLitmusTask>(FindObjectsInactive.Include))
         {
             if (lt == null || (_stage != null && lt.transform.IsChildOf(_stage))) continue;
             lt.Detach();
             Kill(lt);
         }
-        foreach (var wt in FindObjectsByType<VesselWeighTask>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var wt in FindObjectsByType<VesselWeighTask>(FindObjectsInactive.Include))
         {
             if (wt == null || (_stage != null && wt.transform.IsChildOf(_stage))) continue;
             wt.Detach();
             Kill(wt);
         }
-        foreach (var vc in FindObjectsByType<VaporCollectController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var vc in FindObjectsByType<VaporCollectController>(FindObjectsInactive.Include))
         {
             if (vc == null || (_stage != null && vc.transform.IsChildOf(_stage))) continue;
             vc.Detach();
             Kill(vc);
         }
-        foreach (var ft in FindObjectsByType<VesselFlameTask>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var ft in FindObjectsByType<VesselFlameTask>(FindObjectsInactive.Include))
         {
             if (ft == null || (_stage != null && ft.transform.IsChildOf(_stage))) continue;
             ft.Detach();
             Kill(ft);
         }
-        foreach (var sc in FindObjectsByType<StirController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var sc in FindObjectsByType<StirController>(FindObjectsInactive.Include))
         {
             if (sc == null || (_stage != null && sc.transform.IsChildOf(_stage))) continue;
             sc.Detach();

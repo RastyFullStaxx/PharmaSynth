@@ -89,7 +89,7 @@ public static class SimulatedRun
         // every vessel's contents first and restore after, or each edit-mode sim
         // permanently corrupts the saved scene's supplies.
         var snapshot = new List<(LiquidPhysics lp, ChemicalData chem, float ml, ChemicalData ppt, float pptMl)>();
-        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
             snapshot.Add((lp, lp.currentChemical, lp.currentLiquidVolume, lp.currentPptChemical, lp.currentPptVolume));
 
         // Real wiring, real graph — exactly what a campaign start does.
@@ -108,7 +108,7 @@ public static class SimulatedRun
         // shortcut: it performs the subscription play mode would have, then every
         // condition still has to be satisfied by the real verbs below.
         foreach (var rig in Object.FindObjectsByType<MethaneApparatusRig>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+                     FindObjectsInactive.Include))
             if (rig != null) rig.HandleExperimentStarted(module);
 
         var res = new Result { totalTasks = module.graphTasks.Count };
@@ -236,7 +236,7 @@ public static class SimulatedRun
     /// spatula 0.1 g) — the verb contract's tool choice, mirrored.
     static ScoopController FindScoopTool(float grams)
     {
-        foreach (var sc in Object.FindObjectsByType<ScoopController>(FindObjectsSortMode.None))
+        foreach (var sc in Object.FindObjectsByType<ScoopController>())
             if (sc != null && sc.gameObject.activeInHierarchy && !sc.name.StartsWith("Template_")
                 && Mathf.Abs(sc.GramsPerDip - grams) < 0.001f) return sc;
         return null;
@@ -291,7 +291,7 @@ public static class SimulatedRun
             // logged with its observation, so "did the violet discharge / did the
             // buff precipitate drop" is read straight off the log instead of being
             // proven only transitively by the next step's source lookup.
-            foreach (var wlp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var wlp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
             {
                 var cap = wlp;
                 System.Action<ReactionRule> h = rule =>
@@ -319,18 +319,18 @@ public static class SimulatedRun
             // lands on its collider as a puddle). The hints
             // tell the player to pour through the funnel, so a bad funnel breaks
             // the filter step even though a direct pour would work.
-            foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
                 if ((t.name.StartsWith("Eq_Funnel") || t.name.StartsWith("Funnel_"))
                     && t.GetComponent<LiquidPassthrough>() == null)
                     res.bugs.Add(t.name + " has NO LiquidPassthrough — a pour through it is wasted (run Apply Verb Data)");
 
             // Index the mechanisms the build produced.
-            var bindings = Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            Racks = Object.FindObjectsByType<RackTaskGroup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            SimStations = Object.FindObjectsByType<ZoneSimStation>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            ZoneStations = Object.FindObjectsByType<ExperimentTaskStation>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            Temps = Object.FindObjectsByType<TemperatureSim>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-            LabItems = Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var bindings = Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include);
+            Racks = Object.FindObjectsByType<RackTaskGroup>(FindObjectsInactive.Include);
+            SimStations = Object.FindObjectsByType<ZoneSimStation>(FindObjectsInactive.Include);
+            ZoneStations = Object.FindObjectsByType<ExperimentTaskStation>(FindObjectsInactive.Include);
+            Temps = Object.FindObjectsByType<TemperatureSim>(FindObjectsInactive.Include);
+            LabItems = Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include);
 
             StepsByTask = new Dictionary<string, List<(LiquidTaskBinding b, LiquidTaskBinding.ReagentStep s)>>();
             foreach (var b in bindings)
@@ -634,7 +634,7 @@ public static class SimulatedRun
         {
             var bathLp = bath.GetComponentInChildren<LiquidPhysics>();
             ChemicalData water = null;
-            foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
                 if (lp != null && lp.currentChemical != null && lp.currentChemical.chemicalName == "Distilled Water"
                     && lp.GetComponent<LiquidTaskBinding>() == null)
                 { water = lp.currentChemical;
@@ -688,7 +688,7 @@ public static class SimulatedRun
         List<(LiquidTaskBinding b, LiquidTaskBinding.ReagentStep s)> steps, Result res, StringBuilder log)
     {
         FermentationController fc = null;
-        foreach (var f in Object.FindObjectsByType<FermentationController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var f in Object.FindObjectsByType<FermentationController>(FindObjectsInactive.Include))
             if (f != null && f.FermentTaskId == id) { fc = f; break; }
         if (fc == null) return false;
 
@@ -741,7 +741,7 @@ public static class SimulatedRun
                 if (h != null && h.TaskId == id) { heat = h; tube = b.GetComponent<LiquidPhysics>(); break; }
             }
         if (heat == null)
-            foreach (var h in Object.FindObjectsByType<VesselHeatTask>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var h in Object.FindObjectsByType<VesselHeatTask>(FindObjectsInactive.Include))
                 if (h != null && h.TaskId == id) { heat = h; tube = h.GetComponent<LiquidPhysics>(); break; }
         if (heat == null || tube == null) return false;
         Note("heat", tube, heat.RequiredC);
@@ -806,7 +806,7 @@ public static class SimulatedRun
     static bool SimulateChillTask(ExperimentRunner runner, string id, Result res, StringBuilder log)
     {
         VesselChillTask chill = null;
-        foreach (var c in Object.FindObjectsByType<VesselChillTask>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var c in Object.FindObjectsByType<VesselChillTask>(FindObjectsInactive.Include))
             if (c != null && c.TaskId == id) { chill = c; break; }
         if (chill == null) return false;
 
@@ -858,12 +858,12 @@ public static class SimulatedRun
         // and at least one dispensable strip must CARRY the LitmusStrip
         // component with a collider, or a real touch can never register.
         bool boxOnBench = false;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
             if (t.name.StartsWith("Raw_LitmusPaper")) { boxOnBench = true; break; }
         if (!boxOnBench)
             res.bugs.Add(id + ": no Raw_LitmusPaper box on the bench — the player has no strip to test with");
         bool stripWired = false;
-        foreach (var st in Object.FindObjectsByType<LitmusStrip>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var st in Object.FindObjectsByType<LitmusStrip>(FindObjectsInactive.Include))
             if (st != null && st.GetComponentInChildren<Collider>(true) != null) { stripWired = true; break; }
         if (!stripWired)
             res.bugs.Add(id + ": no litmus strip in the scene carries a Collider — a physical touch can never register in play");
@@ -873,7 +873,7 @@ public static class SimulatedRun
         // renderer-less stand-in.
         LitmusStrip real = null;
         if (Application.isPlaying)
-            foreach (var st in Object.FindObjectsByType<LitmusStrip>(FindObjectsSortMode.None))
+            foreach (var st in Object.FindObjectsByType<LitmusStrip>())
                 if (st != null && !st.Used && st.gameObject.activeInHierarchy && !st.name.StartsWith("Template_"))
                 { real = st; break; }
         if (real != null)
@@ -919,7 +919,7 @@ public static class SimulatedRun
     static bool SimulateStir(ExperimentRunner runner, string id, Result res, StringBuilder log)
     {
         StirController stir = null;
-        foreach (var s in Object.FindObjectsByType<StirController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var s in Object.FindObjectsByType<StirController>(FindObjectsInactive.Include))
             if (s != null && s.TaskId == id) { stir = s; break; }
         if (stir == null) return false;
         Note("stir", stir.GetComponent<LiquidPhysics>());
@@ -950,7 +950,7 @@ public static class SimulatedRun
     static bool SimulateGrind(ExperimentRunner runner, string id, Result res, StringBuilder log)
     {
         GrindController grind = null;
-        foreach (var g in Object.FindObjectsByType<GrindController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var g in Object.FindObjectsByType<GrindController>(FindObjectsInactive.Include))
             if (g != null && g.TaskId == id) { grind = g; break; }
         if (grind == null) return false;
         Note("grind", grind.GetComponent<LiquidPhysics>());
@@ -1075,7 +1075,7 @@ public static class SimulatedRun
                 Matchstick match = null;
                 if (id == "test-gas")
                 {
-                    foreach (var m in Object.FindObjectsByType<Matchstick>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                    foreach (var m in Object.FindObjectsByType<Matchstick>(FindObjectsInactive.Include))
                         if (m != null) { match = m; break; }
                     if (match == null)
                     {
@@ -1095,7 +1095,7 @@ public static class SimulatedRun
                 // runs neither, so the sim drives both — a burner held to a tube that
                 // never warms is not a game bug, it is a missing frame.
                 var sims = Object.FindObjectsByType<TemperatureSim>(
-                    FindObjectsInactive.Include, FindObjectsSortMode.None);
+                    FindObjectsInactive.Include);
                 for (int i = 0; i < 1200 && !runner.Graph.IsComplete(id); i++)
                 {
                     rig.Step(0.05f);
@@ -1131,7 +1131,7 @@ public static class SimulatedRun
 
     static Transform FindItemTransform(string itemId)
     {
-        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include))
             if (li != null && li.itemId == itemId) return li.transform;
         return null;
     }
@@ -1188,7 +1188,7 @@ public static class SimulatedRun
         Dictionary<LiquidTaskBinding, float> pouredInto, Result res, StringBuilder log)
     {
         VaporCollectController vapor = null;
-        foreach (var v in Object.FindObjectsByType<VaporCollectController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var v in Object.FindObjectsByType<VaporCollectController>(FindObjectsInactive.Include))
             if (v != null && v.VaporTaskId == id) { vapor = v; break; }
         if (vapor == null) return false;
 
@@ -1256,7 +1256,7 @@ public static class SimulatedRun
                 if (w != null && w.TaskId == id) { weigh = w; tube = b.GetComponent<LiquidPhysics>(); break; }
             }
         if (weigh == null)
-            foreach (var w in Object.FindObjectsByType<VesselWeighTask>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var w in Object.FindObjectsByType<VesselWeighTask>(FindObjectsInactive.Include))
                 if (w != null && w.TaskId == id) { weigh = w; tube = w.GetComponent<LiquidPhysics>(); break; }
         if (weigh == null || tube == null) return false;
 
@@ -1296,7 +1296,7 @@ public static class SimulatedRun
         foreach (var t in runner.Graph.Tasks) if (t.taskId == filterTaskId) filterTask = t;
         if (filterTask == null) return;
 
-        var bindings = Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var bindings = Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include);
         LiquidPhysics src = null, dst = null;
         foreach (var b in bindings)
         {
@@ -1375,7 +1375,7 @@ public static class SimulatedRun
     static LiquidPhysics FindSource(ChemicalData chem, LiquidPhysics destination)
     {
         LiquidPhysics product = null, chillV = null, washed = null, vessel = null, wash = null, shelf = null;
-        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
         {
             if (lp == null || lp == destination || lp.currentChemical != chem
                 || lp.currentLiquidVolume <= 0.01f || lp.name.StartsWith("Vessel_")) continue;
@@ -1440,7 +1440,7 @@ public static class SimulatedRun
             // Heat stations gate on a LIT burner (ignition gate) — the player's
             // match-strike becomes an Ignite() call here. Snuffed after, so the
             // scene isn't left with burning burners.
-            var burners = Object.FindObjectsByType<BurnerController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var burners = Object.FindObjectsByType<BurnerController>(FindObjectsInactive.Include);
             if (st.Kind == StationSim.Heat)
             {
                 foreach (var bu in burners) if (bu != null) bu.Ignite();
@@ -1471,7 +1471,7 @@ public static class SimulatedRun
             // this task, which is what fires their high-threshold pending
             // reactions (the aspirin hydrolysis needs 90 C — only here).
             if (st.Kind == StationSim.Heat)
-                foreach (var b2 in Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                foreach (var b2 in Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include))
                     foreach (var s2 in b2.ExpectedSteps)
                     {
                         if (s2 == null || s2.taskId != id) continue;
@@ -1522,7 +1522,7 @@ public static class SimulatedRun
                               Result res, StringBuilder log)
     {
         log.AppendLine("\n--- supply audit (post-run: consumed vs left in the bottle) ---");
-        var sources = Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var sources = Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include);
         foreach (var kv in demand)
         {
             LiquidPhysics best = null;

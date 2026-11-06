@@ -164,7 +164,7 @@ public static class TubeRackSlotBuilder
     }
 
     static List<LabItem> AllWithItemId(string id)
-        => Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+        => Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include)
                  .Where(li => li != null && li.itemId == id).ToList();
 
 }

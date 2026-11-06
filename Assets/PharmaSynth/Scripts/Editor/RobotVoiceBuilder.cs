@@ -144,7 +144,7 @@ public static class RobotVoiceBuilder
     {
         var list = new System.Collections.Generic.List<AudioSource>();
         foreach (var n in Object.FindObjectsByType<NPCNarrationController>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+                     FindObjectsInactive.Include))
         {
             if (n == null || IsJimenez(n.transform)) continue;
             var so = new SerializedObject(n);

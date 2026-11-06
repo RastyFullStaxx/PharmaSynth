@@ -19,7 +19,7 @@ public static class QuizNavButtonsBuilder
     {
         if (Application.isPlaying) { Debug.LogWarning("[QuizNav] exit Play mode first."); return; }
 
-        var post = Object.FindFirstObjectByType<PostLabController>(FindObjectsInactive.Include);
+        var post = Object.FindAnyObjectByType<PostLabController>(FindObjectsInactive.Include);
         if (post == null) { Debug.LogError("[QuizNav] PostLabController not found."); return; }
 
         var so = new SerializedObject(post);

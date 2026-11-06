@@ -58,11 +58,11 @@ public static class RemoveVrInappropriateApparatus
 
         var ids = new HashSet<string>(Removed.Select(r => r.itemId));
         var kill = new List<GameObject>();
-        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include))
             if (li != null && !string.IsNullOrEmpty(li.itemId) && ids.Contains(li.itemId)) kill.Add(li.gameObject);
         // By-name items (no itemId) — CONTAINS so it catches both `Eq_IronRing`
         // and `IronRing_2` (StartsWith missed the Eq_-prefixed one).
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
             foreach (var nm in RemovedByName)
                 if (t != null && t.name.Replace("_", "").IndexOf(nm, System.StringComparison.OrdinalIgnoreCase) >= 0
                     && !kill.Contains(t.gameObject))

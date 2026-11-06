@@ -33,11 +33,11 @@ public static class MethanePlaytestFix
 
         // Find a pestle to drive the mortar's grind verb.
         Transform pestle = null;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
             if (IsKind(t.gameObject, "Pestle")) { pestle = t; break; }
 
         int burners = 0, strikers = 0, jars = 0, grinders = 0, scoops = 0, mortars = 0;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             var go = t.gameObject;
             bool isBurner = IsKind(go, "BunsenBurner") || IsKind(go, "AlcoholBurner");

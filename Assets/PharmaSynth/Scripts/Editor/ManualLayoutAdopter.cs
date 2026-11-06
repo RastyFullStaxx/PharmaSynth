@@ -64,11 +64,11 @@ public static class ManualLayoutAdopter
         // Longest-first so "TestTubeRack" wins over "TestTube".
         var known = RealSizes.Names.OrderByDescending(n => n.Length).ToArray();
         var taken = new HashSet<string>(
-            Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            Object.FindObjectsByType<Transform>(FindObjectsInactive.Include)
                   .Select(t => t.name));
         int renamed = 0;
 
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t == null) continue;
             var go = t.gameObject;
@@ -183,7 +183,7 @@ public static class ManualLayoutAdopter
         // Park it beside a graduated cylinder ("place it near the
         // graduated cylinder and I'll adjust manually").
         Transform anchor = null;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
             if (t.name.Contains("GraduatedCylinder")) { anchor = t; break; }
         var inst = (GameObject)Object.Instantiate(prefab);
         inst.name = "DistillingFlask";

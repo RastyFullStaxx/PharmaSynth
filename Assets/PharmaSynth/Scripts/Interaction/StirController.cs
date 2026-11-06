@@ -111,7 +111,7 @@ public class StirController : MonoBehaviour
     private void FindRodCandidates()
     {
         _rodCandidates.Clear();
-        foreach (var li in FindObjectsByType<LabItem>(FindObjectsSortMode.None))
+        foreach (var li in FindObjectsByType<LabItem>())
         {
             if (li == null) continue;
             string id = ((li.itemId ?? "") + " " + (li.displayName ?? "") + " " + li.name).ToLowerInvariant();

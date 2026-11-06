@@ -55,7 +55,7 @@ public class DevExperimentDriver : MonoBehaviour
         var gate = FindAnyObjectByType<PharmeeGatekeeper>();
         string line = gate != null ? gate.Lines.labTour : new PharmeeGatekeeper.GateLines().labTour;
 
-        foreach (var n in FindObjectsByType<NPCNarrationController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var n in FindObjectsByType<NPCNarrationController>(FindObjectsInactive.Include))
         {
             if (n == null) continue;
             bool isJimenez = false;

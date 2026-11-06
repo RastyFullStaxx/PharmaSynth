@@ -47,7 +47,7 @@ public class OverheatEffects : MonoBehaviour
         if (TutorialSession.Active) return;
         LiquidPhysics best = null;
         float bestSq = 0.45f * 0.45f;
-        foreach (var lp in FindObjectsByType<LiquidPhysics>(FindObjectsSortMode.None))
+        foreach (var lp in FindObjectsByType<LiquidPhysics>())
         {
             float sq = (lp.transform.position - transform.position).sqrMagnitude;
             if (sq < bestSq && lp.currentLiquidVolume > 0.5f) { bestSq = sq; best = lp; }

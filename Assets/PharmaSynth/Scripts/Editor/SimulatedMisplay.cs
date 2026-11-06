@@ -53,7 +53,7 @@ public static class SimulatedMisplay
         // The probes DRAIN real bottles like the run sim does; snapshot and restore or an
         // edit-mode pass permanently corrupts the saved scene's supplies.
         var snapshot = new List<(LiquidPhysics lp, ChemicalData chem, float ml, ChemicalData ppt, float pptMl)>();
-        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
             snapshot.Add((lp, lp.currentChemical, lp.currentLiquidVolume, lp.currentPptChemical, lp.currentPptVolume));
 
         try
@@ -226,7 +226,7 @@ public static class SimulatedMisplay
         // probe then blamed the monitor for correctly seeing no shortfall.
         string want = step.reagent.chemicalName;
         var drained = new List<LiquidPhysics>();
-        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
         {
             if (lp == null || lp.currentChemical == null) continue;
             if (lp.currentChemical.chemicalName != want) continue;
@@ -347,7 +347,7 @@ public static class SimulatedMisplay
         step = null;
         if (runner == null || runner.Graph == null) return null;
         foreach (var t in runner.Graph.AvailableTasks())
-            foreach (var b in Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var b in Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include))
             {
                 if (b == null || b.ExpectedSteps == null) continue;
                 foreach (var s in b.ExpectedSteps)
@@ -387,7 +387,7 @@ public static class SimulatedMisplay
     static LiquidPhysics FindSourceOf(ChemicalData chem, LiquidPhysics destination)
     {
         if (chem == null) return null;
-        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
         {
             if (lp == null || lp == destination || lp.currentChemical != chem) continue;
             if (lp.currentLiquidVolume <= 0.5f) continue;

@@ -66,7 +66,7 @@ public class VaporCollectController : MonoBehaviour
         if (!VaporMath.Fires(_source.currentTempC, _requiredC, _source.currentLiquidVolume)) return;
 
         LiquidPhysics receiver = null; float best = float.MaxValue; bool bestHeld = false;
-        foreach (var b in FindObjectsByType<LiquidTaskBinding>(FindObjectsSortMode.None))
+        foreach (var b in FindObjectsByType<LiquidTaskBinding>())
         {
             var lp = b.GetComponent<LiquidPhysics>();
             if (lp == null || lp == _source) continue;

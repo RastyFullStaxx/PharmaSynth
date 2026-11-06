@@ -139,10 +139,10 @@ public static class TutorialTargets
         //     ScoopController deliberately has no taskId of its own: it completes via
         //     AddLiquid on the target vessel, so it is covered here rather than below.
         var vessels = Object.FindObjectsByType<LiquidPhysics>(
-            FindObjectsInactive.Include, FindObjectsSortMode.None);
+            FindObjectsInactive.Include);
 
         foreach (var b in Object.FindObjectsByType<LiquidTaskBinding>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+                     FindObjectsInactive.Include))
         {
             if (b == null) continue;
 
@@ -205,7 +205,7 @@ public static class TutorialTargets
         //     publishes its own map (see MethaneApparatusRig.RegisterTutorialTargets)
         //     and we call it here, keeping ONE registry lifetime.
         foreach (var rig in Object.FindObjectsByType<MethaneApparatusRig>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+                     FindObjectsInactive.Include))
             if (rig != null) rig.RegisterTutorialTargets();
 
         // --- A station that demands a specific prop also points at the prop itself.
@@ -213,9 +213,9 @@ public static class TutorialTargets
         //     sensor for rigs (burner-in-zone, tube-in-place) and carries no taskId at
         //     all, so it cannot say which STEP a tool belongs to.
         var items = Object.FindObjectsByType<LabItem>(
-            FindObjectsInactive.Include, FindObjectsSortMode.None);
+            FindObjectsInactive.Include);
         foreach (var st in Object.FindObjectsByType<ExperimentTaskStation>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+                     FindObjectsInactive.Include))
         {
             if (st == null || string.IsNullOrEmpty(st.TaskId) || string.IsNullOrEmpty(st.RequiredItemId)) continue;
             foreach (var it in items)
@@ -245,7 +245,7 @@ public static class TutorialTargets
                                         VerbKind verb = VerbKind.Place) where T : Component
     {
         foreach (var c in Object.FindObjectsByType<T>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+                     FindObjectsInactive.Include))
         {
             if (c == null) continue;
             string id = taskIdOf(c);

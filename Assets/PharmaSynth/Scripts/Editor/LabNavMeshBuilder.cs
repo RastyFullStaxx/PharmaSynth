@@ -117,7 +117,7 @@ public static class LabNavMeshBuilder
         var b = new Bounds();
         bool first = true;
         foreach (var r in Object.FindObjectsByType<MeshRenderer>(
-                     FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                     FindObjectsInactive.Exclude))
         {
             if (first) { b = r.bounds; first = false; } else b.Encapsulate(r.bounds);
         }

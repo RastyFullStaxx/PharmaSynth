@@ -80,10 +80,10 @@ public class VesselFlameTask : MonoBehaviour
         if (_confirmed || _lp == null || _runner == null || _runner.Graph == null) return false;
         if (!_runner.Graph.IsAvailable(_taskId) || _runner.Graph.IsComplete(_taskId)) return false;
         bool served = _binding == null || _binding.ReadyFor(_taskId);
-        foreach (var m in FindObjectsByType<Matchstick>(FindObjectsSortMode.None))
+        foreach (var m in FindObjectsByType<Matchstick>())
             if (m != null && FlameTestMath.Confirms(served, m.IsLit, MatchDistance(m)))
                 return Confirm();
-        foreach (var bu in FindObjectsByType<BurnerController>(FindObjectsSortMode.None))
+        foreach (var bu in FindObjectsByType<BurnerController>())
             if (bu != null && FlameTestMath.Confirms(served, bu.IsLit,
                     Vector3.Distance(FlameTestMath.FlamePos(bu), _lp.transform.position)))
                 return Confirm();

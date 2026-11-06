@@ -200,13 +200,13 @@ public static class JimenezHudPortraitBuilder
         var examiner = Object.FindAnyObjectByType<ExaminerNPC>(FindObjectsInactive.Include);
         if (examiner != null) jimenez = examiner.GetComponentInChildren<NPCNarrationController>(true);
         if (jimenez == null)
-            foreach (var n in Object.FindObjectsByType<NPCNarrationController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var n in Object.FindObjectsByType<NPCNarrationController>(FindObjectsInactive.Include))
                 if (n.name.Contains("Jimenez")) { jimenez = n; break; }
 
         var pharmeeIcon = AssetDatabase.LoadAssetAtPath<Sprite>(PharmeeIconPath);
         var jimenezIcon = AssetDatabase.LoadAssetAtPath<Sprite>(IconPath);
         NPCNarrationController pharmee = null;
-        foreach (var n in Object.FindObjectsByType<NPCNarrationController>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var n in Object.FindObjectsByType<NPCNarrationController>(FindObjectsInactive.Include))
             if (n.name.Contains("Pharmee")) { pharmee = n; break; }
 
         var extras = jimenez != null

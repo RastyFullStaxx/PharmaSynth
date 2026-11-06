@@ -63,7 +63,7 @@ public class TutorialHighlighter : MonoBehaviour
         // Cached per run, not per poll: the sweep is over every grabbable in the lab
         // (~79 of them), and the set only changes when the stage is rebuilt.
         _allHighlights = Object.FindObjectsByType<HoverHighlight>(
-            FindObjectsInactive.Include, FindObjectsSortMode.None);
+            FindObjectsInactive.Include);
     }
 
     private HoverHighlight[] _allHighlights;

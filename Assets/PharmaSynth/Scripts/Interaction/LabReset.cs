@@ -52,7 +52,7 @@ public static class LabReset
     public static int ResetApparatus()
     {
         int n = 0;
-        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
         {
             if (!IsUsedVessel(lp)) continue;
             n++;

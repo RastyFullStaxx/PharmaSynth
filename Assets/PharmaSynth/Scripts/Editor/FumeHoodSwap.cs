@@ -25,7 +25,7 @@ public static class FumeHoodSwap
         if (prefab == null) { Debug.LogWarning("[HoodSwap] FumeHoodOpen.prefab not found."); return; }
 
         GameObject standIn = null, oldModel = null;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t.name == "FumeHood_StandIn") standIn = t.gameObject;
             if (t.name == "FumeHoodModel") oldModel = t.gameObject;
@@ -81,7 +81,7 @@ public static class FumeHoodSwap
         // bottles (same heuristic the HoodShell used). Tripo fronts are +Z by
         // convention; if the opening ends up backwards, rotate this child 180°.
         Vector3 benchCenter = Vector3.zero; int nb = 0;
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
             if (t.name.StartsWith("Raw_") && t.name != "Raw_IceBucket") { benchCenter += t.position; nb++; }
         if (nb > 0)
         {

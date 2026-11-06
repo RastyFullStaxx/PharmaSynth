@@ -82,7 +82,7 @@ public class Matchstick : MonoBehaviour
         if (Time.time < _nextScan) return;
         _nextScan = Time.time + 0.5f;
 
-        foreach (var sim in FindObjectsByType<TemperatureSim>(FindObjectsSortMode.None))
+        foreach (var sim in FindObjectsByType<TemperatureSim>())
         {
             float d = Vector3.Distance(transform.position, sim.transform.position);
             if (ShouldIgnite(d, sim.AtLeast(IgniteTempC) ? IgniteTempC : 0f, _lit, _spent))

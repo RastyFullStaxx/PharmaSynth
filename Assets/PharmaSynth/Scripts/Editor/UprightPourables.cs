@@ -154,7 +154,7 @@ public static class UprightPourables
         int straightened = 0, rehomed = 0;
         string names = "";
         foreach (var pr in Object.FindObjectsByType<LiquidPourer>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+                     FindObjectsInactive.Include))
         {
             if (pr == null) continue;
 
@@ -192,7 +192,7 @@ public static class UprightPourables
         int pivoted = 0; string pivotNotes = "";
         var toSeat = new HashSet<GameObject>();
         foreach (var li in Object.FindObjectsByType<LabItem>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+                     FindObjectsInactive.Include))
         {
             if (li == null || !li.gameObject.activeInHierarchy) continue;
             if (!RePivot(li.gameObject, out string note)) continue;
@@ -205,7 +205,7 @@ public static class UprightPourables
         // half a metre from its pivot cannot be seated, because seating moves the pivot and the
         // mesh keeps the offset.
         foreach (var pr in Object.FindObjectsByType<LiquidPourer>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+                     FindObjectsInactive.Include))
             if (pr != null && pr.gameObject.activeInHierarchy) toSeat.Add(pr.gameObject);
         int seated = 0; string seatNotes = "";
         foreach (var go in toSeat)

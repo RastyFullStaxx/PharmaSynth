@@ -167,7 +167,7 @@ public static class CompactHudBuilder
     static System.Collections.Generic.List<string> FoldDemoButtonsIn(RectTransform hud)
     {
         var found = new System.Collections.Generic.List<string>();
-        var demo = Object.FindFirstObjectByType<DemoHudController>(FindObjectsInactive.Include);
+        var demo = Object.FindAnyObjectByType<DemoHudController>(FindObjectsInactive.Include);
         if (demo == null) return found;
 
         var so = new SerializedObject(demo);

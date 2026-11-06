@@ -17,7 +17,7 @@ public static class GradeCardStyler
     [MenuItem("Tools/PharmaSynth/Style Grade Card (slide layout)")]
     public static void Style()
     {
-        var gs = Object.FindFirstObjectByType<GradeScreenController>(FindObjectsInactive.Include);
+        var gs = Object.FindAnyObjectByType<GradeScreenController>(FindObjectsInactive.Include);
         if (gs == null) { Debug.LogError("[GradeCard] no GradeScreenController in the scene."); return; }
         var root = new SerializedObject(gs).FindProperty("root").objectReferenceValue as GameObject;
         if (root == null) { Debug.LogError("[GradeCard] grade screen root not wired."); return; }

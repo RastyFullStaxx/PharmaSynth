@@ -25,7 +25,7 @@ public static class RevealMethaneStage
             var go = GameObject.Find(name);
             // GameObject.Find skips inactive roots — fall back to a full scan.
             if (go == null)
-                foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
                     if (t.name == name) { go = t.gameObject; break; }
             if (go == null) continue;
             if (!go.activeSelf) { go.SetActive(true); revealed++; }

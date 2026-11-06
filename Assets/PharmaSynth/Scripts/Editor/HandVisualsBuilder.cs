@@ -39,14 +39,14 @@ public static class HandVisualsBuilder
 
         // Wipe previous generations: procedural mittens, glove clones, keepers.
         var wipe = new HashSet<string> { HandL, HandR, "FPGlove_L", "FPGlove_R" };
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
             if (t != null && wipe.Contains(t.name)) Object.DestroyImmediate(t.gameObject);
-        foreach (var k in Object.FindObjectsByType<HandVisualKeeper>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var k in Object.FindObjectsByType<HandVisualKeeper>(FindObjectsInactive.Include))
             Object.DestroyImmediate(k);
 
         // PPE: first-person gloving is the hand-material swap, so the glove
         // visual arrays keep only the mirror-avatar clones.
-        var ppe = Object.FindFirstObjectByType<PPEController>(FindObjectsInactive.Include);
+        var ppe = Object.FindAnyObjectByType<PPEController>(FindObjectsInactive.Include);
         if (ppe != null)
         {
             var coat = SceneFind.AnyByName("WornCoat"); var gog = SceneFind.AnyByName("WornGoggles");

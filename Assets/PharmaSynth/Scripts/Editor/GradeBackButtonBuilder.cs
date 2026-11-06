@@ -16,8 +16,8 @@ public static class GradeBackButtonBuilder
     public static void Wire()
     {
         if (Application.isPlaying) { Debug.LogWarning("[GradeBack] exit Play mode first."); return; }
-        var grade = Object.FindFirstObjectByType<GradeScreenController>(FindObjectsInactive.Include);
-        var gate = Object.FindFirstObjectByType<PharmeeGatekeeper>(FindObjectsInactive.Include);
+        var grade = Object.FindAnyObjectByType<GradeScreenController>(FindObjectsInactive.Include);
+        var gate = Object.FindAnyObjectByType<PharmeeGatekeeper>(FindObjectsInactive.Include);
         if (grade == null || gate == null) { Debug.LogError("[GradeBack] GradeScreenController / PharmeeGatekeeper not found."); return; }
 
         var so = new SerializedObject(grade);

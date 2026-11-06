@@ -78,7 +78,7 @@ public static class VoiceAudioBuilder
         int channels = 0;
 
         foreach (var n in Object.FindObjectsByType<NPCNarrationController>(
-                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+                     FindObjectsInactive.Include))
         {
             if (n == null) continue;
             Undo.RegisterFullObjectHierarchyUndo(n.gameObject, "Voice audibility");
@@ -118,15 +118,15 @@ public static class VoiceAudioBuilder
     static IEnumerable<AudioSource> MusicSources()
     {
         var seen = new HashSet<AudioSource>();
-        var svc = Object.FindFirstObjectByType<AudioService>(FindObjectsInactive.Include);
+        var svc = Object.FindAnyObjectByType<AudioService>(FindObjectsInactive.Include);
         if (svc != null && svc.MusicSource != null) seen.Add(svc.MusicSource);
-        foreach (var ms in Object.FindObjectsByType<MusicSpeaker>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var ms in Object.FindObjectsByType<MusicSpeaker>(FindObjectsInactive.Include))
         {
             var a = ms.GetComponent<AudioSource>();
             if (a != null) seen.Add(a);
         }
         // Any looping source already playing a Music-category clip.
-        foreach (var a in Object.FindObjectsByType<AudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var a in Object.FindObjectsByType<AudioSource>(FindObjectsInactive.Include))
             if (a != null && a.loop && a.clip != null
                 && (a.gameObject.name.ToLowerInvariant().Contains("music")
                     || a.clip.name.ToLowerInvariant().Contains("music")))

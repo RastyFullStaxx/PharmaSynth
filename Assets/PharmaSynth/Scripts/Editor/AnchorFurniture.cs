@@ -39,7 +39,7 @@ public static class AnchorFurniture
         if (Application.isPlaying) { Debug.LogWarning("[Furniture] exit Play mode first."); return; }
 
         int stripped = 0, pinned = 0; string names = "";
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
         {
             if (t == null || !IsFurniture(t.name)) continue;
             var go = t.gameObject;

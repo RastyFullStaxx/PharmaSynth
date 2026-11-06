@@ -150,7 +150,7 @@ public class GrindController : MonoBehaviour
     /// Last-resort pestle lookup so the grind still works if nothing bound one.
     private void AutoFindPestle()
     {
-        foreach (var li in FindObjectsByType<LabItem>(FindObjectsSortMode.None))
+        foreach (var li in FindObjectsByType<LabItem>())
         {
             if (li == null) continue;
             string id = (li.itemId ?? "") + " " + (li.displayName ?? "") + " " + li.name;

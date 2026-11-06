@@ -345,7 +345,7 @@ public static class TutorialModeBuilder
 
         int beacons = 0;
         var mat = EnsureThroughWallMaterial();
-        foreach (var guide in Object.FindObjectsByType<WaypointGuide>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var guide in Object.FindObjectsByType<WaypointGuide>(FindObjectsInactive.Include))
         {
             guide.SetRunner(runner);
             guide.SetMarkerScale(0.16f);                 // METRES tall at the reference distance
@@ -489,7 +489,7 @@ public static class TutorialModeBuilder
         // The sim starts real runs; restore vessel contents afterwards or an edit-mode
         // pass permanently corrupts the saved scene's supplies.
         var snapshot = new List<(LiquidPhysics lp, ChemicalData chem, float ml, ChemicalData ppt, float pptMl)>();
-        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var lp in Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
             snapshot.Add((lp, lp.currentChemical, lp.currentLiquidVolume, lp.currentPptChemical, lp.currentPptVolume));
 
         bool wasTutorial = TutorialSession.Active;

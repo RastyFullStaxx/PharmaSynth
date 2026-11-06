@@ -42,7 +42,7 @@ public static class PPEWearablesBuilder
         // 2. Worn visuals (idempotent: wipe previous clones).
         // (search INACTIVE too — worn visuals are hidden by default)
         var wipeNames = new HashSet<string> { "WornCoat", "WornGoggles", "WornGlove_L", "WornGlove_R", "FPGlove_L", "FPGlove_R" };
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
             if (t != null && wipeNames.Contains(t.name)) Object.DestroyImmediate(t.gameObject);
 
         int layer = LayerMask.NameToLayer("PlayerAvatar");

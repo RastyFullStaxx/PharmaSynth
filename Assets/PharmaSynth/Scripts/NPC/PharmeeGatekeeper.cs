@@ -232,7 +232,7 @@ public class PharmeeGatekeeper : MonoBehaviour
             ? runner.Module.moduleId : GameFlow.SelectedModuleId);
 
         var coach = UnityEngine.Object.FindAnyObjectByType<TutorialCoach>();
-        var card = UnityEngine.Object.FindFirstObjectByType<GradeScreenController>(FindObjectsInactive.Include);
+        var card = UnityEngine.Object.FindAnyObjectByType<GradeScreenController>(FindObjectsInactive.Include);
         if (card != null && coach != null)
         {
             // Hold the panel until the player dismisses it; announcing and teleporting at once
@@ -340,10 +340,10 @@ public class PharmeeGatekeeper : MonoBehaviour
                     // the door inside the Loading fade.
                     if (runner != null && runner.IsRunning)
                     {
-                        var director = UnityEngine.Object.FindFirstObjectByType<CutsceneDirector>(FindObjectsInactive.Include);
+                        var director = UnityEngine.Object.FindAnyObjectByType<CutsceneDirector>(FindObjectsInactive.Include);
                         if (director != null) director.SkipNextOutro();
                         runner.Finish(0f);
-                        var grade = UnityEngine.Object.FindFirstObjectByType<GradeScreenController>(FindObjectsInactive.Include);
+                        var grade = UnityEngine.Object.FindAnyObjectByType<GradeScreenController>(FindObjectsInactive.Include);
                         if (grade != null) grade.Hide();
                     }
                     _returnOnLoad = true;                 // teleport home inside the load fade
@@ -594,7 +594,7 @@ public class PharmeeGatekeeper : MonoBehaviour
     public void OnAbandonAfterFail()
     {
         if (Model.State != GateState.ScoreReview) return;
-        var grade = UnityEngine.Object.FindFirstObjectByType<GradeScreenController>(FindObjectsInactive.Include);
+        var grade = UnityEngine.Object.FindAnyObjectByType<GradeScreenController>(FindObjectsInactive.Include);
         if (grade != null) grade.Hide();
         postLab?.Close();
         DoFaded(() =>
@@ -629,7 +629,7 @@ public class PharmeeGatekeeper : MonoBehaviour
             // leaves a zombie run ticking and a mid-review one leaves the grade card / quiz
             // tablet floating at the entrance.
             if (runner != null && runner.IsRunning) runner.Abort();
-            var grade = UnityEngine.Object.FindFirstObjectByType<GradeScreenController>(FindObjectsInactive.Include);
+            var grade = UnityEngine.Object.FindAnyObjectByType<GradeScreenController>(FindObjectsInactive.Include);
             if (grade != null) grade.Hide();
             postLab?.Close();
             string id = runner != null && runner.Module != null ? runner.Module.moduleId : GameFlow.SelectedModuleId;
@@ -656,7 +656,7 @@ public class PharmeeGatekeeper : MonoBehaviour
     /// shortcuts) it keeps the legacy in-place FullStart.
     public void OnRetryRequested()
     {
-        var grade = UnityEngine.Object.FindFirstObjectByType<GradeScreenController>(FindObjectsInactive.Include);
+        var grade = UnityEngine.Object.FindAnyObjectByType<GradeScreenController>(FindObjectsInactive.Include);
         if (grade != null) grade.Hide();
         if (Model.State == GateState.ScoreReview)
         {
@@ -681,7 +681,7 @@ public class PharmeeGatekeeper : MonoBehaviour
     {
         var roamer = examiner != null ? examiner.GetComponent<ProctorRoamer>() : null;
         if (roamer == null)
-            roamer = UnityEngine.Object.FindFirstObjectByType<ProctorRoamer>(FindObjectsInactive.Include);
+            roamer = UnityEngine.Object.FindAnyObjectByType<ProctorRoamer>(FindObjectsInactive.Include);
         if (roamer == null) return;
         var cam = cameraOverride != null ? cameraOverride : Camera.main;
         roamer.ReturnHomeAndHold(cam != null ? cam.transform : playerRig);
@@ -783,7 +783,7 @@ public class PharmeeGatekeeper : MonoBehaviour
     private void WaitOutroThenRemarks()
     {
         if (Model.State != GateState.ScoreReview) return;
-        var director = UnityEngine.Object.FindFirstObjectByType<CutsceneDirector>(FindObjectsInactive.Include);
+        var director = UnityEngine.Object.FindAnyObjectByType<CutsceneDirector>(FindObjectsInactive.Include);
         if (Application.isPlaying && director != null && director.IsPlaying && director.onCutsceneFinished != null)
         {
             UnityEngine.Events.UnityAction handler = null;

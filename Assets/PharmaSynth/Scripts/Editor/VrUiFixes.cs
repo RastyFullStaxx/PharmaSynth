@@ -25,7 +25,7 @@ public static class VrUiFixes
 
         int added = 0;
         var names = new List<string>();
-        foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include))
         {
             if (canvas == null) continue;
             if (canvas.renderMode == RenderMode.ScreenSpaceOverlay) continue;      // not ray-driven
@@ -50,7 +50,7 @@ public static class VrUiFixes
         if (Application.isPlaying) { Debug.LogWarning("[VrUi] exit Play mode first."); return; }
 
         int moved = 0;
-        foreach (var ex in Object.FindObjectsByType<ExaminerNPC>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var ex in Object.FindObjectsByType<ExaminerNPC>(FindObjectsInactive.Include))
         {
             if (ex == null) continue;
             var so = new SerializedObject(ex);

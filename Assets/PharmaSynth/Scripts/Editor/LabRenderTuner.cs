@@ -162,7 +162,7 @@ public static class LabRenderTuner
     static int EnableCameraPostProcessing(List<string> log)
     {
         int n = 0;
-        foreach (var cam in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var cam in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include))
         {
             if (!cam.CompareTag("MainCamera")) continue;
             var data = cam.GetComponent<UniversalAdditionalCameraData>();

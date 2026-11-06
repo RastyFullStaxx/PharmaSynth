@@ -1327,7 +1327,7 @@ public static class PharmaSelfTests
         // (a lab coat ALONE while the door demands coat + goggles + gloves).
         // Pin what the player HEARS, not what the code says.
         {
-            var gateGo = UnityEngine.Object.FindFirstObjectByType<PharmeeGatekeeper>(FindObjectsInactive.Include);
+            var gateGo = UnityEngine.Object.FindAnyObjectByType<PharmeeGatekeeper>(FindObjectsInactive.Include);
             if (gateGo != null)
             {
                 var def = new PharmeeGatekeeper.GateLines();
@@ -1366,7 +1366,7 @@ public static class PharmaSelfTests
                     // The guided tour is the SECOND scene-serialized dialogue source
                     // and drifts the same way (e.g. sending players to an
                     // "equipment cabinet" or to the emptied reagent shelf).
-                    var tour = UnityEngine.Object.FindFirstObjectByType<LabTourGuide>(FindObjectsInactive.Include);
+                    var tour = UnityEngine.Object.FindAnyObjectByType<LabTourGuide>(FindObjectsInactive.Include);
                     if (tour != null)
                     {
                         var tso = new SerializedObject(tour);
@@ -1435,7 +1435,7 @@ public static class PharmaSelfTests
         {
             int mute = 0, bankless = 0, misattributed = 0, channels = 0;
             foreach (var n in UnityEngine.Object.FindObjectsByType<NPCNarrationController>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
             {
                 if (n == null) continue;
                 channels++;
@@ -3058,7 +3058,7 @@ public static class PharmaSelfTests
         {
             int droppers = 0, wired = 0;
             foreach (var t in UnityEngine.Object.FindObjectsByType<Transform>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
             {
                 if (!t.name.StartsWith("Eq_Dropper")) continue;
                 droppers++;
@@ -3071,7 +3071,7 @@ public static class PharmaSelfTests
             // DropperTip anchor and a DropperLiquid capsule inside the stem.
             int tips2 = 0, liquids2 = 0, allDrop = 0, hidden2 = 0;
             foreach (var t in UnityEngine.Object.FindObjectsByType<DropperController>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
             {
                 allDrop++;
                 if (t.transform.Find("DropperTip") != null) tips2++;
@@ -3103,7 +3103,7 @@ public static class PharmaSelfTests
 
             int holders = 0, snapping = 0;
             foreach (var t in UnityEngine.Object.FindObjectsByType<Transform>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
             {
                 if (!t.name.StartsWith("Experiment_Tube_Table_Kit_Holder")) continue;
                 holders++;
@@ -3548,7 +3548,7 @@ public static class PharmaSelfTests
         // so it works either way and can't catch this.
         {
             int solidJars = 0, noHeap = 0; string worstJar = "";
-            foreach (var lp in UnityEngine.Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var lp in UnityEngine.Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
             {
                 if (lp == null || !LabReset.IsReagent(lp.name) || !SolidJarFitter.IsHeap(lp.currentChemical)) continue;
                 solidJars++;
@@ -3727,7 +3727,7 @@ public static class PharmaSelfTests
         {
             var ids = new HashSet<string>();
             foreach (var li in UnityEngine.Object.FindObjectsByType<LabItem>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
                 if (li != null && !string.IsNullOrEmpty(li.itemId)) ids.Add(li.itemId);
             return ids;
         }
@@ -5178,7 +5178,7 @@ public static class PharmaSelfTests
             // silent class of bug nothing else catches.
             var sceneNames = new HashSet<string>();
             foreach (var t in UnityEngine.Object.FindObjectsByType<Transform>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
                 sceneNames.Add(t.name);
 
             bool allBound = true, allExist = true;
@@ -7180,7 +7180,7 @@ public static class PharmaSelfTests
         // still pass. Pure math cannot see a missing component; pin the actual objects.
         {
             var matches = UnityEngine.Object.FindObjectsByType<Matchstick>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+                FindObjectsInactive.Include);
             bool anchored = matches.Length > 0;
             foreach (var m in matches)
                 if (m.transform.Find("FlameAnchor") == null) anchored = false;
@@ -7190,7 +7190,7 @@ public static class PharmaSelfTests
             // off the collider it hits, so the box needs BOTH the component and a collider.
             MatchStrikerSurface box = null;
             foreach (var s in UnityEngine.Object.FindObjectsByType<MatchStrikerSurface>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
                 if (s.name.StartsWith("Raw_Matchsticks")) box = s;
             A("match: the matchbox IS the striker (strike it to light)", box != null);
             A("match: the striker box has a collider to strike against",
@@ -7557,7 +7557,7 @@ public static class PharmaSelfTests
         // InverseTransformDirection (which ignores scale) and each puff fell 3.9 METRES,
         // straight through the floor. Measured by actually moving a ring and putting it back.
         {
-            var att = UnityEngine.Object.FindFirstObjectByType<PharmeeAttitude>(FindObjectsInactive.Include);
+            var att = UnityEngine.Object.FindAnyObjectByType<PharmeeAttitude>(FindObjectsInactive.Include);
             if (att != null)
             {
                 var attSo = new SerializedObject(att);
@@ -7669,7 +7669,7 @@ public static class PharmaSelfTests
         {
             int selfPouring = 0; string worst = "";
             foreach (var pr in UnityEngine.Object.FindObjectsByType<LiquidPourer>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
             {
                 if (pr == null) continue;
                 float tilt = Vector3.Angle(Vector3.up, pr.transform.up);
@@ -7686,7 +7686,7 @@ public static class PharmaSelfTests
         {
             int tiltedHome = 0; string worstHome = "";
             foreach (var dr in UnityEngine.Object.FindObjectsByType<DropRespawn>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
             {
                 if (dr == null || dr.GetComponent<LiquidPourer>() == null) continue;
                 var so = new SerializedObject(dr);
@@ -7710,7 +7710,7 @@ public static class PharmaSelfTests
         {
             int floating = 0; string worstFloat = "";
             foreach (var pr in UnityEngine.Object.FindObjectsByType<LiquidPourer>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
             {
                 if (pr == null || !pr.gameObject.activeInHierarchy) continue;
                 Bounds b = ExperimentSceneBuilder.SolidWorldBounds(pr.gameObject);
@@ -7748,7 +7748,7 @@ public static class PharmaSelfTests
         {
             int offPivot = 0, offCollider = 0; string worstPivot = "", worstCol = "";
             foreach (var li in UnityEngine.Object.FindObjectsByType<LabItem>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
             {
                 if (li == null || !li.gameObject.activeInHierarchy) continue;
                 Bounds mesh = ExperimentSceneBuilder.SolidWorldBounds(li.gameObject);
@@ -7791,7 +7791,7 @@ public static class PharmaSelfTests
             // of distilled water each). A wash bottle is a SOURCE (it never carries a binding),
             // so nothing in the game notices it is empty until a rinse does nothing.
             int washBottles = 0, dryWash = 0;
-            foreach (var wlp in UnityEngine.Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var wlp in UnityEngine.Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
             {
                 if (wlp == null || (wlp.name != "Eq_WashBottle" && wlp.name != "WashBottleWater")) continue;
                 washBottles++;
@@ -7809,7 +7809,7 @@ public static class PharmaSelfTests
         {
             int grabbable = 0, noCollider = 0; string worstFurn = "";
             foreach (var tr in UnityEngine.Object.FindObjectsByType<Transform>(
-                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+                         FindObjectsInactive.Include))
             {
                 if (tr == null || !AnchorFurniture.IsFurniture(tr.name)) continue;
                 if (tr.GetComponents<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>().Length > 0)

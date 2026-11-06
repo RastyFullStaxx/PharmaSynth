@@ -43,7 +43,7 @@ public class BurnerController : MonoBehaviour
         if (_grab != null && _grab.isSelected) return;   // don't light while being carried
         if (Time.time < _nextScan) return;
         _nextScan = Time.time + 0.25f;
-        foreach (var match in FindObjectsByType<Matchstick>(FindObjectsSortMode.None))
+        foreach (var match in FindObjectsByType<Matchstick>())
         {
             // Measure flame-to-flame: the burner's MOUTH to the match HEAD. Pivot to match
             // origin put the target at the burner's foot, so a match held where a person

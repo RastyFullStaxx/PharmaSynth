@@ -31,7 +31,7 @@ public static class LabHaptics
             for (int i = 0; i < _players.Length && !stale; i++)
                 if (_players[i] == null) stale = true;
         if (stale)
-            _players = Object.FindObjectsByType<HapticPlayer>(FindObjectsSortMode.None);
+            _players = Object.FindObjectsByType<HapticPlayer>();
         return _players;
     }
 

@@ -108,7 +108,7 @@ public class ReagentSupplyMonitor : MonoBehaviour
     public static int RefillSourceBottles()
     {
         int refilled = 0;
-        var bottles = UnityEngine.Object.FindObjectsByType<LiquidPhysics>(FindObjectsSortMode.None);
+        var bottles = UnityEngine.Object.FindObjectsByType<LiquidPhysics>();
         foreach (var lp in bottles)
         {
             // A bottle poured DRY clears its contents, so restock from what it last
@@ -146,7 +146,7 @@ public class ReagentSupplyMonitor : MonoBehaviour
         string ownProduct = runner != null && runner.Module != null
             ? DemoMode.ProductFor(runner.Module.moduleId) : null;
 
-        var binds = UnityEngine.Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsSortMode.None);
+        var binds = UnityEngine.Object.FindObjectsByType<LiquidTaskBinding>();
         foreach (var b in binds)
             foreach (var s in b.ExpectedSteps)
             {
@@ -165,7 +165,7 @@ public class ReagentSupplyMonitor : MonoBehaviour
         // Available supply: SOURCE bottles only (vessels with a task binding are
         // reaction targets, not supplies).
         var avail = new Dictionary<string, float>();
-        var bottles = UnityEngine.Object.FindObjectsByType<LiquidPhysics>(FindObjectsSortMode.None);
+        var bottles = UnityEngine.Object.FindObjectsByType<LiquidPhysics>();
         foreach (var lp in bottles)
         {
             if (lp.currentChemical == null || lp.currentLiquidVolume <= 0f) continue;

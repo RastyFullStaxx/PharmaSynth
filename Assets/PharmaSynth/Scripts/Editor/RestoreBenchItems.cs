@@ -16,7 +16,7 @@ public static class RestoreBenchItems
 
         int restored = 0;
         var names = new List<string>();
-        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include))
         {
             if (li == null) continue;
             var go = li.gameObject;

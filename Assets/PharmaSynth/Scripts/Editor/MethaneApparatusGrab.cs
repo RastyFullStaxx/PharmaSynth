@@ -24,7 +24,7 @@ public static class MethaneApparatusGrab
         var registry = AssetDatabase.LoadAssetAtPath<ReactionRegistry>(
             "Assets/PharmaSynth/ScriptableObjects/Reactions/MasterReactionRegistry.asset");
         int fixedCount = 0;
-        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var li in Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include))
         {
             if (li == null || !Ids.Contains(li.itemId)) continue;
             var go = li.gameObject;
