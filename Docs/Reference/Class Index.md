@@ -76,7 +76,7 @@ float quizScore01
 ### `ExperimentRunner` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Experiment/ExperimentRunner.cs`</sub>
 
-Runtime orchestrator for a single experiment attempt. Owns the TaskGraph, BKT MasteryModel, MistakeLog and grader built from an ExperimentModuleDefinition, and raises the events the HUD / tablet / wrist-watch / grade screen subscribe to. All scoring/mastery logic lives in the (unit-tested) pure classes; this is thin glue plus per-frame time + auto-check. Drives the v2 TaskGraph data model — the sole runner since the legacy ExperimentFlowManager cluster was deleted (2026-08-07); it had been in no scene or prefab, and its callers reached it through `?.`, so every one of them had been silently doing nothing.
+Runtime orchestrator for a single experiment attempt. Owns the TaskGraph, BKT MasteryModel, MistakeLog and grader built from an ExperimentModuleDefinition, and raises the events the HUD / tablet / wrist-watch / grade screen subscribe to. All scoring/mastery logic lives in the (unit-tested) pure classes; this is thin glue plus per-frame time + auto-check. Drives the v2 TaskGraph data model and is the sole runner.
 
 ```csharp
 UnityEvent onExperimentStarted
@@ -103,7 +103,7 @@ The full error taxonomy the safety/error matrix reports (plan §3.7). Extends th
 ### `MistakeLog` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Experiment/MistakeLog.cs`</sub>
 
-Records mistakes during an experiment attempt and exposes counts. (Audit gap: the legacy FlowManager fired a MistakeRecorded event but never kept a count — the grade screen needs "Number of Mistakes".) Plain C# so it is unit-testable and reusable by both the legacy FlowManager and the new experiment runner.
+Records mistakes during an experiment attempt and exposes counts (the grade screen needs "Number of Mistakes"). Plain C# so it is unit-testable.
 
 ```csharp
 event Action<LabErrorType, string> MistakeRecorded
@@ -267,7 +267,7 @@ void ResetProcess()
 ### `EndProductVisibility` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/EndProductVisibility.cs`</sub>
 
-Benzoic Acid — goal of Exp 4, and its own reference sample Exp 2 runs BEFORE Exp 3 and Exp 6, so a global per-chemical hide (what this did until 2026-07-16) removed reagents Exp 2 cannot proceed without. Hiding only the running module's own product keeps both rules true: you never get your goal handed to you, and every experiment still has its inputs. The four PURE products — Acetanilide, Benzamide, Chloroform, Wine — are named as a reagent by no manuscript procedure, so they are not stocked at all rather than gated (see EndProductShelfStocker). Lives on a storage ROOT (ReagentShelf / ReagentCabinets) — the root stays active so this keeps running, and gated bottles are fully SetActive(false) so the supply monitor, hover cards and grabs all ignore them. Play-mode only: in the editor everything stays visible for arranging, and Unity restores the authored state when Play ends.
+Benzoic Acid — goal of Exp 4, and its own reference sample Exp 2 runs BEFORE Exp 3 and Exp 6, so a global per-chemical hide would remove reagents Exp 2 cannot proceed without. Hiding only the running module's own product keeps both rules true: you never get your goal handed to you, and every experiment still has its inputs. The four PURE products — Acetanilide, Benzamide, Chloroform, Wine — are named as a reagent by no manuscript procedure, so they are not stocked at all rather than gated (see EndProductShelfStocker). Lives on a storage ROOT (ReagentShelf / ReagentCabinets) — the root stays active so this keeps running, and gated bottles are fully SetActive(false) so the supply monitor, hover cards and grabs all ignore them. Play-mode only: in the editor everything stays visible for arranging, and Unity restores the authored state when Play ends.
 
 ```csharp
 void Bind(ExperimentRunner r)
@@ -321,7 +321,7 @@ static bool IsConcentratedAcid(string chemicalName)
 ### `HazardousMix` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/HazardousMix.cs`</sub>
 
-Pure classification of chemically-BAD mixes (user 2026-07-10: wrong mixtures showed nothing — no smoke, fire, colour, or penalty). Runs on the existing LiquidPhysics.WrongReagentMixed seam, i.e. only for A+B pairs with NO registered ReactionRule (real chemistry always wins). Direction-aware: `current` is what's in the vessel, `incoming` is what got poured in. Everything stays isolated in-sim per the manuscript ("dangerous conditions isolated without risk") — effects + penalty, never player harm.
+Pure classification of chemically-BAD mixes, so a wrong mixture produces smoke, fire, colour and a penalty. Runs on the existing LiquidPhysics.WrongReagentMixed seam, i.e. only for A+B pairs with NO registered ReactionRule (real chemistry always wins). Direction-aware: `current` is what's in the vessel, `incoming` is what got poured in. Everything stays isolated in-sim per the manuscript ("dangerous conditions isolated without risk") — effects + penalty, never player harm.
 
 ### `HazardOutcome` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/HazardousMix.cs`</sub>
@@ -348,7 +348,7 @@ void Bind(LiquidPhysics liquid, ExperimentRunner runner)
 ### `LiquidPassthrough` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/LiquidPassthrough.cs`</sub>
 
-Marker: a pour STREAM passes straight through this object (funnels). Without it, LiquidPourer.ResolveTarget treated the funnel's collider as the landing surface — no LiquidPhysics there, so the hydrolysate the manuscript says to filter was WASTED as a puddle on top of the funnel and the beaker below stayed empty, leaving the FeCl3 filtrate test nothing to react with (found by the 2026-07-17 player-path simulation). The ray continues to the receiving vessel underneath, which is what a funnel is for. It also OWNS the funnel's visual: the stream disappears into the cone and re-emerges as a thin trickle from the stem's hole (user 2026-07-27: "make the water flowing through it appear from its hole below"). Runtime-only and self-building — no scene authoring beyond the component.
+Marker: a pour STREAM passes straight through this object (funnels). Otherwise LiquidPourer.ResolveTarget treats the funnel's collider as the landing surface (no LiquidPhysics there), so the hydrolysate the manuscript says to filter is wasted as a puddle on the funnel and the FeCl3 filtrate test below has nothing to react with. The ray continues to the receiving vessel underneath. It also OWNS the funnel's visual: the stream disappears into the cone and re-emerges as a thin trickle from the stem's hole. Runtime-only and self-building — no scene authoring beyond the component.
 
 ```csharp
 Transform spout
@@ -380,7 +380,7 @@ ChemicalData currentPptChemical
 ### `PourMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/LiquidPourer.cs`</sub>
 
-Pure pour rules (W5.59).
+Pure pour rules.
 
 ```csharp
 static bool CanPour(ChemicalData chem)
@@ -411,7 +411,7 @@ static float PourVolume(bool pouring, float baseVol, float catVol, float flow01)
 ### `LiquidTaskBinding` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/LiquidTaskBinding.cs`</sub>
 
-Bridges a vessel's LiquidPhysics chemistry events to the experiment logic in a context-aware way: adding a reagent completes the task that expects it (the TaskGraph's prerequisite check enforces order), while a reagent no step expects is a genuine wrong-reagent mistake. Steps may require a MINIMUM poured amount (requiredMl) — deliveries accumulate until the threshold is met, so a one-frame splash no longer completes a step (client depletion mechanic, 2026-07-09).
+Bridges a vessel's LiquidPhysics chemistry events to the experiment logic in a context-aware way: adding a reagent completes the task that expects it (the TaskGraph's prerequisite check enforces order), while a reagent no step expects is a genuine wrong-reagent mistake. Steps may require a MINIMUM poured amount (requiredMl); deliveries accumulate until the threshold is met, so a one-frame splash does not complete a step (the client's depletion mechanic).
 
 ### `ReagentStep` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/LiquidTaskBinding.cs`</sub>
@@ -436,7 +436,7 @@ void ResetRole()
 ### `OverheatEffects` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/OverheatEffects.cs`</sub>
 
-Overheat consequence at a Heat station (user 2026-07-10 error-effects pass): when the station's TemperatureSim crosses its overheat threshold, the vessel on the pad starts SMOKING, its contents turn into a ruined dark mixture, the alarm fires, and an Overheat mistake is recorded. Attached per Heat station by ExperimentSceneBuilder.
+Overheat consequence at a Heat station (error-effects pass): when the station's TemperatureSim crosses its overheat threshold, the vessel on the pad starts SMOKING, its contents turn into a ruined dark mixture, the alarm fires, and an Overheat mistake is recorded. Attached per Heat station by ExperimentSceneBuilder.
 
 ```csharp
 void Bind(TemperatureSim sim, ExperimentRunner runner, ChemicalData ruined)
@@ -455,20 +455,10 @@ void AddPowder(ChemicalData incomingChemical, float amountToAdd)
 ChemicalData PourOut(float amountToRemove)
 ```
 
-### `PowderPourer` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Chemistry/PowderPourer.cs`</sub>
-
-```csharp
-Transform spout
-ParticleSystem powderStreamParticles
-float pourThreshold
-float maxFlowRate
-```
-
 ### `RackRoles` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/RackRoles.cs`</sub>
 
-Who has claimed which role inside ONE rack group (W5.52). A rack group's tubes are interchangeable, so a role belongs to whichever tube the player actually poured it into. This is the shared ledger that keeps that exclusive: without it two tubes both narrow to the same role, the RackTaskGroup counts that role twice, and the step completes while a tube still sits empty. Plain C# rather than a MonoBehaviour: it holds no transform, needs no update, and is created by ExperimentSceneBuilder alongside the group's RackTaskGroups.
+Who has claimed which role inside ONE rack group. A rack group's tubes are interchangeable, so a role belongs to whichever tube the player actually poured it into. This is the shared ledger that keeps that exclusive: without it two tubes both narrow to the same role, the RackTaskGroup counts that role twice, and the step completes while a tube still sits empty. Plain C# rather than a MonoBehaviour: it holds no transform, needs no update, and is created by ExperimentSceneBuilder alongside the group's RackTaskGroups.
 
 ```csharp
 void Join(LiquidTaskBinding who)
@@ -481,7 +471,7 @@ ICollection<int> TakenByOthers(LiquidTaskBinding me)
 ### `RackMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/RackTaskGroup.cs`</sub>
 
-Pure rules for a rack of tubes that share one step (2026-07-16). Manuscript Exp 2 runs the same test across a SET of tubes — five alcohols for the enol test, three butyl alcohols beside a negative control, acetone beside acetaldehyde, hydrolysed beside unhydrolysed aspirin. In every case **the comparison across the tubes IS the lesson**, so the step is only done when every tube that the step names has had its reagent. This exists because LiquidTaskBinding is per-VESSEL: give five tubes a binding for the same task and the first tube to hit its threshold completes it, quietly making the other four optional and throwing the lesson away. The rack members are authored completesTask:false (so their pours are expected and accumulate, but completion is not theirs) and the group calls it in.
+Pure rules for a rack of tubes that share one step. Manuscript Exp 2 runs the same test across a SET of tubes — five alcohols for the enol test, three butyl alcohols beside a negative control, acetone beside acetaldehyde, hydrolysed beside unhydrolysed aspirin. In every case **the comparison across the tubes IS the lesson**, so the step is only done when every tube that the step names has had its reagent. This exists because LiquidTaskBinding is per-VESSEL: give five tubes a binding for the same task and the first tube to hit its threshold completes it, quietly making the other four optional and throwing the lesson away. The rack members are authored completesTask:false (so their pours are expected and accumulate, but completion is not theirs) and the group calls it in.
 
 ```csharp
 static bool AllReady(int readyTubes, int requiredTubes)
@@ -507,7 +497,7 @@ bool ShouldFire()
 ### `RawReagentCatalog` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/RawReagentCatalog.cs`</sub>
 
-THE manuscript materials table (user 2026-07-10: the shelf stocked mostly end-products; Appendix C names ~54 distinct materials — raw precursors, prepared solutions and small consumables — that must exist in the lab). One row per manuscript material, each mapped to nature-appropriate labware. Source of truth for: ChemicalData generation (RawReagentForge), the cabinet stocking pass (ReagentCabinetBuilder), hover-info blurbs (LabInfoDatabase fallback) and the demo ready-made kits. Pure + test-pinned.
+THE manuscript materials table: Appendix C names ~54 distinct materials (raw precursors, prepared solutions and small consumables) that must exist in the lab, not just end-products. One row per manuscript material, each mapped to nature-appropriate labware. Source of truth for: ChemicalData generation (RawReagentForge), the cabinet stocking pass (ReagentCabinetBuilder), hover-info blurbs (LabInfoDatabase fallback) and the demo ready-made kits. Pure + test-pinned.
 
 ### `LabwareKind` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/RawReagentCatalog.cs`</sub>
@@ -584,7 +574,7 @@ List<string> EvaluateNow()
 ### `ShelfPourWiring` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/ShelfPourWiring.cs`</sub>
 
-Pour wiring for HAND-PLACED bottles (user 2026-07-10: tipping a reagent-shelf bottle showed no stream/puddle). ExperimentSceneBuilder wires runtime-spawned pourables, but the 16 shelf display bottles (and batch-H cabinet stock) are scene objects with LiquidPhysics only. This mirrors the builder's pourable block for an existing bottle, idempotently, callable from the editor menu (Tools ▸ PharmaSynth ▸ Wire Shelf Pourers) and from runtime builders. Edit-mode note: SpillMistake/LiquidPourer self-bind in Awake/Start at play time, so edit-mode wiring only has to ADD the components and set the serialized fields (registry, spout); the runner param matters only for runtime callers.
+Pour wiring for HAND-PLACED bottles, so tipping a reagent-shelf bottle shows a stream and puddle. ExperimentSceneBuilder wires runtime-spawned pourables, but the 16 shelf display bottles (and batch-H cabinet stock) are scene objects with LiquidPhysics only. This mirrors the builder's pourable block for an existing bottle, idempotently, callable from the editor menu (Tools ▸ PharmaSynth ▸ Wire Shelf Pourers) and from runtime builders. Edit-mode note: SpillMistake/LiquidPourer self-bind in Awake/Start at play time, so edit-mode wiring only has to ADD the components and set the serialized fields (registry, spout); the runner param matters only for runtime callers.
 
 ```csharp
 static int WireBottle(GameObject bottle, ExperimentRunner runner, ReactionRegistry registry)
@@ -626,7 +616,7 @@ void ResetSim()
 ### `VesselLedger` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/VesselLedger.cs`</sub>
 
-Pure, testable record of what went into a vessel (W5.8 feedback layer). Display-only — chemistry stays in LiquidPhysics/ReactionRegistry; this just remembers the story so hover cards and mix feedback can say "Ethanol 120 ml + NaOH 50 ml" or "Reacted -> Acetanilide". Volumes are per-chemical totals; a reaction collapses the story to the product (matching what the vessel now holds), keeping summaries short after multi-step syntheses.
+Pure, testable record of what went into a vessel (feedback layer). Display-only — chemistry stays in LiquidPhysics/ReactionRegistry; this just remembers the story so hover cards and mix feedback can say "Ethanol 120 ml + NaOH 50 ml" or "Reacted -> Acetanilide". Volumes are per-chemical totals; a reaction collapses the story to the product (matching what the vessel now holds), keeping summaries short after multi-step syntheses.
 
 ```csharp
 int Count
@@ -669,7 +659,7 @@ Where a part seats on its host when snapped.
 ### `AssemblyMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/ApparatusSnap.cs`</sub>
 
-Pure rules for apparatus assemblies (W5.12, user: "apparatus that should be together stick when brought close; grab moves the WHOLE group preserving formation; the ACTIVATE click detaches — never grab"). The part→host table mirrors the real heating rigs the manuscript implies plus the watch-glass cover the user called out. Kept plain so the suite pins the pairs + seats.
+Pure rules for apparatus assemblies. Apparatus that belongs together sticks when brought close, grab moves the WHOLE group preserving formation, and the ACTIVATE click detaches (never grab). The part→host table mirrors the real heating rigs the manuscript implies plus the watch-glass cover. Kept plain so the suite pins the pairs + seats.
 
 ```csharp
 const float SnapRadius
@@ -698,7 +688,7 @@ void Detach()
 ### `AtmosphereVfx` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/AtmosphereVfx.cs`</sub>
 
-Ambient lab atmosphere (user 2026-07-10): gentle white vapour so the room feels alive — a cool stream sinking from the AC unit, and faint slow-drifting haze near the floor/ceiling. Procedural (shares EffectVfx's soft-dot material, no asset deps) and deliberately LOW-density — transparent smoke is the main overdraw cost on Quest, so counts + alpha are kept small. Built + played on Start; placed by AtmosphereBuilder.
+Ambient lab atmosphere: gentle white vapour so the room feels alive — a cool stream sinking from the AC unit, and faint slow-drifting haze near the floor/ceiling. Procedural (shares EffectVfx's soft-dot material, no asset deps) and deliberately LOW-density — transparent smoke is the main overdraw cost on Quest, so counts + alpha are kept small. Built + played on Start; placed by AtmosphereBuilder.
 
 ### `Style` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/AtmosphereVfx.cs`</sub>
@@ -723,7 +713,7 @@ void Break()
 ### `BrushController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/BrushController.cs`</sub>
 
-The test-tube brush: while held and touching a dirty vessel, its travel accumulates — every SwipeDistance of scrubbing motion knocks one swipe off the dirtiness (the user's "repeated brushing" feel).
+The test-tube brush: while held and touching a dirty vessel, its travel accumulates — every SwipeDistance of scrubbing motion knocks one swipe off the dirtiness.
 
 ```csharp
 void Bind(XRGrab grab)
@@ -732,7 +722,7 @@ void Bind(XRGrab grab)
 ### `BurnerController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/BurnerController.cs`</sub>
 
-An ignitable Bunsen/alcohol burner (W5.8: matches finally DO something). Bring a lit matchstick to the burner and it lights — a looping flame + point light; Heat stations whose required prop is a burner only advance their sim while it is LIT (ZoneSimStation ignition gate).
+An ignitable Bunsen/alcohol burner. Bring a lit matchstick to the burner and it lights — a looping flame + point light; Heat stations whose required prop is a burner only advance their sim while it is LIT (ZoneSimStation ignition gate).
 
 ```csharp
 const float MatchIgniteDistance
@@ -746,7 +736,7 @@ void Extinguish()
 ### `CenterTableMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/CenterTableMath.cs`</sub>
 
-Pure geometry for the center-table merge (user 2026-07-10: remove the second island, one wide LANDSCAPE table centered in the lab). The experiment layouts bake world positions on the old left island, so the merge is a rigid remap — rotate 90° about the old island centre, translate to the new centre — applied identically to the island object AND every baked position on it, keeping every station/prop exactly where it sat on the deck.
+Pure geometry for the center-table merge (one wide LANDSCAPE table centered in the lab replaces the two islands). The experiment layouts bake world positions on the old left island, so the merge is a rigid remap — rotate 90° about the old island centre, translate to the new centre — applied identically to the island object AND every baked position on it, keeping every station/prop exactly where it sat on the deck.
 
 ```csharp
 static Bounds FootprintOf(IEnumerable<Vector3> positions, float margin)
@@ -759,7 +749,7 @@ static Vector3 MirrorAcrossX(Vector3 p, float centerX)
 ### `CleanupMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/CleanableVessel.cs`</sub>
 
-Pure rules for glassware cleanliness (W5.12, user: "we scrub a test tube… a text appears that reduces the dirtiness for each swipe… after which the test tube is labeled clean"). Educational only — never graded.
+Pure rules for glassware cleanliness (scrub a test tube and a text shows the dirtiness dropping with each swipe until the test tube is clean). Educational only — never graded.
 
 ```csharp
 const float DirtyOnEmpty
@@ -790,7 +780,7 @@ string NamePrefix()
 ### `DispenserMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/ConsumableDispenser.cs`</sub>
 
-Pure dispenser rules (user 2026-07-11: "put the box on the shelf; grabbing it pulls out a single piece to use"). Kept plain-C# so the self-tests pin the policy without a headset.
+Pure dispenser rules (the box sits on the shelf; grabbing it pulls out a single piece to use). Kept plain-C# so the self-tests pin the policy without a headset.
 
 ```csharp
 static bool IsTaken(bool grabbed, float distFromRest, float takenDistance
@@ -809,7 +799,7 @@ void Bind(GameObject template, Transform restAnchor, Transform spawnParent, Game
 ### `DevExperimentDriver` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/DevExperimentDriver.cs`</sub>
 
-Keyboard driver for in-editor testing of the experiment loop without needing full XR interaction. Lets you watch the HUD, Pharmee, and grade screen react. B = begin/restart · 1-5 = complete step N · F = finish · R = retry P = pour-debug overlay (floating "hit/target" text at every pouring mouth) V = replay Pharmee's test voice line (tune RobotVoiceFx by ear without walking back to the door for every slider tweak — 2026-07-27) Disabled in builds unless enableInBuild is set.
+Keyboard driver for in-editor testing of the experiment loop without needing full XR interaction. Lets you watch the HUD, Pharmee, and grade screen react. B = begin/restart · 1-5 = complete step N · F = finish · R = retry P = pour-debug overlay (floating "hit/target" text at every pouring mouth) V = replay Pharmee's test voice line (tune RobotVoiceFx by ear without walking back to the door for every slider tweak) Disabled in builds unless enableInBuild is set.
 
 ```csharp
 void Setup(ExperimentRunner r, ExperimentStarter s)
@@ -895,7 +885,7 @@ void Bind(XRGrab grab)
 ### `EffectVfx` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/EffectVfx.cs`</sub>
 
-One-shot procedural particle bursts (VFX-set completion, user 2026-07-10), the event twin of StationVfx's looping station effects. All built at runtime from a shared soft-dot material (no asset deps, Quest-cheap, auto-destroy): • Shatter  — glass breaks into a quick outward spray of pale shards (fired from BreakableGlassware.Break, pairs with the glass-break SFX). • Confetti — a colourful upward burst on a passing grade (GradeScreen). • FlamePop — a brief orange flame puff (burner ignite / methane splint test). Each spawner returns immediately; the emitter fades and self-destroys.
+One-shot procedural particle bursts, the event twin of StationVfx's looping station effects. All built at runtime from a shared soft-dot material (no asset deps, Quest-cheap, auto-destroy): • Shatter  — glass breaks into a quick outward spray of pale shards (fired from BreakableGlassware.Break, pairs with the glass-break SFX). • Confetti — a colourful upward burst on a passing grade (GradeScreen). • FlamePop — a brief orange flame puff (burner ignite / methane splint test). Each spawner returns immediately; the emitter fades and self-destroys.
 
 ### `Kind` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/EffectVfx.cs`</sub>
@@ -915,13 +905,6 @@ static void Fizz(Vector3 pos)
 static Material ParticleMaterial()
 static void Play(Kind kind, Vector3 pos, Color tint)
 static Material SmokeMaterial()
-```
-
-### `EquipmentLabelVisibilityController` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/EquipmentLabelVisibilityController.cs`</sub>
-
-```csharp
-void SetLabelsVisible(bool visible)
 ```
 
 ### `LaunchMode` <sub>enum</sub>
@@ -949,7 +932,7 @@ ExperimentModuleDefinition Launch(string moduleId, LaunchMode mode)
 ### `StationSim` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/ExperimentLayout.cs`</sub>
 
-Data description of one experiment's physical setup: where its stations, grabbable props and reagent vessels go. The ExperimentSceneBuilder spawns this on module load, so all 9 experiments share one lab scene instead of 9 hand-built scenes. Positions are WORLD-space (the lab is a fixed room). How a station completes. None = the prop simply entering the zone completes the step. Heat/Crystallise/Filter/Collect run a sustained chemistry sim while the prop occupies the zone. Stir/Grind/Weigh (W5.8, append-only — serialized ints stay valid) are TOOL verbs: circle the rod in the vessel, work the pestle in the mortar, rest the right load on the balance pan.
+Data description of one experiment's physical setup: where its stations, grabbable props and reagent vessels go. The ExperimentSceneBuilder spawns this on module load, so all 9 experiments share one lab scene instead of 9 hand-built scenes. Positions are WORLD-space (the lab is a fixed room). How a station completes. None = the prop simply entering the zone completes the step. Heat/Crystallise/Filter/Collect run a sustained chemistry sim while the prop occupies the zone. Stir/Grind/Weigh (append-only — serialized ints stay valid) are TOOL verbs: circle the rod in the vessel, work the pestle in the mortar, rest the right load on the balance pan.
 
 ### `ExperimentLayout` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/ExperimentLayout.cs`</sub>
@@ -1048,7 +1031,7 @@ void EmitCO2()
 ### `FloatingText` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/FloatingText.cs`</sub>
 
-One-shot rising/fading world-space text (W5.8 feedback layer) — the "what did my mix produce" popup, "Vessel full!", stir progress, etc. EffectVfx style: static entry point, procedural, self-destroying, runtime-only.
+One-shot rising/fading world-space text — the "what did my mix produce" popup, "Vessel full!", stir progress, etc. EffectVfx style: static entry point, procedural, self-destroying, runtime-only.
 
 ```csharp
 static void Show(string text, Vector3 pos, Color? color
@@ -1091,7 +1074,7 @@ bool IsDynamic
 ### `GrabTuning` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/GrabTuning.cs`</sub>
 
-through walls/floor/furniture). The ChemLab pack prefabs shipped with movementType = Instantaneous, which teleports the transform to the hand each frame — no physics sweep, so a held beaker passes straight through static geometry. VelocityTracking drives the rigidbody with velocities instead, so PhysX resolves collisions and a held item stops against the world. Two-handed grab (user 2026-07-11: "hold a container in one hand and pour with the other; steady the mortar and grind with the pestle — for everything"). selectMode = Multiple lets two interactors select the SAME item at once; XRI's default General grab transformer blends the two-handed pose (midpoint position, hand-to-hand rotation). Single-hand use is unchanged — it just also permits a second hand. Independent dual-hand use (one object per hand) already works. One seam applied everywhere: prefabs + scene instances (Wire Grab Coll
+through walls/floor/furniture). The ChemLab pack prefabs shipped with movementType = Instantaneous, which teleports the transform to the hand each frame — no physics sweep, so a held beaker passes straight through static geometry. VelocityTracking drives the rigidbody with velocities instead, so PhysX resolves collisions and a held item stops against the world. Two-handed grab (hold a container in one hand and pour with the other; steady the mortar and grind with the pestle — for everything). selectMode = Multiple lets two interactors select the SAME item at once; XRI's default General grab transformer blends the two-handed pose (midpoint position, hand-to-hand rotation). Single-hand use is unchanged — it just also permits a second hand. Independent dual-hand use (one object per hand) already works. One seam applied everywhere: prefabs + scene instances (Wire Grab Collision menu) and eve
 
 ```csharp
 const float AttachEaseSeconds
@@ -1102,7 +1085,7 @@ static bool Apply(XRGrab grab)
 ### `GrindController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/GrindController.cs`</sub>
 
-The GRIND verb (W5.8): work the pestle in circles inside this mortar's bowl and the grind task completes (dual-path on Methane: the legacy zone-touch still works). When done, a powder heap appears in the bowl. A null/empty taskId makes it purely educational — staged mortars still grind visually.
+The GRIND verb: work the pestle in circles inside this mortar's bowl and the grind task completes (dual-path on Methane: the legacy zone-touch still works). When done, a powder heap appears in the bowl. A null/empty taskId makes it purely educational — staged mortars still grind visually.
 
 ```csharp
 OrbitMath Math
@@ -1121,7 +1104,7 @@ void Tick(float x, float z, bool inside)
 ### `GuidePath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/GuidePath.cs`</sub>
 
-Tutorial Mode's ground path (W5.44): chevrons on the floor that flow from the player's feet toward whatever the current step needs (user request, 2026-09-02). ⛔ It routes on the NAVMESH, not in a straight line. The lab's benches sit in the middle of the room, so a straight line to a wall shelf points through solid furniture — an arrow that lies about the way there is worse than no arrow. `NavMesh.CalculatePath` needs no agent; it just needs the surface baked (Tools ▸ PharmaSynth ▸ Build Lab NavMesh). ⭐ It never draws at the same time as the beacon. The path answers "which way round the benches", the beacon answers "which object, through that cabinet door" — and Tutorial Mode already spends most of the player's attention budget. `GuidePathMath.ShowPath` owns that split so the rule lives in one testable place.
+Tutorial Mode's ground path: chevrons on the floor that flow from the player's feet toward whatever the current step needs. ⛔ It routes on the NAVMESH, not in a straight line. The lab's benches sit in the middle of the room, so a straight line to a wall shelf points through solid furniture — an arrow that lies about the way there is worse than no arrow. `NavMesh.CalculatePath` needs no agent; it just needs the surface baked (Tools ▸ PharmaSynth ▸ Build Lab NavMesh). ⭐ It never draws at the same time as the beacon. The path answers "which way round the benches", the beacon answers "which object, through that cabinet door" — and Tutorial Mode already spends most of the player's attention budget. `GuidePathMath.ShowPath` owns that split so the rule lives in one testable place.
 
 ```csharp
 static GuidePath Instance
@@ -1140,7 +1123,7 @@ void SetTuning(float spacingM, float flow, float scale)
 ### `GuidePathMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/GuidePathMath.cs`</sub>
 
-Pure geometry for Tutorial Mode's ground path (W5.44): given the corners of a walkable route, where does each flowing chevron sit and which way does it face? Pure so the suite can pin the SHAPE of the path without a headset — that chevrons are evenly spaced regardless of how unevenly the navmesh corners fall, that they face along the route rather than at the destination, and that the flow runs toward the target and not away from it. A path that compiles and points backwards is not something a compile or a play-mode run would ever complain about.
+Pure geometry for Tutorial Mode's ground path: given the corners of a walkable route, where does each flowing chevron sit and which way does it face? Pure so the suite can pin the SHAPE of the path without a headset — that chevrons are evenly spaced regardless of how unevenly the navmesh corners fall, that they face along the route rather than at the destination, and that the flow runs toward the target and not away from it. A path that compiles and points backwards is not something a compile or a play-mode run would ever complain about.
 
 ```csharp
 const float Spacing
@@ -1170,7 +1153,7 @@ static bool ShowBeacon(float distanceToTarget, bool hasRoute)
 ### `HandPoseKind` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/HandPoseController.cs`</sub>
 
-The hand's three display poses (user 2026-07-11): FREE (open), GRAB (holding something), POINT (index extended while the ray hovers an interactable — Pharmee, tools, reagents, buttons).
+The hand's three display poses: FREE (open), GRAB (holding something), POINT (index extended while the ray hovers an interactable — Pharmee, tools, reagents, buttons).
 
 ### `HandPosePolicy` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/HandPoseController.cs`</sub>
@@ -1214,7 +1197,7 @@ static bool ShowBareHand(bool gloveVisible)
 ### `HandVisualKeeper` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/HandVisualKeeper.cs`</sub>
 
-Runtime keeper on each controller (user 2026-07-11: "no hands, just controllers / hands on top of the controllers"). Every frame it: - hides the default XRI controller MODEL (the hand replaces it), - keeps the bare hand visible (other systems were toggling it off), - swaps bare hand ↔ FPGlove when PPE gloves are donned/removed. Wired by Tools ▸ PharmaSynth ▸ Build Hand Visuals.
+Runtime keeper on each controller. Every frame it: - hides the default XRI controller MODEL (the hand replaces it), - keeps the bare hand visible (other systems were toggling it off), - swaps bare hand ↔ FPGlove when PPE gloves are donned/removed. Wired by Tools ▸ PharmaSynth ▸ Build Hand Visuals.
 
 ```csharp
 void Bind(GameObject hand, GameObject controllerModel, GameObject glove)
@@ -1223,7 +1206,7 @@ void Bind(GameObject hand, GameObject controllerModel, GameObject glove)
 ### `HeadPushbackMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/HeadCollisionPushback.cs`</sub>
 
-Pure pushback resolution (edit-mode testable). Both rules exist because the old inline version broke headset play (2026-08-24: player ended up under the lab floor, unable to walk).
+Pure pushback resolution (edit-mode testable). Both rules are needed: without them the player can end up under the lab floor, unable to walk).
 
 ```csharp
 const float SurfaceSkin
@@ -1243,7 +1226,7 @@ void Bind(Transform headT, Transform rigT)
 ### `HoverHighlight` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/HoverHighlight.cs`</sub>
 
-Grabbable affordance (user 2026-07-10: prop readability): when a hand/ray hovers a real-scale lab tool, it brightens (base-colour tint via a MaterialPropertyBlock — no per-material keyword or shader needed) and pops slightly larger, so small items are easy to spot and grab; it restores on hover-exit and while actually held. Thin MB over a pure scale helper.
+Grabbable affordance (prop readability): when a hand/ray hovers a real-scale lab tool, it brightens (base-colour tint via a MaterialPropertyBlock — no per-material keyword or shader needed) and pops slightly larger, so small items are easy to spot and grab; it restores on hover-exit and while actually held. Thin MB over a pure scale helper.
 
 ```csharp
 bool IsHighlighted
@@ -1259,7 +1242,7 @@ bool IsDimmed
 ### `HoverInspector` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/HoverInspector.cs`</sub>
 
-Points-at-it inspector (user 2026-07-10): each frame it casts from the pointer (right-hand ray, falling back to gaze) and, if it lands on a known reagent bottle, a piece of apparatus or an NPC, shows a smooth info card (HoverInfoPanel) naming it and explaining what it is / how to use it. A short linger stops the card from flickering as the ray grazes edges. Resolution is data-driven (LabInfoDatabase), so no per-object authoring is needed.
+Points-at-it inspector: each frame it casts from the pointer (right-hand ray, falling back to gaze) and, if it lands on a known reagent bottle, a piece of apparatus or an NPC, shows a smooth info card (HoverInfoPanel) naming it and explaining what it is / how to use it. A short linger stops the card from flickering as the ray grazes edges. Resolution is data-driven (LabInfoDatabase), so no per-object authoring is needed.
 
 ```csharp
 void Bind(Transform aim, Transform headT, HoverInfoPanel p, LayerMask m)
@@ -1284,7 +1267,7 @@ static string StatusLine()
 ### `IceBathController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/IceBathController.cs`</sub>
 
-The bucket itself: every LiquidPhysics vessel brought close is pulled to ice-water temperature. No station, no pad — carry the bucket or carry the flask, either way works (the zone-free tool rule, user 2026-07-17).
+The bucket itself: every LiquidPhysics vessel brought close is pulled to ice-water temperature. No station, no pad — carry the bucket or carry the flask, either way works (the zone-free tool rule).
 
 ```csharp
 Vector3 ChillZoneCenter
@@ -1331,7 +1314,7 @@ static LabItem Resolve(Collider other)
 ### `LabReset` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/LabReset.cs`</sub>
 
-⛔ Apparatus is a vessel the builders marked as USED — one carrying a `CleanableVessel`, which every stage, kit and adopter builder adds to glassware the player fills and never to a source. The first cut used the naming rule instead ("not `Raw_`/`Reagent_`") and swept up nine sources with it: the wash bottles and the methane tutorial's charge jar and glass tube, so the tutorial's setup step starved. Simulate Everything caught it; the suite's fixture could not, because a fixture vessel is whatever the pin says it is. Each used vessel is taken back to empty, cool, unlabelled and unclaimed; `LiquidPhysics.ClearContents` raises `Emptied`, so a pooled vessel gives its role back through the same seam a rinse uses. The bottles then refill through the supply monitor, and a solid jar gets its mound back at full. Positions, flames and consumables stay with `DropRespawn.ResetAllHome`; task wiring wi
+⛔ Apparatus is a vessel the builders marked as USED — one carrying a `CleanableVessel`, which every stage, kit and adopter builder adds to glassware the player fills and never to a source. Never use a naming rule ("not `Raw_`/`Reagent_`"): it sweeps up sources too: the wash bottles and the methane tutorial's charge jar and glass tube, which starves the tutorial's setup step. Simulate Everything covers this; a suite fixture cannot, because a fixture vessel is whatever the pin says it is. Each used vessel is taken back to empty, cool, unlabelled and unclaimed; `LiquidPhysics.ClearContents` raises `Emptied`, so a pooled vessel gives its role back through the same seam a rinse uses. The bottles then refill through the supply monitor, and a solid jar gets its mound back at full. Positions, flames and consumables stay with `DropRespawn.ResetAllHome`; task wiring with `ExperimentSceneBuilder.Cl
 
 ```csharp
 static bool IsUsedVessel(LiquidPhysics lp)
@@ -1343,7 +1326,7 @@ static int ResetApparatus()
 ### `LayoutTidyMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/LayoutTidyMath.cs`</sub>
 
-Pure zoning grid for the center-table layout pass (W5.8: "place all the equipment properly — facing, spacing, open space"). The wide landscape deck (y 0.91, x −1.85…1.40, z −3.94…−2.74; the player works the +z front edge) is divided into four zones; every layout's items are re-seated onto the deterministic slots below, in authored order: • STATIONS  — ONE back row, 0.5 m pitch (verbs need elbow room; the busiest module has 7 stations — exactly one full row) • VESSELS   — center-front, where both hands can reach • REAGENTS  — right-side grid (pourable bottles), 4 per column • TOOLS     — left-side grid (rods, tongs, dishes…), 3 per column The front strip z > −2.90 stays free for the builder's rack, spares and match kits. Suite-pinned; the LayoutTidy menu writes these into the SOs.
+Pure zoning grid for the center-table layout pass (place all the equipment properly — facing, spacing, open space). The wide landscape deck (y 0.91, x −1.85…1.40, z −3.94…−2.74; the player works the +z front edge) is divided into four zones; every layout's items are re-seated onto the deterministic slots below, in authored order: • STATIONS  — ONE back row, 0.5 m pitch (verbs need elbow room; the busiest module has 7 stations — exactly one full row) • VESSELS   — center-front, where both hands can reach • REAGENTS  — right-side grid (pourable bottles), 4 per column • TOOLS     — left-side grid (rods, tongs, dishes…), 3 per column The front strip z > −2.90 stays free for the builder's rack, spares and match kits. Suite-pinned; the LayoutTidy menu writes these into the SOs.
 
 ```csharp
 const float DeckY
@@ -1392,12 +1375,12 @@ void Apply(float pH)
 ### `MatchStrikerSurface` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/MatchStrikerSurface.cs`</sub>
 
-Marker: swiping a held matchstick across this surface lights it (W5.8 — "matches must work"). Lives on the matches dispenser box and burner bases.
+Marker: swiping a held matchstick across this surface lights it. Lives on the matches dispenser box and burner bases.
 
 ### `Matchstick` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/Matchstick.cs`</sub>
 
-A grabbable matchstick (manuscript: combustion/flammability tests, Exp 3/4/7 + the methane splint). Two ways to light it (W5.8): STRIKE it — swipe the held match across a striker surface (the matches box, a burner base) — or hold its head near anything already hot. A lit match then ignites burners (BurnerController) and fires the methane splint test. Pure predicates for the suite.
+A grabbable matchstick (manuscript: combustion/flammability tests, Exp 3/4/7 + the methane splint). Two ways to light it: STRIKE it — swipe the held match across a striker surface (the matches box, a burner base) — or hold its head near anything already hot. A lit match then ignites burners (BurnerController) and fires the methane splint test. Pure predicates for the suite.
 
 ```csharp
 const float IgniteDistance
@@ -1418,7 +1401,7 @@ static Vector3 LongestLocalAxis(Transform t, Bounds b, out float halfExtent)
 ### `MethaneApparatusRig` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/MethaneApparatusRig.cs`</sub>
 
-Methane (Experiment 1) completion — LOCATION-FREE (user 2026-07-13: "we can perform anywhere in the lab as long as we complete the steps"). The old rig gated heat/collect on FIXED trigger zones; this instead detects the ACTIONS by item proximity, so the tutorial works wherever the player does it: prepare-mixture : grinding a mortar (the rig aims the workspace mortar at it) setup-apparatus : the collection tube brought up to the hard-glass tube heat-mixture    : a LIT burner held near the hard-glass tube (it heats) collect-gas     : the hot tube + collection tube held together (gas fills) test-gas        : a LIT match brought to the FILLED collection tube (pop) The rig owns its own TemperatureSim + GasCollection (no station objects). Items are found at runtime by LabItem.itemId, so the player can use their own workspace burner/tube/mortar anywhere.
+Methane (Experiment 1) completion — LOCATION-FREE (the steps can be done anywhere in the lab). Instead of gating heat/collect on FIXED trigger zones, it detects the ACTIONS by item proximity, so the tutorial works wherever the player does it: prepare-mixture : grinding a mortar (the rig aims the workspace mortar at it) setup-apparatus : the collection tube brought up to the hard-glass tube heat-mixture    : a LIT burner held near the hard-glass tube (it heats) collect-gas     : the hot tube + collection tube held together (gas fills) test-gas        : a LIT match brought to the FILLED collection tube (pop) The rig owns its own TemperatureSim + GasCollection (no station objects). Items are found at runtime by LabItem.itemId, so the player can use their own workspace burner/tube/mortar anywhere.
 
 ```csharp
 const float SplintMatchDistance
@@ -1434,7 +1417,7 @@ static float GlowFor(float currentC, float targetC)
 ### `MethaneStageVisibility` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/MethaneStageVisibility.cs`</sub>
 
-W5.12 (user 2026-07-13): the hand-built Methane stage should be PRESENT only during the Lab Tour and the Methane tutorial itself, and gone the moment you move on to any other experiment or are idle in the lab. Methane is the only experiment that uses this stage (Experiment 1), so a single controller owns its visibility — the sole authority (ExperimentSceneBuilder no longer toggles it). Lives on a manager object, NOT on the stage (it must keep running while the stage is hidden). Edit mode leaves the stage as-authored so it can be relocated by hand; this only governs Play. The user hand-moved the 5 methane PROPS out of the stage hierarchy onto the workspace, so toggling the stage alone would leave them visible ("leaking"). This also gathers those loose props by their methane itemIds and toggles them alongside the stage — no reparenting, so the hand placement is untouched.
+The hand-built Methane stage should be PRESENT only during the Lab Tour and the Methane tutorial itself, and gone the moment you move on to any other experiment or are idle in the lab. Methane is the only experiment that uses this stage (Experiment 1), so a single controller owns its visibility — the sole authority (ExperimentSceneBuilder does not toggle it). Lives on a manager object, NOT on the stage (it must keep running while the stage is hidden). Edit mode leaves the stage as-authored so it can be relocated by hand; this only governs Play. The 5 methane PROPS sit outside the stage hierarchy on the workspace, so toggling the stage alone would leave them visible. This also gathers those loose props by their methane itemIds and toggles them alongside the stage — no reparenting, so the hand placement is untouched.
 
 ```csharp
 const string MethaneModuleId
@@ -1445,7 +1428,7 @@ void Bind(GameObject stage, ExperimentRunner runner, LabTourGuide tour)
 ### `MirrorPlane` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/MirrorPlane.cs`</sub>
 
-Real-time dressing mirror (user 2026-07-10) using the canonical planar reflection-matrix technique. Each frame a child camera is placed at the player's eye REFLECTED across the mirror plane and renders the scene with an oblique near plane clamped to the glass (so the wall the mirror hangs on never occludes the view). Rendered by hand — URP does NOT auto-render an enabled off-screen camera, which left the render texture black (user report 2026-07-10) — with inverted culling so the handedness-flipped reflected geometry keeps facing the right way. Distance-gated for the Quest budget. Note: a mirror can only reflect geometry that exists. The player sees the surroundings; seeing THEMSELVES additionally needs a visible body/PPE avatar (tracked separately in the work checklist).
+Real-time dressing mirror using the canonical planar reflection-matrix technique. Each frame a child camera is placed at the player's eye REFLECTED across the mirror plane and renders the scene with an oblique near plane clamped to the glass (so the wall the mirror hangs on never occludes the view). Rendered by hand — URP does NOT auto-render an enabled off-screen camera, which would leave the render texture black — with inverted culling so the handedness-flipped reflected geometry keeps facing the right way. Distance-gated for the Quest budget. Note: a mirror can only reflect geometry that exists. The player sees the surroundings; seeing THEMSELVES additionally needs a visible body/PPE avatar (tracked separately in the work checklist).
 
 ```csharp
 static bool ShouldRender(float distance, float activeDistance, float facingDot, float viewDot)
@@ -1454,7 +1437,7 @@ static bool ShouldRender(float distance, float activeDistance, float facingDot, 
 ### `Mishandling` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/Mishandling.cs`</sub>
 
-Pure rules for mishandling penalties (§2: spill & breakage, user request 2026-07-09): which apparatus is fragile, when an impact shatters it, and when an un-held bottle counts as spilling. Kept plain-C# so the self-tests pin the policy.
+Pure rules for mishandling penalties (§2: spill & breakage): which apparatus is fragile, when an impact shatters it, and when an un-held bottle counts as spilling. Kept plain-C# so the self-tests pin the policy.
 
 ```csharp
 static bool IsBreakable(string prefabName)
@@ -1472,7 +1455,7 @@ static string Prettify(string codeName)
 ### `MixFeedback` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/MixFeedback.cs`</sub>
 
-"What did my mix produce?" feedback on a vessel (W5.8): a registered reaction pops its authored observation text + a colour flash; a harmless no-rule mix reports the mixture story; an overflow says "Vessel full!" and wets the bench. Hazardous mixes stay SILENT here — HazardousMixReactor owns that consequence theatre (smoke/fire/alarm) and double-messaging would bury it. Feedback only: no new graded mistakes.
+"What did my mix produce?" feedback on a vessel: a registered reaction pops its authored observation text + a colour flash; a harmless no-rule mix reports the mixture story; an overflow says "Vessel full!" and wets the bench. Hazardous mixes stay SILENT here — HazardousMixReactor owns that consequence theatre (smoke/fire/alarm) and double-messaging would bury it. Feedback only: no new graded mistakes.
 
 ```csharp
 static bool ShouldAnnounceWrongMix(HazardousMix.HazardOutcome outcome)
@@ -1496,7 +1479,7 @@ static float NextTemp(float current, float dt)
 ### `NakedFlameHeat` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/NakedFlameHeat.cs`</sub>
 
-Zone-free open-flame heat on every Bunsen burner (wired by Apply W5.8): while LIT, any vessel within reach of the flame anchor heats toward 400 °C. This is what the hard-glass tubes exist for — the water bath owns every gentler step.
+Zone-free open-flame heat on every Bunsen burner (wired by the Apply W5.8 Verb Data menu): while LIT, any vessel within reach of the flame anchor heats toward 400 °C. This is what the hard-glass tubes exist for — the water bath owns every gentler step.
 
 ```csharp
 void Bind(BurnerController burner)
@@ -1506,7 +1489,7 @@ void HeatVessel(LiquidPhysics vessel, float dt)
 ### `OrbitMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/OrbitMath.cs`</sub>
 
-Pure circular-motion accumulator shared by the STIR and GRIND verbs (W5.8): feed it the tool tip's XZ offset from the vessel/bowl axis each frame; while the tip stays inside the working radius the swept angle accumulates (direction-agnostic, per-sample clamped so teleports/jitter can't cheat). Leaving the zone PAUSES progress — it never resets (a student lifting the rod to check shouldn't lose their work).
+Pure circular-motion accumulator shared by the STIR and GRIND verbs: feed it the tool tip's XZ offset from the vessel/bowl axis each frame; while the tip stays inside the working radius the swept angle accumulates (direction-agnostic, per-sample clamped so teleports/jitter can't cheat). Leaving the zone PAUSES progress — it never resets (a student lifting the rod to check shouldn't lose their work).
 
 ```csharp
 float requiredRevs
@@ -1535,7 +1518,7 @@ PhysicsProfile(float mass, RestPose p)
 ### `PhysicsProfiles` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/PhysicsProfiles.cs`</sub>
 
-Physics-attribute table for the ChemLab prefabs — the companion to RealSizes (task #78 physics/resting-pose audit). Name → realistic mass + plausible resting pose, plus the pure math that turns a pose into a rotation and the guards the audit tool uses (degenerate colliders, resting plausibility). Policy: items spawn KINEMATIC on the shelf; GrabPhysicsPolicy flips them dynamic on first release so a dropped glass rod falls and lies on its side instead of freezing mid-air or balancing upright.
+Physics-attribute table for the ChemLab prefabs — the companion to RealSizes (used by the physics/resting-pose audit tool). Name → realistic mass + plausible resting pose, plus the pure math that turns a pose into a rotation and the guards the audit tool uses (degenerate colliders, resting plausibility). Policy: items spawn KINEMATIC on the shelf; GrabPhysicsPolicy flips them dynamic on first release so a dropped glass rod falls and lies on its side instead of freezing mid-air or balancing upright.
 
 ```csharp
 static int Count
@@ -1552,7 +1535,7 @@ static Collider EnsureCollider(GameObject go)
 ### `PlacementAnchor` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/PlacementAnchor.cs`</sub>
 
-A tiny draggable marker the user positions in the editor to tell a verb exactly WHERE something happens on an imported mesh — the flame on a match head, the flame on a burner mouth, the bowl of a scoopula. Bounds-based guessing can't know a model's axis convention (user 2026-07-14: "can I drag these to the specific parts?"), so the code reads this anchor's position and falls back to a heuristic only when no anchor is present. Convention: a child named "FlameAnchor" (Matchstick / BurnerController) or "ScoopAnchor" (ScoopController). Drag it in the Scene view, then Lock My Layout to bake it. The gizmo just makes it easy to see/select.
+A tiny draggable marker positioned by hand in the editor to tell a verb exactly WHERE something happens on an imported mesh — the flame on a match head, the flame on a burner mouth, the bowl of a scoopula. Bounds-based guessing can't know a model's axis convention, so the code reads this anchor's position and falls back to a heuristic only when no anchor is present. Convention: a child named "FlameAnchor" (Matchstick / BurnerController) or "ScoopAnchor" (ScoopController). Drag it in the Scene view, then Lock My Layout to bake it. The gizmo just makes it easy to see/select.
 
 ```csharp
 Color gizmoColor
@@ -1566,7 +1549,7 @@ const float TubeRadius
 ### `PlayerAvatarRig` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/PlayerAvatarRig.cs`</sub>
 
-Drives the mirror-only first-person avatar (user 2026-07-10): stands the body at the player's feet, turns it to the head's yaw, and feeds the Animation-Rigging IK targets (head + both hands) from the HMD and controllers so the reflection moves with you. Attach to the avatar root; `PlayerAvatarBuilder` wires the transforms. The avatar renders on the PlayerAvatar layer, which the main camera culls and the mirror includes — so you see this only in the mirror.
+Drives the mirror-only first-person avatar: stands the body at the player's feet, turns it to the head's yaw, and feeds the Animation-Rigging IK targets (head + both hands) from the HMD and controllers so the reflection moves with you. Attach to the avatar root; `PlayerAvatarBuilder` wires the transforms. The avatar renders on the PlayerAvatar layer, which the main camera culls and the mirror includes — so you see this only in the mirror.
 
 ```csharp
 void Bind(Transform h, Transform l, Transform r,
@@ -1588,7 +1571,7 @@ void SimulateEnter()
 ### `RackDispenserMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/RackDispenser.cs`</sub>
 
-Pure rules for a capped tube rack (user 2026-07-12: "unmovable racks that when grabbed pull out single items, with a cap so the maximum is controlled"). Unlike the ConsumableDispenser (endless single-piece box for matches/litmus), a rack holds a FINITE set of REUSABLE tubes — one persistent instance per hole. Pulling one leaves its hole empty; the tube stays a normal grabbable (fillable, cleanable, breakable → returns home). The cap is the hole count by construction: you can never have more tubes out than the rack was built with.
+Pure rules for a capped tube rack (an unmovable rack that, when grabbed, pulls out single items, with a cap so the maximum is controlled). Unlike the ConsumableDispenser (endless single-piece box for matches/litmus), a rack holds a FINITE set of REUSABLE tubes — one persistent instance per hole. Pulling one leaves its hole empty; the tube stays a normal grabbable (fillable, cleanable, breakable → returns home). The cap is the hole count by construction: you can never have more tubes out than the rack was built with.
 
 ```csharp
 static bool InHole(bool held, float distFromHole, float slotRadius
@@ -1622,7 +1605,7 @@ static float UniformScaleFactor(Vector3 currentWorldSize, float targetLongest)
 ### `ScoopMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/ScoopController.cs`</sub>
 
-Pure rules for scooping solids (W5.12, user: "some reagents are needed to be scooped… scoop adds a specific amount per scoop… the visual increases and so does the scale text"). Kept plain so the suite pins the policy.
+Pure rules for scooping solids (solid reagents are scooped: each scoop adds a fixed amount, and the heap visual grows and so does the scale reading). Kept plain so the suite pins the policy.
 
 ```csharp
 const float GramsPerScoop
@@ -1655,7 +1638,7 @@ static float MoundFill(float grams, float fullAtG
 ### `HeightCalibration` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/SeatedHeightBoost.cs`</sub>
 
-Pure fixed-eye-height math (edit-mode testable). Design (user 2026-07-11): per-scene FIXED eye height, NOT relative to the player's real height — the Quest/Link runtime flip-flops between Floor and Device origin spaces across sessions, so any "relative" scheme produced floor-spawns or roof-spawns. Measure where the headset says the head is ONCE at load (only from a VALID, SETTLED pose), then offset the rig so the eye line lands exactly on the scene's authored height. Offset may be NEGATIVE (pulls a too-high pose back down). Gravity (move providers, m_UseGravity on) keeps the rig grounded.
+Pure fixed-eye-height math (edit-mode testable). Design: per-scene FIXED eye height, NOT relative to the player's real height — the Quest/Link runtime flip-flops between Floor and Device origin spaces across sessions, so any "relative" scheme produces floor-spawns or roof-spawns. Measure where the headset says the head is ONCE at load (only from a VALID, SETTLED pose), then offset the rig so the eye line lands exactly on the scene's authored height. Offset may be NEGATIVE (pulls a too-high pose back down). Gravity (move providers, m_UseGravity on) keeps the rig grounded.
 
 ```csharp
 const float MaxAdjust
@@ -1669,7 +1652,7 @@ static bool PoseValid(Vector3 headLocalPos, float lastY)
 ### `SeatedHeightBoost` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/SeatedHeightBoost.cs`</sub>
 
-Thin driver on the XR Origin (class name kept so existing scene wiring stays valid — behaviour is FIXED height, no seated boost / auto-levitate). v3 fixes (user 2026-07-11: "1.6x too tall in menu / roof in lab"): the old settle counter counted frames of UNTRACKED (0,0,0) poses during the load fade, measured y≈0, applied the max +1.5 offset, and the real head height then stacked on top (eye ≈ 2.5 m → too tall; capsule ballooned into the lab ceiling → depenetration shoved the rig onto the roof). Now: - calibration only accepts a valid, settled pose (see PoseValid); - the offset is held at 0 until calibrated (a stale Device-mode 1.36 can never balloon the capsule during load); - the roof-recovery guard runs CONTINUOUSLY, not once. Recalibrates only on scene load / explicit Recalibrate() — never mid-play. Per-scene targets set by Tools ▸ PharmaSynth ▸ Wire Spawn Height.
+Thin driver on the XR Origin (class name kept so existing scene wiring stays valid — behaviour is FIXED height, no seated boost / auto-levitate). Counting UNTRACKED (0,0,0) poses during the load fade as settled measures y≈0, applies the max +1.5 offset, and the real head height then stacks on top (eye ≈ 2.5 m; the capsule balloons into the lab ceiling and depenetration shoves the rig onto the roof). So: - calibration only accepts a valid, settled pose (see PoseValid); - the offset is held at 0 until calibrated (a stale Device-mode 1.36 can never balloon the capsule during load); - the roof-recovery guard runs CONTINUOUSLY, not once. Recalibrates only on scene load / explicit Recalibrate() — never mid-play. Per-scene targets set by Tools ▸ PharmaSynth ▸ Wire Spawn Height.
 
 ```csharp
 float TargetEyeHeight
@@ -1704,7 +1687,7 @@ void SetRunning(bool on)
 ### `SpawnBurstFX` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/SpawnBurstFX.cs`</sub>
 
-Cyan "materialize" spawn burst (user 2026-07-10): a one-shot column of cyan particles that rises from the player's feet like smoke on every teleport / reset / spawn — the classic game spawn animation. Scene singleton (mirrors ScreenFader); triggers fire it null-safely via SpawnBurstFX.Instance?.PlayAtPlayer().
+Cyan "materialize" spawn burst: a one-shot column of cyan particles that rises from the player's feet like smoke on every teleport / reset / spawn — the classic game spawn animation. Scene singleton (mirrors ScreenFader); triggers fire it null-safely via SpawnBurstFX.Instance?.PlayAtPlayer().
 
 ```csharp
 static SpawnBurstFX Instance
@@ -1726,7 +1709,7 @@ static Color LiquidColorOf(LiquidPhysics liquid)
 ### `SpillPuddle` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/SpillPuddle.cs`</sub>
 
-A liquid puddle left on the ground by a spilled/broken vessel (user 2026-07-10: "liquid spilled on ground … a 3 seconds delay then smoothly fades away"). Spawn() drops a flat translucent disc at the impact point (raycast to the floor), tinted with the spilled chemical's colour; it lingers, then fades out and destroys itself. Purely visual — the graded penalty + supply loss already happen in SpillMistake/LiquidPourer/BreakableGlassware.
+A liquid puddle left on the ground by a spilled/broken vessel: it lingers ~3 s, then smoothly fades away. Spawn() drops a flat translucent disc at the impact point (raycast to the floor), tinted with the spilled chemical's colour; it lingers, then fades out and destroys itself. Purely visual — the graded penalty + supply loss already happen in SpillMistake/LiquidPourer/BreakableGlassware.
 
 ```csharp
 static float Alpha01(float age, float linger, float fade)
@@ -1748,7 +1731,7 @@ static bool Matches(string requiredId, LabItem item)
 ### `StationStatusLabel` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/StationStatusLabel.cs`</sub>
 
-Live status on a sim station's billboard label (W5.8: "the temperature showing in heaters etc"): Heat shows "62 C -> 150 C", Filter/Collect/ Crystallise show percent progress. Throttled + change-gated; formats live in VesselStatusMath so the suite pins them.
+Live status on a sim station's billboard label (the temperature shown on heaters etc.): Heat shows "62 C -> 150 C", Filter/Collect/ Crystallise show percent progress. Throttled + change-gated; formats live in VesselStatusMath so the suite pins them.
 
 ```csharp
 void SetIgnitionHint(System.Func<bool> isLit)
@@ -1760,7 +1743,7 @@ string ComposeStatus()
 ### `StationVfx` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/StationVfx.cs`</sub>
 
-Per-station particle effects (user 2026-07-10: "special effects for boiling, freezing etc."), the visual twin of SimLoopAudio: while the required prop occupies a sim station the effect plays — steam for Heat (boiling), a frosty sparkle for Crystallise (freezing/ice bath), a falling drip for Filter, rising bubbles for Collect. Attached + bound by ExperimentSceneBuilder per station; ZoneSimStation drives SetRunning from occupancy. The ParticleSystem is built procedurally on first use (no asset dependencies — Quest-cheap, ≤60 live).
+Per-station particle effects (special effects for boiling, freezing etc.), the visual twin of SimLoopAudio: while the required prop occupies a sim station the effect plays — steam for Heat (boiling), a frosty sparkle for Crystallise (freezing/ice bath), a falling drip for Filter, rising bubbles for Collect. Attached + bound by ExperimentSceneBuilder per station; ZoneSimStation drives SetRunning from occupancy. The ParticleSystem is built procedurally on first use (no asset dependencies — Quest-cheap, ≤60 live).
 
 ```csharp
 static string StyleFor(StationSim s)
@@ -1772,7 +1755,7 @@ void SetRunning(bool on)
 ### `StirController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/StirController.cs`</sub>
 
-The STIR verb (W5.8): circle the glass rod inside this vessel's mouth while it holds liquid and the stir task completes — works with the vessel on the table OR held in a hand (everything is vessel-relative). Progress pops as floating text; the TaskGraph condition owns completion (Retry-safe via the ZoneSimStation resubscribe pattern).
+The STIR verb: circle the glass rod inside this vessel's mouth while it holds liquid and the stir task completes — works with the vessel on the table OR held in a hand (everything is vessel-relative). Progress pops as floating text; the TaskGraph condition owns completion (Retry-safe via the ZoneSimStation resubscribe pattern).
 
 ```csharp
 OrbitMath Math
@@ -1783,20 +1766,6 @@ void Detach()
 void Register()
 bool RodInMouth()
 void Tick(float x, float z, bool inside)
-```
-
-### `TVRepositionController` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/TVRepositionController.cs`</sub>
-
-```csharp
-void ApplyReposition()
-```
-
-### `TabletGestureController` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/TabletGestureController.cs`</sub>
-
-```csharp
-UnityEvent onTabletGesture
 ```
 
 ### `TargetRole` <sub>enum</sub>
@@ -1820,7 +1789,7 @@ bool pool
 ### `TaskTargetRegistry` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/TaskTargetRegistry.cs`</sub>
 
-taskId → the scene objects that step involves. Formerly ExperimentStationRegistry, which mapped ONE Transform per task and was fed only by ExperimentTaskStation.OnEnable. Since the zone-free conversion (2026-07-17) no module stages a station, so nothing ever registered and every consumer silently got null — WaypointGuide has been calling Hide() every frame in all 9 modules ever since. Widened to a list and fed by the TutorialTargets sweep, which is the single source of truth: components no longer self-register, so there is no second lifetime to keep in sync.
+taskId → the scene objects that step involves. Fed by the TutorialTargets sweep, the single source of truth (no module stages an ExperimentTaskStation, so station self-registration would find nothing). Components do not self-register, so there is no second lifetime to keep in sync.
 
 ```csharp
 static void Register(string taskId, Transform t, TargetRole role, bool stayLitWhenHeld,
@@ -1835,7 +1804,7 @@ static void Clear()
 ### `TutorialTargets` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/TaskTargetRegistry.cs`</sub>
 
-Builds the taskId → objects map by sweeping the live scene once per run. Deliberately DERIVED from the components that actually complete each task rather than from an authored per-task list. An authored list can drift from the binding it describes — exactly the bug class the W5.34 clueless-player audit was spent on (a hint whose ACTION line contradicted the binding it had to satisfy). Deriving makes that disagreement structurally impossible: if the sweep points at it, it is the thing that completes the step.
+Builds the taskId → objects map by sweeping the live scene once per run. Deliberately DERIVED from the components that actually complete each task rather than from an authored per-task list. An authored list can drift from the binding it describes — the bug class of (a hint whose ACTION line contradicted the binding it had to satisfy). Deriving makes that disagreement structurally impossible: if the sweep points at it, it is the thing that completes the step.
 
 ```csharp
 static readonly List<string> LastUnresolved
@@ -1860,7 +1829,7 @@ static string Counter(float k, float hours)
 ### `TimeSkipController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/TimeSkipController.cs`</sub>
 
-Compresses a real-world wait the player can't sit through (user 2026-07-17: "after the mixture requirement is set, the screen fades black for 2 s, and when it returns a success text says the time has passed and it's done. Set this for all procedures across all experiments that need lengthy time"). A task authored longProcess=true plays a TIMELAPSE on completion: fade black, a security-camera view of the lab from its top corner (Cam_Timelapse) running through days and nights with a counter, fade black, then back to play with a "time has passed" message. Without the cinema rig it falls back to a plain black hold. Zone-free and experiment-agnostic: it keys off the task flag, so any module's week-long fermentation / overnight dry / hour-long crystallisation reuses it for free.
+Compresses a real-world wait the player can't sit through (once the mixture requirement is met, the screen fades black for 2 s, and when it returns a success text says the time has passed and the step is done; this covers every procedure in every experiment that needs lengthy time). A task authored longProcess=true plays a TIMELAPSE on completion: fade black, a security-camera view of the lab from its top corner (Cam_Timelapse) running through days and nights with a counter, fade black, then back to play with a "time has passed" message. Without the cinema rig it falls back to a plain black hold. Zone-free and experiment-agnostic: it keys off the task flag, so any module's week-long fermentation / overnight dry / hour-long crystallisation reuses it for free.
 
 ```csharp
 static bool IsTimeSkip(ExperimentTask t)
@@ -1873,7 +1842,7 @@ void PlayTimelapse(ExperimentTask t)
 ### `TubeSlotMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/TubeRackSlots.cs`</sub>
 
-Pure rules for snapping a released test tube into a workspace holder slot (user 2026-07-16: "the racking of the tubes wont work for the Experiment_Tube_Table_Kit_Holder_1 to 4. It doesn't automatically get and rack the tubes, even empty ones that I place near it"). The green Slot_* anchors were only EDITOR ghosts until now — position markers the user dragged into the holder's holes. This gives them their runtime half: release any tube (regular or hard-glass — both carry itemId kit-testtube) near a free slot and it seats upright in the hole.
+Pure rules for snapping a released test tube into a workspace holder slot of Experiment_Tube_Table_Kit_Holder_1 to 4: any tube, empty or filled, released near a free slot. The green Slot_* anchors are hand-placed editor markers in the holder's holes; this is their runtime half: release any tube (regular or hard-glass — both carry itemId kit-testtube) near a free slot and it seats upright in the hole.
 
 ```csharp
 const float SnapRadius
@@ -1895,7 +1864,7 @@ int SlotCount
 ### `TutorialHighlighter` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/TutorialHighlighter.cs`</sub>
 
-Drives Tutorial Mode's guidance off the task graph: whatever step is available right now, its objects glow. ⭐ It NEVER decides that a step is DONE. This is a pure read of AvailableTasks(); the task completes through its existing binding exactly as in campaign, and the glow follows on the next poll because the available set changed. Since no parallel completion detector exists, the guidance cannot disagree with the game — which is the whole failure mode the W5.34 hint audit was spent unpicking.
+Drives Tutorial Mode's guidance off the task graph: whatever step is available right now, its objects glow. ⭐ It NEVER decides that a step is DONE. This is a pure read of AvailableTasks(); the task completes through its existing binding exactly as in campaign, and the glow follows on the next poll because the available set changed. Since no parallel completion detector exists, the guidance cannot disagree with the game — which is the failure mode this design avoids.
 
 ```csharp
 void Bind(ExperimentRunner r)
@@ -1953,7 +1922,7 @@ Quaternion rotation
 ### `VerbDemoMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/VerbDemoMath.cs`</sub>
 
-Pure motion curves for Tutorial Mode's verb demonstration (W5.39): given a verb and two world points, where should the ghost be at normalised time t? Pure so the suite can pin the SHAPE of each motion without a headset — that a pour actually tips past horizontal, that a stir completes real revolutions, that a travel arc never sinks through the bench. A curve that looks plausible in code and does nothing useful in VR is exactly what this file exists to prevent. No hand is modelled. The ghost is a copy of the object the player must move, which is both cheaper (no rig, no clips, no new art) and clearer: the thing that moves on screen is the thing they have to pick up.
+Pure motion curves for Tutorial Mode's verb demonstration: given a verb and two world points, where should the ghost be at normalised time t? Pure so the suite can pin the SHAPE of each motion without a headset — that a pour actually tips past horizontal, that a stir completes real revolutions, that a travel arc never sinks through the bench. A curve that looks plausible in code and does nothing useful in VR is exactly what this file exists to prevent. No hand is modelled. The ghost is a copy of the object the player must move, which is both cheaper (no rig, no clips, no new art) and clearer: the thing that moves on screen is the thing they have to pick up.
 
 ```csharp
 const float ArcHeight
@@ -1974,7 +1943,7 @@ static VerbPose Sample(VerbKind kind, float t01, Vector3 from, Vector3 to,
 ### `VerbDemoPlayer` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/VerbDemoPlayer.cs`</sub>
 
-Tutorial Mode's verb demonstration (W5.39): a translucent ghost of the object the player has to move, miming the actual motion of the step, twice, then gone. ⭐ Deliberately NOT a hand. Rigging and animating a pair of hands is days of art for a hint, and it answers the wrong question — the player already knows what a hand looks like. Ghosting the BOTTLE tells them which object moves, from where, to where, and how it is held at the end of the motion. The mesh-copy machinery is the same one TutorialHighlighter's glow shell already proved. Fires only on request (coach level 2, or poking Pharmee for help). Never loops ambiently: a permanently miming ghost is noise, and it would compete with the glow for the player's attention instead of reinforcing it.
+Tutorial Mode's verb demonstration: a translucent ghost of the object the player has to move, miming the actual motion of the step, twice, then gone. ⭐ Deliberately NOT a hand. Rigging and animating a pair of hands is days of art for a hint, and it answers the wrong question — the player already knows what a hand looks like. Ghosting the BOTTLE tells them which object moves, from where, to where, and how it is held at the end of the motion. The mesh-copy machinery is the same one TutorialHighlighter's glow shell already proved. Fires only on request (coach level 2, or poking Pharmee for help). Never loops ambiently: a permanently miming ghost is noise, and it would compete with the glow for the player's attention instead of reinforcing it.
 
 ```csharp
 void Bind(ExperimentRunner r, Material ghost)
@@ -2054,7 +2023,7 @@ void Detach()
 ### `VesselStatus` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/VesselStatus.cs`</sub>
 
-Live contents readout on a vessel's existing ProximityLabel (W5.8: "track the contents — texts that show when we hover or get near"). Throttled and change-gated so the TMP mesh only rebuilds when the state actually moves.
+Live contents readout on a vessel's existing ProximityLabel: contents text on hover or when near. Throttled and change-gated so the TMP mesh only rebuilds when the state actually moves.
 
 ```csharp
 void SetRoleSuffix(string suffix)
@@ -2086,7 +2055,7 @@ void SetAmplitude(float a)
 ### `WatchMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/WatchMath.cs`</sub>
 
-Pure fitted-watch geometry (edit-mode testable). The authored WatchModel is a SOLID Tripo mesh — a solid object can never encircle a wrist (user 2026-07-11: "perfectly neat and wrapped" like a real watch). Instead we MEASURE the hand mesh's wrist cross-section and generate an elliptical band around it, with a disc face on top. Everything here is deterministic math on plain data.
+Pure fitted-watch geometry (edit-mode testable). The authored WatchModel is a SOLID Tripo mesh — a solid object can never encircle a wrist the way a real watch wraps. Instead we MEASURE the hand mesh's wrist cross-section and generate an elliptical band around it, with a disc face on top. Everything here is deterministic math on plain data.
 
 ```csharp
 const float BandClearance
@@ -2110,7 +2079,7 @@ static Mesh BuildBandMesh(Vector2 radii, float tube, int loopSegs, int tubeSegs)
 ### `WaterBathMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/WaterBathController.cs`</sub>
 
-Pure rules for the ZONE-FREE water bath (user 2026-07-17: "I don't want any zone. The entire lab IS the zone. The tools themselves function when brought together ANYWHERE"). The bath is a real tool with real requirements, exactly like the manuscript's: fill it with water, put a lit burner under it, and it warms whatever vessel you bring to it — wherever in the lab it happens to sit.
+Pure rules for the ZONE-FREE water bath (no fixed zone: the entire lab IS the zone, and tools function when brought together ANYWHERE). The bath is a real tool with real requirements, exactly like the manuscript's: fill it with water, put a lit burner under it, and it warms whatever vessel you bring to it — wherever in the lab it happens to sit.
 
 ```csharp
 const float MinWaterMl
@@ -2165,7 +2134,7 @@ string CurrentTargetTaskId
 ### `WeighMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/WeighMath.cs`</sub>
 
-Pure weighing rules (W5.8): the balance pan auto-tares the vessel, so the display reads the CONTENTS in grams (1 g/ml proxy — real densities are out of scope per the client's record-only-yield ruling). The suite pins these.
+Pure weighing rules: the balance pan auto-tares the vessel, so the display reads the CONTENTS in grams (1 g/ml proxy — real densities are out of scope per the client's record-only-yield ruling). The suite pins these.
 
 ```csharp
 static float MassOf(float liquidMl, float solidG
@@ -2179,7 +2148,7 @@ static bool PanSettled(float secondsOnPan, float minSeconds
 ### `WeighStation` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/WeighStation.cs`</sub>
 
-A functional balance (W5.8: "the weighing scale too"): whatever rests on the pan drives the live grams display (auto-tared contents, 1 g/ml proxy), and a weigh-* task completes once the CORRECT load sits settled on the pan — either a vessel holding enough of the required chemical (Aspirin: flask with ~50 ml Salicylic Acid) or the required tool (Acetone: the acetate scoopula). TaskGraph condition + ExperimentStarted resubscribe = Retry-safe (the ZoneSimStation pattern). The pan is a trigger volume over the Balance model.
+A functional balance: whatever rests on the pan drives the live grams display (auto-tared contents, 1 g/ml proxy), and a weigh-* task completes once the CORRECT load sits settled on the pan — either a vessel holding enough of the required chemical (Aspirin: flask with ~50 ml Salicylic Acid) or the required tool (Acetone: the acetate scoopula). TaskGraph condition + ExperimentStarted resubscribe = Retry-safe (the ZoneSimStation pattern). The pan is a trigger volume over the Balance model.
 
 ```csharp
 LabItem OccupantItem
@@ -2198,7 +2167,7 @@ bool HasScale
 ### `WeighingScaleController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/WeighingScaleController.cs`</sub>
 
-The balance's digital head. Drives the grams readout from a target mass, the way a bench balance does: the reading TYPES IN, wobbles while the load settles, then locks (user 2026-07-27: "add animation to the typing of the weight like how a real digital scale does"). All display maths is pure so the suite pins it without a scene.
+The balance's digital head. Drives the grams readout from a target mass, the way a bench balance does: the reading TYPES IN, wobbles while the load settles, then locks (like a real digital scale). All display maths is pure so the suite pins it without a scene.
 
 ```csharp
 UnityEvent onTargetReached
@@ -2217,7 +2186,7 @@ static string Format(float grams, string unit)
 ### `WorkspaceShelfMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/WorkspaceShelfMath.cs`</sub>
 
-Pure geometry for the center-table overhead shelf. W5.10 built one row of flush platform tiles on the gantry rails (front z=-3.15, back z=-3.50, tops y≈1.55). W5.12: the user hand-added a SECOND, lower row (plank centres y≈1.200) for the apparatus kits — this math now describes BOTH rows so the builder can rebuild them cleanly and the kit layout can target either. Values match the user's planks (row pitch, z centre, depth). Kept plain so the suite pins coverage + heights.
+Pure geometry for the center-table overhead shelf. One row of flush platform tiles sits on the gantry rails (front z=-3.15, back z=-3.50, tops y≈1.55). A SECOND, lower row (plank centres y≈1.200) for the apparatus kits — this math describes BOTH rows so the builder can rebuild them cleanly and the kit layout can target either. Values match the hand-placed planks (row pitch, z centre, depth). Kept plain so the suite pins coverage + heights.
 
 ```csharp
 const int Rows
@@ -2235,9 +2204,6 @@ static Vector3 TileCenter(int i, int count, int row
 static Vector3 TileSize(int count)
 static Vector3 LipCenter(int row
 ```
-
-### `XRBottleUI` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Interaction/XRBottleUI.cs`</sub>
 
 ### `ZoneItemSensor` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/ZoneItemSensor.cs`</sub>
@@ -2356,7 +2322,7 @@ float Total
 ### `ScoreCalculator` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Scoring/ScoreCalculator.cs`</sub>
 
-Turns per-criterion sub-scores (each 0..1) into a weight-normalized grade %. Split out of the original flow god-class as the audit asked; that class (ExperimentFlowManager) was finally deleted in 2026-08-07 once the split was complete and nothing in any scene referenced it.
+Turns per-criterion sub-scores (each 0..1) into a weight-normalized grade %.
 
 ```csharp
 ScoreCalculator(RubricWeights weights)
@@ -2374,7 +2340,7 @@ static float TimeSubScore(float elapsedSeconds, float parSeconds)
 ### `DemoConfig` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Progression/DemoMode.cs`</sub>
 
-Backend demo-mode switch (user 2026-07-10): panelists need a fast run-through with auto-complete controls, while Chapter-3 study participants must see the untouched normal flow. A config FILE decides whether the cube-room menu even shows the "Demo Mode" button; pressing that button starts a demo SESSION (separate throwaway save, all periods unlocked, HUD auto-complete controls, infinite reagents). Config off = zero footprint.
+Backend demo-mode switch: panelists need a fast run-through with auto-complete controls, while Chapter-3 study participants must see the untouched normal flow. A config FILE decides whether the cube-room menu even shows the "Demo Mode" button; pressing that button starts a demo SESSION (separate throwaway save, all periods unlocked, HUD auto-complete controls, infinite reagents). Config off = zero footprint.
 
 ```csharp
 bool demoEnabled
@@ -2437,7 +2403,7 @@ CatalogEntry(string id, string asset, string title, ExperimentPeriod period, str
 ### `ExperimentCatalog` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Progression/ExperimentCatalog.cs`</sub>
 
-The ordered 9-experiment roster — the client's 2026-07-16 period grouping, which is exactly the manuscript's 8 bench labs (Exp 2-9) plus the methane tutorial. (Manuscript Exp 1, Stoichiometry, is a pen-and-paper calc exercise, so it has no bench module.) Aspirin + Caffeine were game-authored, are absent from the grouping, and were dropped 2026-07-16 — Aspirin survives as a RAW REAGENT because Exp 2 §D hydrolyses it. Linear mastery chain: each experiment unlocks the next once its two-part 90% gate is cleared. Kept as plain data so the menu/hub/experiment-select and ProgressionFlow can drive off one source of truth, and so it is unit-testable without a scene.
+The ordered 9-experiment roster — the client's period grouping, which is exactly the manuscript's 8 bench labs (Exp 2-9) plus the methane tutorial. (Manuscript Exp 1, Stoichiometry, is a pen-and-paper calc exercise, so it has no bench module.) Aspirin + Caffeine were game-authored, are absent from the grouping, and were dropped — Aspirin survives as a RAW REAGENT because Exp 2 §D hydrolyses it. Linear mastery chain: each experiment unlocks the next once its two-part 90% gate is cleared. Kept as plain data so the menu/hub/experiment-select and ProgressionFlow can drive off one source of truth, and so it is unit-testable without a scene.
 
 ```csharp
 static readonly IReadOnlyList<CatalogEntry> Entries
@@ -2584,7 +2550,7 @@ ChemicalData GetChemical(string n)
 ### `TutorialSession` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Progression/TutorialSession.cs`</sub>
 
-Tutorial Mode (2026-08-07): all 9 experiments unlocked, heavily guided (glow + waypoint + hint on the watch + always-on labels), and UNGRADED — no quiz, no grade screen, no BKT update, no save write, no unlock. Practice only; a run leaves no trace. Deliberately the same shape as DemoSession.Active: one static flag every consumer early-returns on, so the campaign path stays unchanged by construction rather than by testing.
+Tutorial Mode: all 9 experiments unlocked, heavily guided (glow + waypoint + hint on the watch + always-on labels), and UNGRADED — no quiz, no grade screen, no BKT update, no save write, no unlock. Practice only; a run leaves no trace. Deliberately the same shape as DemoSession.Active: one static flag every consumer early-returns on, so the campaign path stays unchanged by construction rather than by testing.
 
 ```csharp
 static bool Active
@@ -2744,7 +2710,7 @@ const string OutDir
 ### `ExaminerNPC` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/ExaminerNPC.cs`</sub>
 
-Dr. Jimenez — the assessment-mode examiner (plan §3.4) plus his proctor VOICE (user 2026-07-10: "populate more messages... improve their behaviors"). In experiments flagged assessmentMode he observes and gives NO hints (Pharmee also stays quiet); the `State`/`IsObserving` machine still reflects that flag exactly. Independently, whenever ANY run is active he proctors aloud: a stern greeting at the start, then occasional oversight remarks (never hints), each driving the rigged model's "Talking" bool for its duration and showing a subtitle if he has a narration channel. Movement is ProctorRoamer's job; this is his voice + state.
+Dr. Jimenez — the assessment-mode examiner (plan §3.4) plus his proctor VOICE (a varied pool of remarks and behaviours). In experiments flagged assessmentMode he observes and gives NO hints (Pharmee also stays quiet); the `State`/`IsObserving` machine still reflects that flag exactly. Independently, whenever ANY run is active he proctors aloud: a stern greeting at the start, then occasional oversight remarks (never hints), each driving the rigged model's "Talking" bool for its duration and showing a subtitle if he has a narration channel. Movement is ProctorRoamer's job; this is his voice + state.
 
 ### `ExaminerState` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/ExaminerNPC.cs`</sub>
@@ -2764,7 +2730,7 @@ float SecondsFor(string line)
 ### `FloatBob` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/FloatBob.cs`</sub>
 
-Gentle hover animation for a floating character/prop (Pharmee): sinusoidal vertical bob plus a slight sway tilt and a bounded Perlin jitter ("alive" wiggle, client request 2026-07-09), around a movable home pose. Local-space so it composes with any parent motion; a mover may drive the home via SetHome.
+Gentle hover animation for a floating character/prop (Pharmee): sinusoidal vertical bob plus a slight sway tilt and a bounded Perlin jitter ("alive" wiggle), around a movable home pose. Local-space so it composes with any parent motion; a mover may drive the home via SetHome.
 
 ```csharp
 void SetApplyRotation(bool on)
@@ -2780,7 +2746,7 @@ static Vector3 JitterOffset(float t, float speed, float amplitude)
 ### `GateState` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/GatekeeperModel.cs`</sub>
 
-States of the door-gated game loop (confirmed client workflow 2026-07-09, post-experiment review flow redesigned 2026-07-11 per the user's plan): Pharmee blocks the lab door; the player picks Lab Tour or Campaign → episode → lab-coat → ready → the lab loads/resets → threshold warning → the period starts the moment they walk in → tests complete → Pharmee congratulates and fades the player to Dr. Jimenez's review corner (QuizIntro) → Jimenez briefs → the quiz (QuizTime, never score-gated — manuscript) → grade + outro + spoken remarks (ScoreReview) → Continue teleports home with a full lab/wearables reset (Returning) → Pharmee's quiz-completion debrief AT THE ENTRANCE (Debrief) → unlock announcement → repeat. Retry from the review corner re-arms at the door.
+States of the door-gated game loop (the confirmed client workflow, post-experiment review flow included): Pharmee blocks the lab door; the player picks Lab Tour or Campaign → episode → lab-coat → ready → the lab loads/resets → threshold warning → the period starts the moment they walk in → tests complete → Pharmee congratulates and fades the player to Dr. Jimenez's review corner (QuizIntro) → Jimenez briefs → the quiz (QuizTime, never score-gated — manuscript) → grade + outro + spoken remarks (ScoreReview) → Continue teleports home with a full lab/wearables reset (Returning) → Pharmee's quiz-completion debrief AT THE ENTRANCE (Debrief) → unlock announcement → repeat. Retry from the review corner re-arms at the door.
 
 ### `GateEvent` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/GatekeeperModel.cs`</sub>
@@ -2810,7 +2776,7 @@ static string FirstPlayableInPeriod(ProgressionFlow flow, ExperimentPeriod perio
 ### `IloCopy` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/IloCopy.cs`</sub>
 
-Intended Learning Outcomes per experiment (user 2026-07-10: Pharmee states the session's objectives in the opening dialogue). The 8 manuscript modules use the VERBATIM Appendix C "Objectives" text (transcribed in Docs/manuscript-reconciliation.md §2 — the chemistry authority); Methane is game-authored in the same voice and is client-CONFIRMED (2026-07-16) as the tutorial. (Aspirin + Caffeine were dropped 2026-07-16 with their modules.)
+Intended Learning Outcomes per experiment (Pharmee states the session's objectives in the opening dialogue). The 8 manuscript modules use the VERBATIM Appendix C "Objectives" text (transcribed in Docs/manuscript-reconciliation.md §2 — the chemistry authority); Methane is game-authored in the same voice and is client-CONFIRMED as the tutorial. (Aspirin + Caffeine were dropped with their modules.)
 
 ```csharp
 const string LeadIn
@@ -2843,7 +2809,7 @@ static float Redistribute(ref BoneWeight w, int fromBone, int toBone, float frac
 ### `LabTourGuide` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/LabTourGuide.cs`</sub>
 
-Location-triggered Lab Tour (storyboard, 2026-07-10): instead of narrating on a timer, Pharmee points each area out as the player physically walks up to it — workbench, equipment cabinet, reagent shelf — then signs off once they've seen them all. Started/stopped by PharmeeGatekeeper; speaks through its narration via a callback. Landmarks resolve by name (no scene wiring); if none resolve the gatekeeper falls back to the timed sequence. Pure proximity core is self-tested.
+Location-triggered Lab Tour (storyboard): instead of narrating on a timer, Pharmee points each area out as the player physically walks up to it — workbench, equipment cabinet, reagent shelf — then signs off once they've seen them all. Started/stopped by PharmeeGatekeeper; speaks through its narration via a callback. Landmarks resolve by name (no scene wiring); if none resolve the gatekeeper falls back to the timed sequence. Pure proximity core is self-tested.
 
 ### `Stop` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/LabTourGuide.cs`</sub>
@@ -2858,15 +2824,6 @@ void End()
 static int FirstUnvisitedInRange(Vector3 playerPos, Vector3[] landmarkPos, bool[] visited, float[] radii)
 static readonly string[] DefaultBeatTexts
 void SeedDefaults()
-```
-
-### `ModuleCutsceneController` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/NPC/ModuleCutsceneController.cs`</sub>
-
-```csharp
-UnityEvent onCutscenesFinished
-void PlayCutscenes()
-void SkipCutscenes()
 ```
 
 ### `NPCNarrationController` <sub>class</sub>
@@ -2895,7 +2852,7 @@ void PlayTutorialNarration()
 ### `PharmeeAttitude` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeAttitude.cs`</sub>
 
-Pharmee flight attitude (user 2026-07-10): lean the body into the movement direction so he reads as flying through air, pulse the hover waves at his base, and add a gentle bob-nod while he talks. Composes with FaceCamera (root yaw) and FloatBob (position) by twisting only the body CHILD. W5.38: also folds in the GESTURE pose (PharmeeGestureMath) and aims the model's two hand pivots. Everything still lands in the ONE localRotation assignment below - this class is the sole writer of bodyRoot, and a second component writing it would silently lose or fight per-frame. The model has no skeleton (no skins, no joints, no LimbNodes in either RobotNPC.glb or .fbx), so all of this is procedural by necessity as well as by choice.
+Pharmee flight attitude: lean the body into the movement direction so he reads as flying through air, pulse the hover waves at his base, and add a gentle bob-nod while he talks. Composes with FaceCamera (root yaw) and FloatBob (position) by twisting only the body CHILD. Also folds in the GESTURE pose (PharmeeGestureMath) and aims the model's two hand pivots. Everything still lands in the ONE localRotation assignment below - this class is the sole writer of bodyRoot, and a second component writing it would silently lose or fight per-frame. The model has no skeleton (no skins, no joints, no LimbNodes in either RobotNPC.glb or .fbx), so all of this is procedural by necessity as well as by choice.
 
 ```csharp
 void Bind(Transform body, Transform[] waveRings, FloatBob b, NPCNarrationController n)
@@ -2922,7 +2879,7 @@ Optional visual face — implemented by the robot's face material/animator layer
 ### `PharmeeBrain` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeBrain.cs`</sub>
 
-Robot-guide brain: reacts to ExperimentRunner events with subtitle dialogue and a face expression (user requirement: "NPC robot must have dialogues"). Greets on start, instructs the current step, warns on mistakes, celebrates or encourages at the end. Dialogue lives in serialized data (client-reviewable); step instructions come from each task's hint.
+Robot-guide brain: reacts to ExperimentRunner events with subtitle dialogue and a face expression (a core requirement: the NPC robot has dialogue). Greets on start, instructs the current step, warns on mistakes, celebrates or encourages at the end. Dialogue lives in serialized data (client-reviewable); step instructions come from each task's hint.
 
 ### `DialogueSet` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeBrain.cs`</sub>
@@ -2943,7 +2900,7 @@ static string InstructionFor(ExperimentTask task)
 ### `PharmeeFace` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeFace.cs`</sub>
 
-Concrete face for Pharmee: tints the screen-face renderer(s) per expression. Implements IPharmeeFace so PharmeeBrain/PharmeeGatekeeper drive it. Point faceRenderers at the robot's eye/mouth meshes; the color property matches the shader (_EmissionColor for an emissive screen, else _BaseColor). Uses a MaterialPropertyBlock — no material instantiation, edit-mode safe. Default = HAPPY (user 2026-07-10: happy by default, especially while following).
+Concrete face for Pharmee: tints the screen-face renderer(s) per expression. Implements IPharmeeFace so PharmeeBrain/PharmeeGatekeeper drive it. Point faceRenderers at the robot's eye/mouth meshes; the color property matches the shader (_EmissionColor for an emissive screen, else _BaseColor). Uses a MaterialPropertyBlock — no material instantiation, edit-mode safe. Default = HAPPY (happy by default, especially while following).
 
 ```csharp
 PharmeeFaceExpression Current
@@ -3040,7 +2997,7 @@ void Play(PharmeeGesture g)
 ### `PharmeeGiveWay` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeGiveWay.cs`</sub>
 
-Pharmee steps aside when the player walks into him (user 2026-07-10: "give way when I bump into him — I'm trying to go that way but he's blocking it"). While the player is inside his personal-space bubble, he drifts laterally out of their path (to whichever side he's already on, so he clears their forward direction), then eases back once they pass. Additive on top of FloatBob's home + bob, so it composes with the follow/hover behaviour instead of fighting it.
+Pharmee steps aside when the player walks into him (so he never blocks the way the player is trying to go). While the player is inside his personal-space bubble, he drifts laterally out of their path (to whichever side he's already on, so he clears their forward direction), then eases back once they pass. Additive on top of FloatBob's home + bob, so it composes with the follow/hover behaviour instead of fighting it.
 
 ```csharp
 void Bind(FloatBob b, Transform bodyXform, Transform p)
@@ -3066,7 +3023,7 @@ static bool IsShellPart(string rendererName)
 ### `PharmeeGlow` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeGlow.cs`</sub>
 
-Keeps Pharmee from blowing out (user 2026-09-05: "too flashy", then a screenshot of a white ball while she speaks). TWO separate causes, measured rather than guessed: 1. The robot FBX ships one emissive material, `Blue_Light`, at HDR (0.46, 2.75, 8.0) — eight times white — on the body panel and all four hover rings. Dimmed here. 2. Her `White_Glossy` shell has NO emission at all and still blooms, because albedo 0.91 under the nearby fill light pushes the lit result past the 1.0 bloom threshold. Dimming the emissive alone therefore could not have fixed it. Everything is written through a MaterialPropertyBlock, the same pattern `PharmeeFace` uses: no material is instanced, the FBX and its importer stay untouched, and both values are tunable live in the inspector. Thin over pure `PharmeeGlowMath`; `Bind*` seams exist because AddComponent fires no Awake in edit mode.
+Keeps Pharmee from blowing out into a white ball while she speaks. TWO separate causes, measured rather than guessed: 1. The robot FBX ships one emissive material, `Blue_Light`, at HDR (0.46, 2.75, 8.0) — eight times white — on the body panel and all four hover rings. Dimmed here. 2. Her `White_Glossy` shell has NO emission at all and still blooms, because albedo 0.91 under the nearby fill light pushes the lit result past the 1.0 bloom threshold. Dimming the emissive alone therefore could not have fixed it. Everything is written through a MaterialPropertyBlock, the same pattern `PharmeeFace` uses: no material is instanced, the FBX and its importer stay untouched, and both values are tunable live in the inspector. Thin over pure `PharmeeGlowMath`; `Bind*` seams exist because AddComponent fires no Awake in edit mode.
 
 ```csharp
 Renderer[] Renderers
@@ -3082,7 +3039,7 @@ void Apply()
 ### `PharmeeLines` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeLines.cs`</sub>
 
-interactions for Pharmee and Dr. for a rich gameplay"). Pure static data + a deterministic picker so the self-tests can pin variety without RNG. Pharmee rotates through these instead of repeating one canned line; Dr. Jimenez draws his stern examiner remarks from the exam pools. Client-reviewable copy (the §5 dialogue sign-off still applies).
+interactions for Pharmee and the Dr.). Pure static data + a deterministic picker so the self-tests can pin variety without RNG. Pharmee rotates through these instead of repeating one canned line; Dr. Jimenez draws his stern examiner remarks from the exam pools. Client-reviewable copy (the §5 dialogue sign-off still applies).
 
 ```csharp
 static readonly string[] Greetings
@@ -3104,7 +3061,7 @@ const string PracticeComplete
 ### `PharmeeMood` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeMood.cs`</sub>
 
-Keeps Pharmee's face in sync with what he's doing (user 2026-07-10: expressions depend on what he's saying; HAPPY by default, especially while following you). PharmeeBrain/PharmeeGatekeeper set the per-line expression when a line starts; this component resets the face to its default (happy) when the line ENDS, so he never gets stuck on a warning face while floating after the player.
+Keeps Pharmee's face in sync with what he's doing (expressions depend on what he's saying; HAPPY by default, especially while following you). PharmeeBrain/PharmeeGatekeeper set the per-line expression when a line starts; this component resets the face to its default (happy) when the line ENDS, so he never gets stuck on a warning face while floating after the player.
 
 ```csharp
 void Bind(NPCNarrationController n, PharmeeFace f)
@@ -3144,7 +3101,7 @@ void Poke()
 ### `PharmeeThrusterMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeThrusterMath.cs`</sub>
 
-Pure motion for Pharmee's hover rings, read as THRUSTER EXHAUST (suite-pinned). ⛔ What they used to do: `scale = 1 + 0.12 * sin(t * 2.2 * 30)`. That is a ±12% LATERAL pulse at about 10 Hz on a flat horizontal ring — a sideways shimmy, which is what the user saw ("they shake sideways, which a thruster shouldn't"). Nothing ever translated them, so nothing ever flowed anywhere. What they do now: each ring is a puff of exhaust. It is born at the emitter, travels DOWN, spreads slightly as it goes, and fades out at the bottom while the next one is already on its way — so the four rings read as one continuous jet.
+Pure motion for Pharmee's hover rings, read as THRUSTER EXHAUST (suite-pinned). ⛔ A scale pulse (`scale = 1 + 0.12 * sin(t * 2.2 * 30)`) is a ±12% LATERAL pulse at about 10 Hz on a flat horizontal ring: a sideways shake, which a thruster never does, and nothing flows anywhere. Each ring is a puff of exhaust. It is born at the emitter, travels DOWN, spreads slightly as it goes, and fades out at the bottom while the next one is already on its way — so the four rings read as one continuous jet.
 
 ```csharp
 const float DefaultFlowSpeed
@@ -3158,7 +3115,7 @@ static float Swell(float phase01, float spread)
 ### `ProctorRoamModel` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/ProctorRoamModel.cs`</sub>
 
-Pure state machine for Dr. Jimenez's proctor roaming (user 2026-07-10: "roam around the room time to time, observing us or looking at assets like the shelf… walk back to his original position to facilitate the quiz"). No Unity types. Loop: AtHome (idle a while) → WalkingOut (to the next observation point) → Observing (look at it) → WalkingHome → AtHome … . Round-robin over the points with a deterministic idle-time jitter (seeded — testable). When roaming is disallowed (quiz/post-lab time) any outing is cut short and he heads home.
+Pure state machine for Dr. Jimenez's proctor roaming (he roams the room from time to time, observing the player or looking at the shelves, then walks back to his original position to run the quiz). No Unity types. Loop: AtHome (idle a while) → WalkingOut (to the next observation point) → Observing (look at it) → WalkingHome → AtHome … . Round-robin over the points with a deterministic idle-time jitter (seeded — testable). When roaming is disallowed (quiz/post-lab time) any outing is cut short and he heads home.
 
 ### `Phase` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/ProctorRoamModel.cs`</sub>
@@ -3192,7 +3149,7 @@ static bool StuckTick(ref float timer, float movedSq, float dt, float giveUpSeco
 ### `ChecklistPager` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/ChecklistPager.cs`</sub>
 
-Focused checklist text for the holo procedures board (user 2026-07-10: the flat pads rendered every phase at full detail into a fixed rect, so long checklists overflowed and overlaid the reaction footer — unreadable). Instead of shrinking text to fit, collapse what the player doesn't need: completed phases fold to a "done n/n" line, future phases to a "(n steps)" stub, and only the ACTIVE phase renders its full step list. Line count is bounded by construction (phases + longest single phase), so the text always fits its rect at a readable size.
+Focused checklist text for the holo procedures board (the flat pads rendered every phase at full detail into a fixed rect, so long checklists overflowed and overlaid the reaction footer — unreadable). Instead of shrinking text to fit, collapse what the player doesn't need: completed phases fold to a "done n/n" line, future phases to a "(n steps)" stub, and only the ACTIVE phase renders its full step list. Line count is bounded by construction (phases + longest single phase), so the text always fits its rect at a readable size.
 
 ```csharp
 static TaskPhase? ActivePhase(TaskGraph graph)
@@ -3200,17 +3157,6 @@ static string BuildObjectivesHeader(ExperimentModuleDefinition module)
 static string BuildMaterialsHeader(ExperimentModuleDefinition module)
 static string BuildFocusedText(TaskGraph graph)
 static string BuildHeader(ExperimentRunner runner)
-```
-
-### `ChemLabelUpdater` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/UI/ChemLabelUpdater.cs`</sub>
-
-```csharp
-ChemicalData chemicalData
-Text uiText
-TMP_Text tmpText
-bool applyReadableStyle
-Color readableColor
 ```
 
 ### `ChoicePanelController` <sub>class</sub>
@@ -3309,7 +3255,7 @@ static string Sanitize(string s)
 ### `GradeDisplay` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/GradeDisplay.cs`</sub>
 
-Pure display rules for grades (W5.9): the pass gate compares RAW values (Total >= 90), so displayed percentages must FLOOR — rounding 89.6 up to "90%" beside a TRY AGAIN verdict read as a contradiction. Suite-pinned.
+Pure display rules for grades: the pass gate compares RAW values (Total >= 90), so displayed percentages must FLOOR — rounding 89.6 up to "90%" beside a TRY AGAIN verdict reads as a contradiction. Suite-pinned.
 
 ```csharp
 static int Percent(float raw)
@@ -3340,7 +3286,7 @@ static string BuildBreakdown(ExperimentResult r)
 ### `HoloScroller` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/HoloScroller.cs`</sub>
 
-Scroll driver for the holo procedures board (user 2026-07-12: the instruction text rendered as one continuous row and couldn't be read — the body now wraps inside a masked viewport and this scrolls it). Big ▲/▼ page buttons are the primary VR affordance (poke/ray-friendly); the ScrollRect still accepts direct drag. Pure page math kept static so the suite pins the clamping.
+Scroll driver for the holo procedures board (the instruction text rendered as one continuous row and couldn't be read — the body now wraps inside a masked viewport and this scrolls it). Big ▲/▼ page buttons are the primary VR affordance (poke/ray-friendly); the ScrollRect still accepts direct drag. Pure page math kept static so the suite pins the clamping.
 
 ```csharp
 static float NextPage(float current01, float pageFrac, int direction)
@@ -3353,7 +3299,7 @@ void SnapToTop()
 ### `HoverInfoPanel` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/HoverInfoPanel.cs`</sub>
 
-The floating info card the hover-inspector shows when you point at a piece of equipment, a reagent bottle or an NPC (user 2026-07-10). It smoothly fades and scales in/out and rides a comfortable distance in front of you along the line to the pointed object, always billboarded and readable. Pure easing helpers so the animation curve is unit-testable; HoverInspector feeds it entries.
+The floating info card the hover-inspector shows when you point at a piece of equipment, a reagent bottle or an NPC. It smoothly fades and scales in/out and rides a comfortable distance in front of you along the line to the pointed object, always billboarded and readable. Pure easing helpers so the animation curve is unit-testable; HoverInspector feeds it entries.
 
 ```csharp
 static float Ease(float t)
@@ -3387,7 +3333,7 @@ bool Select(string moduleId)
 ### `HudDialogueBar` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/HudDialogueBar.cs`</sub>
 
-Screen-bottom dialogue bar (storyboard style): the speaker's portrait + name + the line they are currently speaking, mirrored from NPCNarrationController so the player can read them without looking at them. Visible ONLY while a line is live; fades out smoothly when the line ends. MULTI-SPEAKER (user 2026-07-19: "let's make dr jimenez same as pharmee that appears in our HUD as well"). Pharmee and Dr. Jimenez own SEPARATE NPCNarrationControllers (their own world bubbles); the bar used to subscribe to exactly one, so Jimenez's briefing/verdict never reached the HUD at all and the "Pharmee" name was baked into the scene text. Now each channel carries its own name + portrait, and whichever speaks last owns the bar.
+Screen-bottom dialogue bar (storyboard style): the speaker's portrait + name + the line they are currently speaking, mirrored from NPCNarrationController so the player can read them without looking at them. Visible ONLY while a line is live; fades out smoothly when the line ends. MULTI-SPEAKER. Pharmee and Dr. Jimenez own SEPARATE NPCNarrationControllers (their own world bubbles), so the bar subscribes to each channel; each carries its own name + portrait, and whichever speaks last owns the bar.
 
 ### `Channel` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/HudDialogueBar.cs`</sub>
@@ -3421,7 +3367,7 @@ static State Snapped(Vector3 headPos, float headYawDeg, in Params p)
 ### `HudMenuDropdown` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/HudMenuDropdown.cs`</sub>
 
-Collapses the HUD's Settings/Restart/Quit actions behind a single icon button — plus the demo verbs (Skip Step / Finish Experiment / Auto-Answer Quiz), which live in the same list and are shown only during a demo session (user 2026-07-15). The icon's onClick calls Toggle(); each action button's onClick also calls Close() so the list dismisses after a pick. Starts hidden. The action buttons keep their own LabMenuController / DemoHudController wiring untouched.
+Collapses the HUD's Settings/Restart/Quit actions behind a single icon button — plus the demo verbs (Skip Step / Finish Experiment / Auto-Answer Quiz), which live in the same list and are shown only during a demo session. The icon's onClick calls Toggle(); each action button's onClick also calls Close() so the list dismisses after a pick. Starts hidden. The action buttons keep their own LabMenuController / DemoHudController wiring untouched.
 
 ```csharp
 void SetList(GameObject panel)
@@ -3448,7 +3394,7 @@ void SnapToCamera()
 ### `LabInfoCategory` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/LabInfoDatabase.cs`</sub>
 
-Knowledge base behind the hover-inspector pane (user 2026-07-10): pointing at a piece of equipment, a reagent bottle or an NPC pops a card with its name and a short, learn-as-you-play blurb — "what it's for + how to use it" for apparatus, trivia + hazard for reagents. Pure + tested; the resolver (HoverInspector) feeds it a chemical name / prop name and gets back a ready-to-display entry.
+Knowledge base behind the hover-inspector pane: pointing at a piece of equipment, a reagent bottle or an NPC pops a card with its name and a short, learn-as-you-play blurb — "what it's for + how to use it" for apparatus, trivia + hazard for reagents. Pure + tested; the resolver (HoverInspector) feeds it a chemical name / prop name and gets back a ready-to-display entry.
 
 ### `LabInfoEntry` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/LabInfoDatabase.cs`</sub>
@@ -3492,7 +3438,7 @@ static string RestartConfirmText(bool running)
 ### `LabelDeclutterMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/LabelDeclutter.cs`</sub>
 
-Pure rules for keeping world-space name tags from sitting on top of each other (W5.55, user: "can you make it so that texts are not overlapping? like make push each other properly relative to the item they are naming? this way, players can read things better"). Every ProximityLabel billboards independently, so a rack of 19 identical tubes, a shelf of bottles or a cluster of glassware produced a stack of tags occupying the same few centimetres of screen. Nothing was wrong with any single tag; the problem only exists between them, which is why it needs a pass that can see them all at once. The separation is computed in SCREEN space (that is where the overlap actually happens — two tubes a hand's width apart overlap from across the room and not from close up) and applied as a small WORLD-space lift, so a tag never leaves the item it names.
+Pure rules for keeping world-space name tags from sitting on top of each other (labels must not overlap: they push each other apart while staying next to the item they name, so players can read them). Every ProximityLabel billboards independently, so a rack of 19 identical tubes, a shelf of bottles or a cluster of glassware produced a stack of tags occupying the same few centimetres of screen. Nothing was wrong with any single tag; the problem only exists between them, which is why it needs a pass that can see them all at once. The separation is computed in SCREEN space (that is where the overlap actually happens — two tubes a hand's width apart overlap from across the room and not from close up) and applied as a small WORLD-space lift, so a tag never leaves the item it names.
 
 ```csharp
 const float MaxLift
@@ -3502,7 +3448,7 @@ static float[] Lifts(IReadOnlyList<float> screenY, IReadOnlyList<float> halfHeig
 ### `LabelDeclutter` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/LabelDeclutter.cs`</sub>
 
-Drives LabelDeclutterMath over the live ProximityLabels (W5.55). Thin: it measures, calls the pure solver and hands each label a lift. Polls at the same 5 Hz TutorialHighlighter uses. Tags are read at a human pace, and a per-frame solve over every visible label would cost more than the problem.
+Drives LabelDeclutterMath over the live ProximityLabels. Thin: it measures, calls the pure solver and hands each label a lift. Polls at the same 5 Hz TutorialHighlighter uses. Tags are read at a human pace, and a per-frame solve over every visible label would cost more than the problem.
 
 ```csharp
 void Bind(float poll, float lift)
@@ -3532,14 +3478,6 @@ void Bind(Renderer[] trim, Light[] lights)
 static float Breath(float time, float speed, float phase)
 ```
 
-### `MoveInstructionsOnTilt` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/UI/MoveInstructionsOnTilt.cs`</sub>
-
-```csharp
-void ShowInstructions()
-void CloseInstructions()
-```
-
 ### `PostLabController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/PostLabController.cs`</sub>
 
@@ -3565,7 +3503,7 @@ void Answer(int questionIndex, int optionIndex)
 ### `ProcessReadout` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/ProcessReadout.cs`</sub>
 
-A live world-space readout floating over a vessel — an in-game instrument panel (user 2026-07-15: "add texts that reflect the temperature… other experiments that require heating will use these texts for monitoring"). Shows "Hard-glass tube / 62 C -> 120 C" while heating, or "Gas collection tube / Collecting 45%" while a gas fills, and tints from cool blue to hot orange. REUSABLE: attach to ANY heated vessel in ANY experiment and BindHeat() it to that vessel's TemperatureSim. It reuses the suite-pinned VesselStatusMath formats, so it reads identically to the station billboards. NOTE: this does NOT replace the thermometer apparatus — the thermometer stays on the bench for the experiments that call for it (client rule: all tools are always present). This is an extra monitoring aid, not a substitute.
+A live world-space readout floating over a vessel — an in-game instrument panel (text that reflects the temperature; other experiments that require heating use it for monitoring). Shows "Hard-glass tube / 62 C -> 120 C" while heating, or "Gas collection tube / Collecting 45%" while a gas fills, and tints from cool blue to hot orange. REUSABLE: attach to ANY heated vessel in ANY experiment and BindHeat() it to that vessel's TemperatureSim. It reuses the suite-pinned VesselStatusMath formats, so it reads identically to the station billboards. NOTE: this does NOT replace the thermometer apparatus — the thermometer stays on the bench for the experiments that call for it (client rule: all tools are always present). This is an extra monitoring aid, not a substitute.
 
 ```csharp
 void BindHeat(string baseLabel, TemperatureSim temp, float targetC, float ambientC
@@ -3689,9 +3627,6 @@ static string BuildChecklistText(TaskGraph graph)
 static string PhaseLabel(TaskPhase p)
 ```
 
-### `TimerController` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/UI/TimerController.cs`</sub>
-
 ### `TutorialCoach` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/TutorialCoach.cs`</sub>
 
@@ -3709,18 +3644,10 @@ void ShowSummary()
 void HelpNow()
 ```
 
-### `UIfuncs` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/UI/UIfuncs.cs`</sub>
-
-```csharp
-GameObject[] views
-void objectToggler(GameObject gameObject)
-```
-
 ### `UiButtonSounds` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/UiButtonSounds.cs`</sub>
 
-Adds audio feedback to a UI button: a soft blip when the pointer/ray hovers it and a click when it's pressed (user 2026-07-10). Works with the XR ray (XRUIInputModule dispatches pointer-enter/click to these handlers) and the desktop mouse. Attach to any Button's GameObject — no per-button wiring, no new clips.
+Adds audio feedback to a UI button: a soft blip when the pointer/ray hovers it and a click when it's pressed. Works with the XR ray (XRUIInputModule dispatches pointer-enter/click to these handlers) and the desktop mouse. Attach to any Button's GameObject — no per-button wiring, no new clips.
 
 ```csharp
 void SetKeys(string hover, string click)
@@ -3731,7 +3658,7 @@ void OnPointerClick(PointerEventData _)
 ### `VesselStatusMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/VesselStatusMath.cs`</sub>
 
-Pure format functions for the live-status feedback layer (W5.8): vessel name tags that show contents/volume, hover-card "Now:" lines, and station billboards that show temperature / sim progress. Kept plain so the suite pins every format. All output is TMP-safe ASCII except the em-dash, which the dialogue system already uses everywhere (LiberationSans has it); the degree glyph is deliberately avoided ("62 C", not "62°C").
+Pure format functions for the live-status feedback layer: vessel name tags that show contents/volume, hover-card "Now:" lines, and station billboards that show temperature / sim progress. Kept plain so the suite pins every format. All output is TMP-safe ASCII except the em-dash, which the dialogue system already uses everywhere (LiberationSans has it); the degree glyph is deliberately avoided ("62 C", not "62°C").
 
 ```csharp
 static string Compose(string displayName, string chemName, float ml)
@@ -3748,7 +3675,7 @@ static string ProgressLine(string baseLabel, string verb, float frac01)
 ### `WristWatchController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/WristWatchController.cs`</sub>
 
-Wrist-flip progress tracker (user's headline feature). Flipping the wrist so the watch face turns up (supination) while glancing toward it shows a compact panel: current step, progress %, mastery %. A button/thumbstick fallback toggles it so the feature works without the gesture (and is testable pre-HMD). Gesture detection is via the anchor transform's up-vector, which works for both controller supination and hand-tracking palm-up. Hysteresis prevents flicker.
+Wrist-flip progress tracker (the headline feature). Flipping the wrist so the watch face turns up (supination) while glancing toward it shows a compact panel: current step, progress %, mastery %. A button/thumbstick fallback toggles it so the feature works without the gesture (and is testable pre-HMD). Gesture detection is via the anchor transform's up-vector, which works for both controller supination and hand-tracking palm-up. Hysteresis prevents flicker.
 
 ```csharp
 static bool SuppressNpcPokes
@@ -3769,24 +3696,10 @@ static bool IsGazingAt(Vector3 headPos, Vector3 headForward, Vector3 targetPos, 
 
 `Assets/PharmaSynth/Scripts/Safety/`
 
-### `AcidCorrosion` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Safety/AcidCorrosion.cs`</sub>
-
-```csharp
-float corrosionDuration
-float initialVolume
-float residualVolume
-float audioFadeTime
-DecalProjector decal
-AudioSource fizzSound
-ParticleSystem smokeParticles
-Transform warningUI
-```
-
 ### `FumeHoodStatusLabel` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Safety/FumeHoodStatusLabel.cs`</sub>
 
-Narrating label for the fume hood (2026-07-18, user: "how do we use the fumehood? does it open?"): the hood is an OPEN alcove — nothing to open or switch on; protection is purely WHERE the vessel is. The invisible WorkVolume made "am I in far enough?" a guess, so the label says what belongs inside and flips to a ✓ while a vessel is actually protected.
+Narrating label for the fume hood: the hood is an OPEN alcove — nothing to open or switch on; protection is purely WHERE the vessel is. The invisible WorkVolume made "am I in far enough?" a guess, so the label says what belongs inside and flips to a ✓ while a vessel is actually protected.
 
 ```csharp
 void Bind(FumeHoodZone zone, ProximityLabel label)
@@ -3833,7 +3746,7 @@ static bool FlashOn(float sinceStart, float period)
 ### `PPEController` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Safety/PPEController.cs`</sub>
 
-PPE donning at the locker. Since 2026-07-10 the three pieces — lab coat, goggles, gloves — are donned INDIVIDUALLY (click each locker item; `PPEDonOnSelect` forwards the clicks here) and ALL THREE are required before an experiment can start (`PPEWorn` == all worn — the gate checks it). Per-piece visuals: coat + goggles + gloves appear on the mirror avatar (PlayerAvatar layer — mirror-only), and the gloves ALSO appear first-person on the controllers. `PPEWearablesBuilder` wires the visuals; `RemovePPE` (HUD Reset) strips everything.
+PPE donning at the locker. The three pieces — lab coat, goggles, gloves — are donned INDIVIDUALLY (click each locker item; `PPEDonOnSelect` forwards the clicks here) and ALL THREE are required before an experiment can start (`PPEWorn` == all worn — the gate checks it). Per-piece visuals: coat + goggles + gloves appear on the mirror avatar (PlayerAvatar layer — mirror-only), and the gloves ALSO appear first-person on the controllers. `PPEWearablesBuilder` wires the visuals; `RemovePPE` (HUD Reset) strips everything.
 
 ```csharp
 UnityEvent onPPEWorn
@@ -3854,7 +3767,7 @@ void BindVisuals(GameObject[] coat, GameObject[] goggles, GameObject[] gloves)
 ### `PPEDonOnSelect` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Safety/PPEDonOnSelect.cs`</sub>
 
-Forwards an XR select on a locker PPE item (coat display / goggles / gloves) to `PPEController.Don(piece)` — each piece is donned individually (user 2026-07-10). Attach next to an XRSimpleInteractable; `PPEWearablesBuilder` wires these.
+Forwards an XR select on a locker PPE item (coat display / goggles / gloves) to `PPEController.Don(piece)` — each piece is donned individually. Attach next to an XRSimpleInteractable; `PPEWearablesBuilder` wires these.
 
 ```csharp
 void Bind(PPEController c, PPEPiece p)
@@ -3863,7 +3776,7 @@ void Bind(PPEController c, PPEPiece p)
 ### `PPEPiece` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/Safety/PPESetModel.cs`</sub>
 
-The three personal-protective-equipment pieces (user 2026-07-10: goggles + gloves are required alongside the coat before experimenting).
+The three personal-protective-equipment pieces (goggles + gloves are required alongside the coat before experimenting).
 
 ### `PPESetModel` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Safety/PPESetModel.cs`</sub>
@@ -3879,25 +3792,10 @@ bool Clear()
 string MissingSummary()
 ```
 
-### `SaltBurn` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Safety/SaltBurn.cs`</sub>
-
-```csharp
-float burnDuration
-ParticleSystem flame
-```
-
-### `SpoonSaltController` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Safety/SpoonSaltController.cs`</sub>
-
-```csharp
-GameObject[] saltVisuals
-```
-
 ### `WearableReseat` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Safety/WearableReseat.cs`</sub>
 
-Restores the PPE locker displays (lab coat / goggles / gloves) to their original pegs on demand (user 2026-07-10: the lab coat went missing after restarting from the lab tour, so campaign couldn't be entered). Snapshots each display's local pose + active state at scene start; `Reseat()` puts them back AND strips any worn PPE, giving a clean, dressable locker every time the player is asked to gear up (gate CoatPrompt) or restarts (ResetToEntrance).
+Restores the PPE locker displays (lab coat / goggles / gloves) to their original pegs on demand, so a restart from the lab tour can never leave a piece missing and the campaign unenterable. Snapshots each display's local pose + active state at scene start; `Reseat()` puts them back AND strips any worn PPE, giving a clean, dressable locker every time the player is asked to gear up (gate CoatPrompt) or restarts (ResetToEntrance).
 
 ```csharp
 static WearableReseat Instance
@@ -3957,7 +3855,7 @@ static void TryPlayAt(string key, Vector3 pos, float volumeScale
 ### `DialogueDucker` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/DialogueDucker.cs`</sub>
 
-Ducks the looping ambient + music beds while ANY NPC is speaking, so dialogue reads clearly, then eases them back afterward (user 2026-07-10 UX pass). Ref-counts speakers so overlapping lines (Pharmee + Dr. Jimenez) hold the dip until both stop. Subscribes to every NPCNarrationController in the scene at Start — no wiring needed. Only touches the source volumes while a duck is active; otherwise leaves them to AudioService / the settings sliders.
+Ducks the looping ambient + music beds while ANY NPC is speaking, so dialogue reads clearly, then eases them back afterward (UX pass). Ref-counts speakers so overlapping lines (Pharmee + Dr. Jimenez) hold the dip until both stop. Subscribes to every NPCNarrationController in the scene at Start — no wiring needed. Only touches the source volumes while a duck is active; otherwise leaves them to AudioService / the settings sliders.
 
 ```csharp
 static float DuckTarget(int speakers, float factor)
@@ -3967,7 +3865,7 @@ int Speakers
 ### `MusicDucker` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/MusicDucker.cs`</sub>
 
-Pulls the background music down while an NPC is speaking, so dialogue is always clearly audible over it (user 2026-07-27: "reduce the bg music so the player can hear things clearly"), then eases it back afterwards. Ducks FAST and releases SLOWLY — the standard broadcast shape. A quick duck means the first syllable is never buried; a slow release stops the music pumping up and down between two lines of the same conversation.
+Pulls the background music down while an NPC is speaking, so dialogue is always clearly audible over it (the background music must never mask what the player needs to hear), then eases it back afterwards. Ducks FAST and releases SLOWLY — the standard broadcast shape. A quick duck means the first syllable is never buried; a slow release stops the music pumping up and down between two lines of the same conversation.
 
 ```csharp
 float attackPerSecond
@@ -3979,7 +3877,7 @@ static float TargetVolume(float baseVolume, float duckTo, bool speaking)
 ### `MusicSpeaker` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/MusicSpeaker.cs`</sub>
 
-A physical music speaker in the lab (user 2026-07-10): a 3D positional source standing in a corner that plays a PLAYLIST of background tracks — louder as you approach it (logarithmic rolloff), quieter across the room. Its volume also smoothly fades in/out with the screen fade, so moving between the menu room and the lab crossfades the music instead of hard-cutting it. Thin MonoBehaviour: playlist advance + fade envelope are pure/testable; the AudioSource is built at runtime so the clip list can be swapped by a builder.
+A physical music speaker in the lab: a 3D positional source standing in a corner that plays a PLAYLIST of background tracks — louder as you approach it (logarithmic rolloff), quieter across the room. Its volume also smoothly fades in/out with the screen fade, so moving between the menu room and the lab crossfades the music instead of hard-cutting it. Thin MonoBehaviour: playlist advance + fade envelope are pure/testable; the AudioSource is built at runtime so the clip list can be swapped by a builder.
 
 ```csharp
 bool IsPlaying
@@ -3991,7 +3889,7 @@ static int NextIndex(int current, int count, bool shuffle, float rand01)
 ### `NpcFootsteps` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/NpcFootsteps.cs`</sub>
 
-Subtle positional footsteps for a walking NPC (user 2026-07-10: Dr. Jimenez). Tracks its own transform's horizontal movement and plays a quiet 3D footstep at its feet once per stride — so his roaming reads audibly but stays background (distance rolloff keeps it soft across the room). Reuses the shared StrideMath + the SoundBank footstep clip at a lowered, own-source volume.
+Subtle positional footsteps for a walking NPC (Dr. Jimenez). Tracks its own transform's horizontal movement and plays a quiet 3D footstep at its feet once per stride — so his roaming reads audibly but stays background (distance rolloff keeps it soft across the room). Reuses the shared StrideMath + the SoundBank footstep clip at a lowered, own-source volume.
 
 ### `PlaySoundOnEnable` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/PlaySoundOnEnable.cs`</sub>
@@ -4006,7 +3904,7 @@ void Play()
 ### `ProximityHum` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/ProximityHum.cs`</sub>
 
-Positional machine hum (user 2026-07-10: "subtle ac machine like music for the ac assets where it goes a bit loud as we get near"). Builds its own looping 3D AudioSource from a SoundBank key — quiet across the room, louder up close via a logarithmic rolloff. Attach to each AC unit (LabAudioBuilder wires them); no-ops silently when the clip isn't supplied yet.
+Positional machine hum (a subtle AC-unit hum from the AC assets that grows a little louder up close). Builds its own looping 3D AudioSource from a SoundBank key — quiet across the room, louder up close via a logarithmic rolloff. Attach to each AC unit (LabAudioBuilder wires them); no-ops silently when the clip isn't supplied yet.
 
 ```csharp
 bool IsHumming
@@ -4032,7 +3930,7 @@ float Process(int channel, float voice, float carrier)
 ### `RobotVoiceFx` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/RobotVoiceFx.cs`</sub>
 
-so nobody re-derives it: • Heavy band-limiting -> "muffled". Fixed by opening the low-pass to 11 kHz and adding the presence lift; those two ARE still in use. • Decimation + comb   -> technically more machine-like, but the verdict was "sounds so human" — they recolour timbre without touching pitch contour. • Vocoder             -> the textbook robot technique (rebuilds the words on a synthetic monotone carrier, discarding the vocal cords entirely) and the verdict was "so much worse". So: the strongest-on-paper techniques lost to the simplest one. Do not swap the character back without asking — every alternative here has already been heard and rejected. Everything stays blended enough to keep the words legible: this is a teaching game and Pharmee explains procedure.
+are kept so nobody rebuilds them: • Heavy band-limiting -> "muffled". Fixed by opening the low-pass to 11 kHz and adding the presence lift; those two ARE still in use. • Decimation + comb   -> technically more machine-like, but the verdict was "sounds so human" — they recolour timbre without touching pitch contour. • Vocoder             -> the textbook robot technique (rebuilds the words on a synthetic monotone carrier, discarding the vocal cords entirely) and the verdict was "so much worse". So: the strongest-on-paper techniques lost to the simplest one. Do not swap the character back without asking — every alternative here has already been heard and rejected. Everything stays blended enough to keep the words legible: this is a teaching game and Pharmee explains procedure.
 
 ```csharp
 RobotVoiceProfile profile
@@ -4054,7 +3952,7 @@ float RingHz
 ### `RobotVoiceProfile` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/RobotVoiceProfile.cs`</sub>
 
-component. So you can tune by ear in a live session and keep what you land on. ⭐ THE CHOSEN CHARACTER (user 2026-07-28, after hearing all the alternatives): RING MODULATION at a LOW carrier, blended with dry signal. The user describes it as "speaking against an electric fan" and WANTS that — just not too strong. This was arrived at by elimination, so do not "improve" it away: • Heavier band-limiting  -> "muffled"           (rejected) • Decimation + comb      -> "sounds so human"   (rejected — it recolours timbre but leaves the human pitch contour) • Full VOCODER           -> "so much worse"     (rejected outright, even though it is the textbook robot technique) The vocoder, decimation and comb code all still exist and are simply switched off here. Turning them back on is a values change, not a code change — but ask first, because every one of them has already been auditioned and refused.
+component. So you can tune by ear in a live session and keep what you land on. ⭐ THE CHOSEN CHARACTER (picked after auditioning all the alternatives): RING MODULATION at a LOW carrier, blended with dry signal. It sounds like "speaking against an electric fan", which is intended — just not too strong. This was arrived at by elimination, so do not "improve" it away: • Heavier band-limiting  -> "muffled"           (rejected) • Decimation + comb      -> "sounds so human"   (rejected — it recolours timbre but leaves the human pitch contour) • Full VOCODER           -> "so much worse"     (rejected outright, even though it is the textbook robot technique) The vocoder, decimation and comb code all still exist and are simply switched off here. Turning them back on is a values change, not a code change — but ask first, because every one of them has already been auditioned and refused.
 
 ```csharp
 bool active
@@ -4078,7 +3976,7 @@ static readonly string[] ExpectedKeys
 ### `SpeakerLedBlink` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/SpeakerLedBlink.cs`</sub>
 
-Makes the lab speaker cabinet's power LED blink like a real machine's standby light (user 2026-07-19): a crisp bright pulse with a long dark gap, rather than the flat always-on emissive it used to be. Driven through a MaterialPropertyBlock so the shared SpeakerLED material is never instanced (edit-mode safe). Thin MonoBehaviour: the envelope is a pure static function; the renderer is bound through Bind() because AddComponent doesn't fire Awake in edit mode.
+Makes the lab speaker cabinet's power LED blink like a real machine's standby light: a crisp bright pulse with a long dark gap, rather than a flat always-on emissive. Driven through a MaterialPropertyBlock so the shared SpeakerLED material is never instanced (edit-mode safe). Thin MonoBehaviour: the envelope is a pure static function; the renderer is bound through Bind() because AddComponent doesn't fire Awake in edit mode.
 
 ```csharp
 float CurrentLevel
@@ -4092,7 +3990,7 @@ static float Level01(float t, float period, float onFraction, float edgeSeconds,
 ### `VoiceBank` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/VoiceBank.cs`</sub>
 
-Voice-over clip lookup (user 2026-07-10: Pharmee + Dr. Jimenez must SPEAK their lines). Keyed by speaker + the normalised-text hash (VoiceLineId), so no line/SO schema changes anywhere — a missing clip simply falls back to the existing blip + typewriter. Rebuilt from Audio/Voice/<speaker>/<id>.mp3 by Tools ▸ PharmaSynth ▸ Voice ▸ Import & Wire Voice Clips.
+Voice-over clip lookup (Pharmee + Dr. Jimenez SPEAK their lines). Keyed by speaker + the normalised-text hash (VoiceLineId), so no line/SO schema changes anywhere — a missing clip simply falls back to the existing blip + typewriter. Rebuilt from Audio/Voice/<speaker>/<id>.mp3 by Tools ▸ PharmaSynth ▸ Voice ▸ Import & Wire Voice Clips.
 
 ### `Entry` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/VoiceBank.cs`</sub>
@@ -4117,7 +4015,7 @@ static string Normalize(string text)
 ### `VoiceCorpus` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/VoiceCorpus.cs`</sub>
 
-Every code-authored NPC line, with its speaker — the voice-over corpus (user 2026-07-10: both NPCs must speak). The manifest exporter adds the cutscene SO beats on top (assets aren't reachable from runtime code). Numbers were deliberately kept OUT of spoken lines (grade bands, finite unlock variants), so this enumeration is exhaustive and finite.
+Every code-authored NPC line, with its speaker — the voice-over corpus (both NPCs speak). The manifest exporter adds the cutscene SO beats on top (assets aren't reachable from runtime code). Numbers were deliberately kept OUT of spoken lines (grade bands, finite unlock variants), so this enumeration is exhaustive and finite.
 
 ### `Line` <sub>struct</sub>
 <sub>`Assets/PharmaSynth/Scripts/Audio/VoiceCorpus.cs`</sub>
@@ -4137,7 +4035,7 @@ static readonly string[] ModuleIds
 ### `AlignExperimentStages` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/AlignExperimentStages.cs`</sub>
 
-W5.12 (user 2026-07-13): experiments spawn their stations/vessels/labels/ waypoints as children of DynamicStage (and Methane uses MethaneStage), both authored at the ORIGINAL center-table spot. When the user moved the whole workspace table into the room, the stages stayed put — so experiment content (incl. the coloured test watch-glasses the user saw as "pads", the stale name tags, and the waypoint) appeared where the table USED to be. This shifts both stages by the table's horizontal delta so all spawns land on the moved table. Idempotent (absolute set from the current table position). Re-run after any further table move.
+Experiments spawn their stations/vessels/labels/ waypoints as children of DynamicStage (and Methane uses MethaneStage), both authored at the center table's ORIGINAL spot. This shifts both stages by the table's horizontal offset from that spot so all spawns land on the table wherever it now stands. Idempotent (absolute set from the current table position). Re-run after any further table move.
 
 ```csharp
 static void Run()
@@ -4146,7 +4044,7 @@ static void Run()
 ### `AnchorFurniture` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/AnchorFurniture.cs`</sub>
 
-Furniture is scenery, not equipment (W5.56, user: "make the stools not grabbable"). The six lab stools shipped inside the Environment prefab with an `XRGrabInteractable` each, so a player could pick a stool up and carry it around the lab, or fling it across the bench mid-experiment. Nothing in the game asks them to move a stool, and every real interaction the lab needs is with glassware and tools. ⛔ The GRAB goes, the COLLIDER stays. The stool still stops the player walking through it and still holds anything resting on it — the same rule `Anchor Tube Racks` follows. The Rigidbody is left kinematic rather than destroyed so nothing doing `GetComponent&lt;Rigidbody&gt;()` starts null-referencing. Idempotent: a second run finds nothing to strip. Pinned by `bench: lab furniture is not grabbable`.
+Furniture is scenery, not equipment: the stools must not be grabbable. The six lab stools in the Environment prefab carry an `XRGrabInteractable` each, so a player could pick a stool up and carry it around the lab, or fling it across the bench mid-experiment. Nothing in the game asks them to move a stool, and every real interaction the lab needs is with glassware and tools. ⛔ The GRAB goes, the COLLIDER stays. The stool still stops the player walking through it and still holds anything resting on it — the same rule `Anchor Tube Racks` follows. The Rigidbody is left kinematic rather than destroyed so nothing doing `GetComponent&lt;Rigidbody&gt;()` starts null-referencing. Idempotent: a second run finds nothing to strip. Pinned by `bench: lab furniture is not grabbable`.
 
 ```csharp
 static readonly string[] Fragments
@@ -4157,7 +4055,7 @@ static void Run()
 ### `AtmosphereBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/AtmosphereBuilder.cs`</sub>
 
-Places the ambient atmosphere emitters (user 2026-07-10): cool vapour sinking from the AC unit + a faint haze layer near the floor and ceiling. Low-density on purpose (Quest overdraw). Door cold-air is code-hooked in DoorOpener, not here. Tools ▸ PharmaSynth ▸ Build Atmosphere VFX (SampleScene, edit mode, idempotent).
+Places the ambient atmosphere emitters: cool vapour sinking from the AC unit + a faint haze layer near the floor. Low-density on purpose (Quest overdraw). Door cold-air is code-hooked in DoorOpener, not here. Tools ▸ PharmaSynth ▸ Build Atmosphere VFX (SampleScene, edit mode, idempotent).
 
 ```csharp
 static void Build()
@@ -4166,7 +4064,7 @@ static void Build()
 ### `ButtonSoundsBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/ButtonSoundsBuilder.cs`</sub>
 
-Adds UiButtonSounds (hover blip + click) to every UI Button in the OPEN scene (user 2026-07-10). Run it once per scene — MainMenu (cube room) and SampleScene (HUD / choice panels / settings / grade / post-lab). Idempotent. Tools ▸ PharmaSynth ▸ Wire Button Sounds (edit mode).
+Adds UiButtonSounds (hover blip + click) to every UI Button in the OPEN scene. Run it once per scene — MainMenu (cube room) and SampleScene (HUD / choice panels / settings / grade / post-lab). Idempotent. Tools ▸ PharmaSynth ▸ Wire Button Sounds (edit mode).
 
 ```csharp
 static void Build()
@@ -4175,7 +4073,7 @@ static void Build()
 ### `CenterTableBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/CenterTableBuilder.cs`</sub>
 
-Merge Center Tables (user 2026-07-10: "remove the other table; make the current one one single wide table, placed at the center, now in landscape"). The experiment layouts bake WORLD positions on the left island, so this is a one-time atomic migration: 1. discover both islands geometrically (raycast under the baked positions and at their x-mirror; climb to the Environment child), 2. deactivate the right island (+ its sink follows to the new short end), 3. rigid-remap the left island 90° to the lab centre (landscape), 4. apply the SAME remap to every layout-SO position and every in-footprint scene prop (methane stage children, loose items, proctor points), 5. verify every remapped position still raycasts onto a deck. Re-run safe: once the layouts no longer sit on the old left-island footprint, the guard aborts before touching anything. Run Re-Home Scene Items after.
+Merge Center Tables: removes the second table and makes the remaining one a single wide table at the centre of the room, in landscape. The experiment layouts bake WORLD positions on the left island, so this is a one-time atomic migration: 1. discover both islands geometrically (raycast under the baked positions and at their x-mirror; climb to the Environment child), 2. deactivate the right island (+ its sink follows to the new short end), 3. rigid-remap the left island 90° to the lab centre (landscape), 4. apply the SAME remap to every layout-SO position and every in-footprint scene prop (methane stage children, loose items, proctor points), 5. verify every remapped position still raycasts onto a deck. Re-run safe: once the layouts no longer sit on the old left-island footprint, the guard aborts before touching anything. Run Re-Home Scene Items after.
 
 ```csharp
 static void Merge()
@@ -4194,7 +4092,7 @@ static ChemicalData EnsureRuinedMixture()
 ### `ChemicalStateAudit` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/ChemicalStateAudit.cs`</sub>
 
-W5.12 reagent-nature audit (user: "double check the reagents if all by nature are really liquid and needed to be scooped"). Dumps every ChemicalData's state/flags to Temp/chemical-state-audit.md and flags chemicals that are solids in their common lab form but are marked Liquid (manuscript solutions like "10% NaOH" are correctly liquid — only pure solids that get weighed/scooped are suspects).
+Reagent-nature audit: checks whether each reagent is really a liquid or a solid that has to be scooped. Dumps every ChemicalData's state/flags to Temp/chemical-state-audit.md and flags chemicals that are solids in their common lab form but are marked Liquid (manuscript solutions like "10% NaOH" are correctly liquid — only pure solids that get weighed/scooped are suspects).
 
 ```csharp
 static void Run()
@@ -4224,7 +4122,7 @@ static int RenderShots(CutsceneData data, string folder)
 ### `CompactHudBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/CompactHudBuilder.cs`</sub>
 
-Compact VR HUD layout (user 2026-07-11): the timer + title move OUT of the centre and merge into the Progress pill on the LEFT (small, stacked); the top cluster tucks to the top edge; the three Settings/Restart/Quit buttons collapse behind ONE hamburger icon that opens a vertical dropdown; and Pharmee's bottom dialogue bar is raised so it's fully in view. Idempotent — re-run after tuning the constants below. Operates on the open scene's HudRig (SampleScene only).
+Compact VR HUD layout: the timer + title move OUT of the centre and merge into the Progress pill on the LEFT (small, stacked); the top cluster tucks to the top edge; the three Settings/Restart/Quit buttons collapse behind ONE hamburger icon that opens a vertical dropdown; and Pharmee's bottom dialogue bar is raised so it's fully in view. Idempotent — re-run after tuning the constants below. Operates on the open scene's HudRig (SampleScene only).
 
 ```csharp
 static void Rebuild()
@@ -4243,7 +4141,7 @@ static void Record()
 ### `DemoModeBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/DemoModeBuilder.cs`</sub>
 
-Demo Mode scene wiring (user 2026-07-10). Three menus: • Build Demo Menu Button — MainMenu scene: clones the Laboratory button into a config-gated "Demo Mode" button wired to MainMenuController.OnDemoLaboratory. • Build Demo HUD — SampleScene: a Skip Step / Finish Experiment / Auto-Answer Quiz row under the HUD's top-right cluster, driven by DemoHudController. • Demo Enabled (persistent override) — toggles persistentDataPath/demo-config.json for in-editor testing (the shipped StreamingAssets default stays false). All idempotent.
+Demo Mode scene wiring. Three menus: • Build Demo Menu Button — MainMenu scene: clones the Laboratory button into a config-gated "Demo Mode" button wired to MainMenuController.OnDemoLaboratory. • Build Demo HUD — SampleScene: a Skip Step / Finish Experiment / Auto-Answer Quiz row under the HUD's top-right cluster, driven by DemoHudController. • Demo Enabled (persistent override) — toggles persistentDataPath/demo-config.json for in-editor testing (the shipped StreamingAssets default stays false). All idempotent.
 
 ```csharp
 static void BuildMenuButton()
@@ -4268,7 +4166,7 @@ static void Capture()
 ### `DistillationApparatusWiring` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/DistillationApparatusWiring.cs`</sub>
 
-W5.12: wires the distillation-completion apparatus into the game — the 6 AI-generated pieces (Condenser, RubberStopper, DeliveryTube, WaterBath, UtilityClamp, Aspirator) plus the 3 that existed only as raw models (Pipette, Thermometer, FlorenceFlask). Each is prefabbed if needed, registered in the SceneAssetLibrary, and one instance is spawned + fully wired + placed in a tidy row beside the distilling flask (the user then nudges + re-homes). Idempotent. Size/physics/breakage live in the code tables (RealSizes/PhysicsProfiles/Mishandling).
+Wires the distillation-completion apparatus into the game: the 6 generated pieces (Condenser, RubberStopper, DeliveryTube, WaterBath, UtilityClamp, Aspirator) plus the 3 that exist only as raw models (Pipette, Thermometer, FlorenceFlask). Each is prefabbed if needed, registered in the SceneAssetLibrary, and one instance is spawned + fully wired + placed in a tidy row beside the distilling flask (the user then nudges + re-homes). Idempotent. Size/physics/breakage live in the code tables (RealSizes/PhysicsProfiles/Mishandling).
 
 ### `Spec` <sub>struct</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/DistillationApparatusWiring.cs`</sub>
@@ -4280,7 +4178,7 @@ static void Wire()
 ### `DistillingFlaskGlass` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/DistillingFlaskGlass.cs`</sub>
 
-W5.12: the DistillingFlask model (glTFast .glb) imported with a bare grey metallic material, so it read as a chrome flask instead of glass. This swaps every mesh on the scene flask (and its prefab) to the SAME borosilicate glass materials the ChemLab beakers use, so it matches the rest of the glassware. Idempotent; run from SampleScene edit mode.
+The DistillingFlask model (glTFast .glb) imports with a bare grey metallic material, so it reads as a chrome flask instead of glass. This swaps every mesh on the scene flask (and its prefab) to the SAME borosilicate glass materials the ChemLab beakers use, so it matches the rest of the glassware. Idempotent; run from SampleScene edit mode.
 
 ```csharp
 static void Upgrade()
@@ -4289,7 +4187,7 @@ static void Upgrade()
 ### `EndProductGateBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/EndProductGateBuilder.cs`</sub>
 
-A ready-made GOAL destroys the experiment (user 2026-07-11 / 2026-07-16) — attaches EndProductVisibility to both storage roots and binds the runner, so each product bottle SetActive(false)s WHILE ITS OWN MODULE RUNS. The gate is per-EXPERIMENT, not per-chemical: Ethanol, Acetone and Benzoic Acid are each some module's goal AND a manuscript-listed reagent for others, so a global hide stripped Exp 2 (which runs before Exp 3/6) of reagents it needs. The four PURE products were deleted from the shelf instead — no bottle, nothing to gate. See EndProductVisibility. Idempotent; safe to re-run after any storage rework.
+A ready-made GOAL destroys the experiment — attaches EndProductVisibility to both storage roots and binds the runner, so each product bottle SetActive(false)s WHILE ITS OWN MODULE RUNS. The gate is per-EXPERIMENT, not per-chemical: Ethanol, Acetone and Benzoic Acid are each some module's goal AND a manuscript-listed reagent for others, so a global hide would strip Exp 2 (which runs before Exp 3/6) of reagents it needs. The four PURE products are not on the shelf at all, so there is nothing to gate. See EndProductVisibility. Idempotent; safe to re-run after any storage rework.
 
 ```csharp
 static void Wire()
@@ -4298,7 +4196,7 @@ static void Wire()
 ### `EndProductShelfStocker` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/EndProductShelfStocker.cs`</sub>
 
-Acetanilide · Benzamide · Chloroform · Wine are named as a reagent by NO manuscript procedure — their own chemical tests consume the product the player just made (Exp 5's "place 1 gram of acetanilide in a test tube" is testing YOUR synthesis). They are never inputs to anything, so they are simply absent rather than gated. Caffeine went with its dropped module. Ethanol · Acetone · Benzoic Acid are the exception: each is some module's goal AND a manuscript-listed reagent for others (Ethanol → Exp 2, 6; Acetone → Exp 2, 7; Benzoic Acid → Exp 4). They stock as ordinary RAW reagents via RawReagentCatalog / ReagentCabinetBuilder, and EndProductVisibility hides each ONLY while its own module is running — see that class. Run order after this: Generate Reagent Labels → Wire End-Product Gate → Wire Shelf Pourers → Re-Home Scene Items (Adopt Current).
+Acetanilide · Benzamide · Chloroform · Wine are named as a reagent by NO manuscript procedure — their own chemical tests consume the product the player just made (Exp 5's "place 1 gram of acetanilide in a test tube" is testing YOUR synthesis). They are never inputs to anything, so they are simply absent rather than gated. Ethanol · Acetone · Benzoic Acid are the exception: each is some module's goal AND a manuscript-listed reagent for others (Ethanol → Exp 2, 6; Acetone → Exp 2, 7; Benzoic Acid → Exp 4). They stock as ordinary RAW reagents via RawReagentCatalog / ReagentCabinetBuilder, and EndProductVisibility hides each ONLY while its own module is running — see that class. Run order after this: Generate Reagent Labels → Wire End-Product Gate → Wire Shelf Pourers → Re-Home Scene Items (Adopt Current).
 
 ```csharp
 static void Stock()
@@ -4307,7 +4205,7 @@ static void Stock()
 ### `EntranceSealBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/EntranceSealBuilder.cs`</sub>
 
-Seals the skybox seams the user reported at BOTH entrances (front corridor door + interior lab door, 2026-07-10). Each doorway's frame doesn't quite meet the surrounding wall, so the skybox shows through thin cracks at the jambs/lintel. This wraps each doorway with opaque trim strips (top lintel + two jambs) centred on the wall plane and standing slightly proud on both faces, so the seam is covered whether viewed from the corridor or the lab. Reuses GapSealWall's dark material for a consistent look; re-runnable. Tools ▸ PharmaSynth ▸ Seal Entrance Gaps (SampleScene, edit mode, idempotent).
+Seals the skybox seams at BOTH entrances (front corridor door + interior lab door). Each doorway's frame doesn't quite meet the surrounding wall, so the skybox shows through thin cracks at the jambs/lintel. This wraps each doorway with opaque trim strips (top lintel + two jambs) centred on the wall plane and standing slightly proud on both faces, so the seam is covered whether viewed from the corridor or the lab. Reuses GapSealWall's dark material for a consistent look; re-runnable. Tools ▸ PharmaSynth ▸ Seal Entrance Gaps (SampleScene, edit mode, idempotent).
 
 ```csharp
 static void Build()
@@ -4316,7 +4214,7 @@ static void Build()
 ### `FixTripodCollider` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/FixTripodCollider.cs`</sub>
 
-W5.12 (user 2026-07-13): the tripod is a STAND — the burner goes underneath, wire gauze + flask on top. But it was given a single CONVEX hull collider (required for a dynamic/grabbable body), which fills the open frame so nothing fits below. A tripod can't be both grabbable-dynamic AND hollow. This makes it a KINEMATIC stand with a NON-CONVEX mesh collider that matches the real open legs+ring, so the burner fits underneath and items rest on top. Still grabbable (moves while held), but it stays where you drop it instead of tumbling. Idempotent.
+The tripod is a STAND: the burner goes underneath, wire gauze + flask on top. A single CONVEX hull collider (required for a dynamic/grabbable body) fills the open frame so nothing fits below. A tripod can't be both grabbable-dynamic AND hollow. This makes it a KINEMATIC stand with a NON-CONVEX mesh collider that matches the real open legs+ring, so the burner fits underneath and items rest on top. Still grabbable (moves while held), but it stays where you drop it instead of tumbling. Idempotent.
 
 ```csharp
 static void Run()
@@ -4325,7 +4223,7 @@ static void Run()
 ### `FixtureTools` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/FixtureTools.cs`</sub>
 
-Edit-mode helper (user 2026-07-11: "let me manually reposition the sinks, speaker, tables and shelves in the editor"). Two blockers were stopping Scene-view clicks: 1. The Environment furniture (tables, wall cabinets, wash-table sinks) had PICKING DISABLED (the pointer toggle in the Hierarchy) — same reason the stools couldn't be clicked. 2. Some fixtures (the LabSpeaker, and the shelf ROOTS that sit at the origin with their meshes parented elsewhere) had no click target, so a click selected a child prop instead of the movable unit. This re-enables picking on every fixture, ensures a click collider where one is missing, and selects them all so they show in the Hierarchy — click the one you want in the Scene view and move it with the gizmo (W), then Ctrl-S. Tools ▸ PharmaSynth ▸ Select Movable Furniture (edit mode).
+Edit-mode helper so the sinks, speaker, tables and shelves can be repositioned by hand in the editor. Two things block Scene-view clicks: 1. The Environment furniture (tables, wall cabinets, wash-table sinks) has PICKING DISABLED (the pointer toggle in the Hierarchy), as do the stools. 2. Some fixtures (the LabSpeaker, and the shelf ROOTS that sit at the origin with their meshes parented elsewhere) have no click target, so a click selects a child prop instead of the movable unit. This re-enables picking on every fixture, ensures a click collider where one is missing, and selects them all so they show in the Hierarchy — click the one you want in the Scene view and move it with the gizmo (W), then Ctrl-S. Tools ▸ PharmaSynth ▸ Select Movable Furniture (edit mode).
 
 ```csharp
 static void SelectFurniture()
@@ -4334,7 +4232,7 @@ static void SelectFurniture()
 ### `FumeHoodSwap` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/FumeHoodSwap.cs`</sub>
 
-Swaps the sealed Tripo fume-hood model for the regenerated OPEN-SASH, hollow-chamber one (user 2026-07-18: "even if you have a sliding there, it is not hollow inside"). Idempotent: • deactivates the old FumeHoodModel (kept in the scene for hand-deletion, per the user's delete-by-hand preference), • mounts Art/Generated/Refs/FumeHoodOpen.prefab under FumeHood_StandIn, height-normalised to the house 2.35 m, • re-fits the WorkVolume trigger into the new chamber (upper-front region — hand-tune afterwards, the wire box is visible when selected), • rebuilds the HoodShell walls from the refit volume (front stays open).
+Swaps the sealed Tripo fume-hood model (a sash, but not hollow inside) for the OPEN-SASH, hollow-chamber one. Idempotent: • deactivates the old FumeHoodModel (kept in the scene for hand-deletion rather than deleted by the tool), • mounts Art/Generated/Refs/FumeHoodOpen.prefab under FumeHood_StandIn, height-normalised to the house 2.35 m, • re-fits the WorkVolume trigger into the new chamber (upper-front region — hand-tune afterwards, the wire box is visible when selected), • rebuilds the HoodShell walls from the refit volume (front stays open).
 
 ```csharp
 static void Swap()
@@ -4343,7 +4241,7 @@ static void Swap()
 ### `GrabMovementTools` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/GrabMovementTools.cs`</sub>
 
-Applies the GrabTuning velocity-tracked profile to every grabbable so held items collide with the world (user 2026-07-10: props could be pushed through walls/floor). Covers the SceneAssetLibrary prefabs (persisted) AND every XRGrabInteractable in the open scene(s) (catches instance overrides, stools, shelf bottles). Idempotent — re-running reports 0 changes.
+Applies the GrabTuning velocity-tracked profile to every grabbable so held items collide with the world (without it, props can be pushed through walls/floor). Covers the SceneAssetLibrary prefabs (persisted) AND every XRGrabInteractable in the open scene(s) (catches instance overrides, stools, shelf bottles). Idempotent — re-running reports 0 changes.
 
 ```csharp
 static void Wire()
@@ -4352,7 +4250,7 @@ static void Wire()
 ### `GradeBackButtonBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/GradeBackButtonBuilder.cs`</sub>
 
-W5.9: the fail path used to trap the player in a Retry-only loop — this wires a "Complete Experiment" button onto the grade screen (shown only on FAIL, where Continue is hidden — they share the slot) that ends the attempt and returns the player to the entrance, where any unlocked experiment can be picked. Label renamed from "Choose Another" (user 2026-07-15). Idempotent.
+Wires a "Complete Experiment" button onto the grade screen (shown only on FAIL, where Continue is hidden; they share the slot) that ends the attempt and returns the player to the entrance, where any unlocked experiment can be picked, so a failed attempt is never a Retry-only loop. Idempotent.
 
 ```csharp
 static void Wire()
@@ -4370,7 +4268,7 @@ static void Style()
 ### `HandVisualsBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/HandVisualsBuilder.cs`</sub>
 
-v4 (user 2026-07-11): controllers are REPLACED by skinned hands — XR Hands sample meshes (Art/Hands/LeftHand.fbx + RightHand.fbx, real finger bones). Two skins: bare (HandSkin.mat) / nitrile blue (HandNitrile.mat) driven by the PPE gloves state; two poses: free / grab (finger curl while selecting) driven by HandPoseController. Retires the old procedural mittens, HandVisualKeeper AND the FPGlove_* first-person glove clones (PPE visuals rebound to the mirror gloves only — first-person gloving is now the material swap). Tools ▸ PharmaSynth ▸ Build Hand Visuals — run per scene, edit mode.
+Controllers are REPLACED by skinned hands: XR Hands sample meshes (Art/Hands/LeftHand.fbx + RightHand.fbx, real finger bones). Two skins: bare (HandSkin.mat) / nitrile blue (HandNitrile.mat) driven by the PPE gloves state; two poses: free / grab (finger curl while selecting) driven by HandPoseController. Removes any procedural mittens, HandVisualKeeper AND FPGlove_* first-person glove clones (PPE visuals bind to the mirror gloves only; first-person gloving is the material swap). Tools ▸ PharmaSynth ▸ Build Hand Visuals — run per scene, edit mode.
 
 ```csharp
 static void Build()
@@ -4384,7 +4282,7 @@ One-click switch for editor Play mode's XR init on the Standalone (PC) target �
 ### `HideStationPads` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/HideStationPads.cs`</sub>
 
-W5.12 (user 2026-07-13): the hand-built Methane station pads still render as coloured cubes on the table — the DynamicStage builder hides its own pads (padMr.enabled = false, W5.8) but the authored Station_* objects were missed. The pads are purely cosmetic: the trigger COLLIDER + sensors that detect each step stay, and the guides/labels tell the player where to act — so the cube mesh just clutters the view. This disables the MeshRenderer on every Station_* pad while leaving all functionality intact. Idempotent.
+The hand-built Methane station pads render as coloured cubes on the table. The DynamicStage builder hides its own pads (padMr.enabled = false) but not the authored Station_* objects. The pads are purely cosmetic: the trigger COLLIDER + sensors that detect each step stay, and the guides/labels tell the player where to act — so the cube mesh just clutters the view. This disables the MeshRenderer on every Station_* pad while leaving all functionality intact. Idempotent.
 
 ```csharp
 static void Run()
@@ -4393,7 +4291,7 @@ static void Run()
 ### `HoverInfoBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/HoverInfoBuilder.cs`</sub>
 
-Builds the hover-inspector info card + wires the raycasting HoverInspector into SampleScene (user 2026-07-10). Point the right-hand ray (or gaze) at a reagent, a piece of apparatus or an NPC and a smoothly-animated card names it and explains what it is / how to use it. Tools ▸ PharmaSynth ▸ Build Hover Info Panel (SampleScene, edit mode, idempotent).
+Builds the hover-inspector info card + wires the raycasting HoverInspector into SampleScene. Point the right-hand ray (or gaze) at a reagent, a piece of apparatus or an NPC and a smoothly-animated card names it and explains what it is / how to use it. Tools ▸ PharmaSynth ▸ Build Hover Info Panel (SampleScene, edit mode, idempotent).
 
 ```csharp
 static void Build()
@@ -4402,7 +4300,7 @@ static void Build()
 ### `IloBeatInjector` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/IloBeatInjector.cs`</sub>
 
-Injects each experiment's ILO beats into its Intro cutscene (user 2026-07-10: Pharmee states the learning outcomes in the opening dialogue). Beats slot in after the greeting beat: a lead-in, then one beat per objective (verbatim Appendix C copy from IloCopy). Idempotent — the lead-in text is the marker.
+Injects each experiment's ILO beats into its Intro cutscene (Pharmee states the learning outcomes in the opening dialogue). Beats slot in after the greeting beat: a lead-in, then one beat per objective (verbatim Appendix C copy from IloCopy). Idempotent — the lead-in text is the marker.
 
 ```csharp
 static readonly (string moduleId, string prefix)[] Modules
@@ -4413,7 +4311,7 @@ static int InjectInto(CutsceneData data, string moduleId)
 ### `JimenezArmDamper` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/JimenezArmDamper.cs`</sub>
 
-⛔ WHY THIS EXISTS AND THE RE-WEIGHT DOES NOT. The obvious fix — move the coat's vertex weights off the arm bones — was built, measured and REVERTED. On this asset the coat and the sleeve are one continuous surface with no seam to cut along, so any weight change big enough to free the coat is big enough to rip it: against the untouched mesh, worst edge stretch went 4.2x → 14.9x and torn edges 32 → 174. Smoothing the transfer across a band removed the tearing but then barely moved the coat either (1625 → 1557 dragged vertices). The geometry, not the weighting, is the limit. See JimenezRigMath.TransferFraction. So this attacks the OTHER side of the equation: the coat only drags as far as the arm swings. His clips are HUMANOID, so the knobs are muscle curves (-1..1 across each joint's range), not bone rotations — a bone-name scan finds nothing here. ⛔ Never compounds: the first run copies ea
+⛔ WHY THIS EXISTS INSTEAD OF A RE-WEIGHT. Moving the coat's vertex weights off the arm bones does not work on this asset: the coat and the sleeve are one continuous surface with no seam to cut along, so any weight change big enough to free the coat is big enough to rip it (measured against the untouched mesh, worst edge stretch 4.2x → 14.9x and torn edges 32 → 174). Smoothing the transfer across a band removes the tearing but then barely moves the coat (1625 → 1557 dragged vertices). The geometry, not the weighting, is the limit. See JimenezRigMath.TransferFraction. So this attacks the OTHER side of the equation: the coat only drags as far as the arm swings. His clips are HUMANOID, so the knobs are muscle curves (-1..1 across each joint's range), not bone rotations — a bone-name scan finds nothing here. ⛔ Never compounds: the first run copies each clip to Originals/ and EVERY run re-deri
 
 ```csharp
 const float DefaultFactor
@@ -4425,7 +4323,7 @@ static void Run(float factor)
 ### `JimenezCoatRig` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/JimenezCoatRig.cs`</sub>
 
-lab coat moves with it, which it is not supposed to"). ⛔ There is nothing to unparent. He is a Tripo auto-rig: ONE SkinnedMeshRenderer over 41 bones, with the coat baked into the body mesh. The coat follows the arm because coat VERTICES carry weight on the arm bones — an auto-rigger assigns weight by proximity, so a coat panel hanging near the elbow picks up elbow weight even though a real coat hangs from the shoulders. This finds that bleed geometrically (a vertex carrying arm weight while sitting well outside the arm) and hands the weight to the spine. The sleeve is kept: anything within `sleeveRadius` of the arm bone still follows it, or he would wear a rigid tube. ⛔ It ALWAYS rebuilds from the ORIGINAL imported mesh, never from its own output, so re-running at a different radius cannot compound. The source .glb is never modified and the change is undone by clearing the mesh override 
+with the arm. ⛔ There is nothing to unparent. He is a Tripo auto-rig: ONE SkinnedMeshRenderer over 41 bones, with the coat baked into the body mesh. The coat follows the arm because coat VERTICES carry weight on the arm bones — an auto-rigger assigns weight by proximity, so a coat panel hanging near the elbow picks up elbow weight even though a real coat hangs from the shoulders. This finds that bleed geometrically (a vertex carrying arm weight while sitting well outside the arm) and hands the weight to the spine. The sleeve is kept: anything within `sleeveRadius` of the arm bone still follows it, or he would wear a rigid tube. ⛔ It ALWAYS rebuilds from the ORIGINAL imported mesh, never from its own output, so re-running at a different radius cannot compound. The source .glb is never modified and the change is undone by clearing the mesh override on the prefab.
 
 ```csharp
 static void Run()
@@ -4435,7 +4333,7 @@ static void Run(float sleeveRadius)
 ### `JimenezHudPortraitBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/JimenezHudPortraitBuilder.cs`</sub>
 
-Gives Dr. Jimenez a HUD presence equal to Pharmee's (user 2026-07-19: "let's make dr jimenez same as pharmee that appears in our HUD as well. so we'll need to create an icon image for dr. jimenez as well"). Two jobs, both idempotent: 1. RENDER his portrait from his own rigged model — a transparent-background headshot framed on the humanoid Head bone. No AI generation (so no credits, and no risk of a portrait that looks like a different person): the icon IS the character the player meets. → Art/UI/jimenez_icon.png, imported with pharmee_icon.png's settings (Sprite/Single, alpha, no mips). 2. WIRE the HudDialogueBar for two speakers: the existing DialogueBar Portrait Image + Pharmee's icon as the primary channel, and Jimenez's narration + name + new icon as an extra channel. Before this his lines only ever appeared in his own world bubble — the HUD bar showed nothing.
+Gives Dr. Jimenez a HUD presence equal to Pharmee's — he appears in the HUD with his own icon image, just as she does. Two jobs, both idempotent: 1. RENDER his portrait from his own rigged model: a transparent-background headshot framed on the humanoid Head bone, so the icon IS the character the player meets. → Art/UI/jimenez_icon.png, imported with pharmee_icon.png's settings (Sprite/Single, alpha, no mips). 2. WIRE the HudDialogueBar for two speakers: the existing DialogueBar Portrait Image + Pharmee's icon as the primary channel, and Jimenez's narration + name + new icon as an extra channel. Without it his lines appear only in his own world bubble and the HUD bar shows nothing.
 
 ```csharp
 static void Run()
@@ -4454,7 +4352,7 @@ static void Build()
 ### `LabDoorFixBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabDoorFixBuilder.cs`</sub>
 
-1. The leaf inherits the Environment prefab's `m_StaticEditorFlags = 87`, which includes **Batching Static**. A static-batched renderer is merged into a combined mesh at load and then IGNORES its transform, so the leaf's collider swung open while the drawn door stayed shut. The player walks through what looks like a closed door, and no amount of reading DoorOpener explains it. Contribute GI goes with it: a door that moves must not carry a lightmap baked in the closed position. 2. `doorBlocker` was null, so nothing held the player back while the gate was still talking. The blocker is a plain trigger-free box across the doorway that the gatekeeper enables and disables; it is created here so the scene stops depending on someone having hand-placed one. Idempotent: re-running finds the same objects and rewrites the same values. ⚠ The leaf was lightmap- and navmesh-static, so after running thi
+1. The leaf inherits the Environment prefab's `m_StaticEditorFlags = 87`, which includes **Batching Static**. A static-batched renderer is merged into a combined mesh at load and then IGNORES its transform, so the leaf's collider swings open while the drawn door stays shut, and the player walks through what looks like a closed door. Contribute GI goes with it: a door that moves must not carry a lightmap baked in the closed position. 2. A null `doorBlocker` leaves nothing to hold the player back while the gate is still talking. The blocker is a plain trigger-free box across the doorway that the gatekeeper enables and disables; it is created here so the scene does not depend on a hand-placed one. Idempotent: re-running finds the same objects and rewrites the same values. ⚠ The leaf's lightmap- and navmesh-static flags change, so after running this go through `Build Lab Probes` → `Run Lab L
 
 ```csharp
 static void Build()
@@ -4463,7 +4361,7 @@ static void Build()
 ### `LabLightingBake` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabLightingBake.cs`</sub>
 
-is the whole reason it is the right tool on a Quest. The three steps that have to happen in THIS order, because each depends on the last: 1. Lightmap UVs. A mesh with no UV2 cannot receive a lightmap. 36 of the project's 107 models lacked them, including the entire room shell (Wall, Floor, Ceiling_2, the tables). Anything still missing UV2 after the import pass is set to receive from LIGHT PROBES instead, so it still occludes and bounces without a broken lightmap. 2. Static flags, filtered HARD. A grabbable baked into a lightmap carries its baked shadow around the room in your hand, so anything with a Rigidbody, an XRGrabInteractable, a DropRespawn or a LabItem is excluded, as is everything the stage builder spawns. 3. Light modes. Realtime lights contribute nothing to a bake. Tools > PharmaSynth > Prepare Lab Lighting Bake  - steps 1-3, no bake (fast, inspectable) Tools > PharmaSynth > 
+floats. Baked GI is also FREE at runtime, which is why it is the right tool on a Quest. The three steps that have to happen in THIS order, because each depends on the last: 1. Lightmap UVs. A mesh with no UV2 cannot receive a lightmap. 36 of the project's 107 models lack them, including the entire room shell (Wall, Floor, Ceiling_2, the tables). Anything still missing UV2 after the import pass is set to receive from LIGHT PROBES instead, so it still occludes and bounces without a broken lightmap. 2. Static flags, filtered HARD. A grabbable baked into a lightmap carries its baked shadow around the room in your hand, so anything with a Rigidbody, an XRGrabInteractable, a DropRespawn or a LabItem is excluded, as is everything the stage builder spawns. 3. Light modes. Realtime lights contribute nothing to a bake. Tools > PharmaSynth > Prepare Lab Lighting Bake  - steps 1-3, no bake (fast, in
 
 ```csharp
 static void Prepare()
@@ -4473,7 +4371,7 @@ static void Run()
 ### `LabLightingBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabLightingBuilder.cs`</sub>
 
-Brightens the lab so it reads as a well-lit laboratory (user 2026-07-10: "a lab must be well-lit, currently our lab-room is dim"). Quest-friendly recipe — NO extra shadow-casting lights: 1. The 16 ceiling `Light (n)` fixture meshes get a white EMISSIVE panel material (they were unlit gray boxes). 2. Flat ambient raised from the dark skybox gray (0.21) to a bright neutral. 3. A small grid of shadowless point lights (`LabLights` group, re-runnable) fills the room — 6 lights, wide range, warm-white, no shadows (URP per-object cap safe). 4. The directional key light keeps shadows but drops a touch so it doesn't blow out. Tools ▸ PharmaSynth ▸ Brighten Lab Lighting (run in SampleScene, edit mode, idempotent).
+Brightens the lab so it reads as a well-lit laboratory. Quest-friendly recipe, with NO extra shadow-casting lights: 1. The 16 ceiling `Light (n)` fixture meshes get a white EMISSIVE panel material. 2. Ambient is applied from LabRenderTuner (a ceiling-to-floor gradient). 3. A small grid of shadowless point lights (`LabLights` group, re-runnable) fills the room — 6 lights, wide range, warm-white, no shadows (URP per-object cap safe). 4. The directional key light keeps shadows but drops a touch so it doesn't blow out. Tools ▸ PharmaSynth ▸ Brighten Lab Lighting (run in SampleScene, edit mode, idempotent).
 
 ```csharp
 static void Build()
@@ -4482,7 +4380,7 @@ static void Build()
 ### `LabNavMeshBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabNavMeshBuilder.cs`</sub>
 
-Bakes the walkable surface Tutorial Mode's ground path routes on (W5.44). Without this there is no NavMesh in the project at all, and `GuidePath` silently draws nothing — the floor arrows would look "not implemented" rather than "not baked", which is exactly the sort of silence this codebase has been bitten by before. ⚠ **The bake goes STALE when furniture moves**, precisely like the lightmap bake — the benches ARE the obstacles it routes around. Re-run this in the same breath as `Build Lab Probes` → `Run Lab Lighting Bake` after any `Select Movable Furniture` session, or the arrows will confidently route through a bench that has since moved.
+Bakes the walkable surface Tutorial Mode's ground path routes on. Without this there is no NavMesh in the project at all, and `GuidePath` silently draws nothing, so the floor arrows look "not implemented" rather than "not baked". ⚠ **The bake goes STALE when furniture moves**, like the lightmap bake: the benches ARE the obstacles it routes around. Re-run this together with `Build Lab Probes` → `Run Lab Lighting Bake` after any `Select Movable Furniture` session, or the arrows route through a bench that has since moved.
 
 ```csharp
 static void Build()
@@ -4491,7 +4389,7 @@ static void Build()
 ### `LabNpcPolishBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabNpcPolishBuilder.cs`</sub>
 
-Wires the 2026-07-10 NPC/audio polish batch into SampleScene: 1. Pharmee expressions — PharmeeFace re-pointed at the robot's EYES + MOUTH meshes (was Ears_Black_Matt_0), default-happy; PharmeeMood resets the face after every line; the gatekeeper's faceBehaviour drives gate moods. 2. Dr. Jimenez proctor roaming — ProctorRoamer + observation points at the reagent shelf, equipment shelf, dynamic stage and fume hood. 3. AC proximity hum — ProximityHum on the air-con / vent assets (falls back to the fume hood if no AC mesh exists). Tools ▸ PharmaSynth ▸ Wire NPC Polish (SampleScene, edit mode, idempotent).
+Wires the NPC/audio polish into SampleScene: 1. Pharmee expressions: PharmeeFace pointed at the robot's EYES + MOUTH meshes, default-happy; PharmeeMood resets the face after every line; the gatekeeper's faceBehaviour drives gate moods. 2. Dr. Jimenez proctor roaming — ProctorRoamer + observation points at the reagent shelf, equipment shelf, dynamic stage and fume hood. 3. AC proximity hum — ProximityHum on the air-con / vent assets (falls back to the fume hood if no AC mesh exists). Tools ▸ PharmaSynth ▸ Wire NPC Polish (SampleScene, edit mode, idempotent).
 
 ```csharp
 const float JimenezIdleLift
@@ -4501,7 +4399,7 @@ static void Build()
 ### `LabProbeBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabProbeBuilder.cs`</sub>
 
-blending AND box projection switched on - the features were paid for with nothing to feed them. Two consequences the player sees constantly: * Every glass material in the ChemLab pack sets _EnvironmentReflections = 1, so with no probe they all sampled the DEFAULT reflection - the built-in procedural outdoor sky - inside a sealed windowless room. That is why beakers and flasks read as pale plastic. * Every dynamic object (all grabbable glassware, held items, Pharmee, Dr. Jimenez) was lit by flat ambient alone, so a beaker was lit identically under a closed cabinet and directly beneath a lamp. Nothing in the room grounded anything. Probe placement is DERIVED from the room's own renderer bounds rather than hard-coded, so it survives the furniture moves the user makes through Select Movable Furniture. Tools > PharmaSynth > Build Lab Probes (edit mode, idempotent - deletes and rebuilds its ow
+The Mobile RP asset has reflection-probe blending AND box projection switched on, and both need probes to feed them. Without probes: * Every glass material in the ChemLab pack sets _EnvironmentReflections = 1, so it samples the DEFAULT reflection - the built-in procedural outdoor sky - inside a sealed windowless room, and beakers and flasks read as pale plastic. * Every dynamic object (all grabbable glassware, held items, Pharmee, Dr. Jimenez) is lit by flat ambient alone, so a beaker is lit identically under a closed cabinet and directly beneath a lamp. Probe placement is DERIVED from the room's own renderer bounds rather than hard-coded, so it survives the furniture moves the user makes through Select Movable Furniture. Tools > PharmaSynth > Build Lab Probes (edit mode, idempotent - deletes and rebuilds its own root). Run the lighting bake afterwards to populate them.
 
 ```csharp
 static void Build()
@@ -4510,7 +4408,7 @@ static void Build()
 ### `LabRenderTuner` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabRenderTuner.cs`</sub>
 
-* MSAA was 1 (off). On the Adreno tile GPU 4x resolves in tile memory and is close to free, and this scene is nothing but thin edges - tube rims, glass rods, rack rails. It is the largest per-pixel quality gain available. * HDR was off, so emission above 1.0 just clamped: the 16 emissive ceiling panels could never read as LIGHTS, only as white paint, and tonemapping had no range to work with. * Ambient was FLAT grey 0.45 - identical from every direction, so nothing in the room had any vertical shading and the whole space read as one plane of grey. * The skybox was the built-in PROCEDURAL SKY, in a sealed windowless room, feeding ambient and every reflection an outdoor gradient. Vignette is deliberately DISABLED rather than tuned down: it was active at template strength and would have switched on the moment post was enabled, and a vignette in a headset reads as a dirty lens rather than as
+* MSAA 1 (off). On the Adreno tile GPU 4x resolves in tile memory and is close to free, and this scene is nothing but thin edges - tube rims, glass rods, rack rails. It is the largest per-pixel quality gain available. * HDR off, so emission above 1.0 just clamps: the 16 emissive ceiling panels can never read as LIGHTS, only as white paint, and tonemapping has no range to work with. * FLAT grey 0.45 ambient, identical from every direction, so nothing in the room has any vertical shading and the whole space reads as one plane of grey. * The built-in PROCEDURAL SKY, in a sealed windowless room, feeding ambient and every reflection an outdoor gradient. Vignette is deliberately DISABLED rather than tuned down: the template has it at full strength, so it switches on the moment post is enabled, and a vignette in a headset reads as a dirty lens rather than as framing. Tools > PharmaSynth > Tune 
 
 ```csharp
 const int   Msaa
@@ -4530,7 +4428,7 @@ static void ApplyAmbient()
 ### `LabSurfaceTextureForge` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabSurfaceTextureForge.cs`</sub>
 
-Generates the lab's MISSING surface textures (user 2026-08-28: "improve the textures to make it an aesthetic lab"; free-authoring route chosen, so no Unity AI credits are spent). The Laboratory pack left the two largest surfaces in the player's view with no albedo at all - Wall_0/Wall_1 carry a normal map and nothing else, and Ceiling_2 carries no maps whatsoever. A featureless white plane is exactly what makes the room read as an untextured grey box, and it is worst on the ceiling, which a seated VR player looks straight up into. Everything here is drawn in code and written to PNG - the same approach LabelForge already uses for reagent labels: deterministic, re-runnable, diffable, and free. All noise wraps, so the maps tile seamlessly. Tools > PharmaSynth > Generate Lab Surface Textures (edit mode, idempotent, re-runnable).
+Generates the lab's MISSING surface textures. The Laboratory pack leaves the two largest surfaces in the player's view with no albedo at all - Wall_0/Wall_1 carry a normal map and nothing else, and Ceiling_2 carries no maps whatsoever. A featureless white plane makes the room read as an untextured grey box, and it is worst on the ceiling, which a seated VR player looks straight up into. Everything here is drawn in code and written to PNG, as LabelForge does for reagent labels: deterministic, re-runnable, diffable, and free. All noise wraps, so the maps tile seamlessly. Tools > PharmaSynth > Generate Lab Surface Textures (edit mode, idempotent, re-runnable).
 
 ```csharp
 static void Generate()
@@ -4539,7 +4437,7 @@ static void Generate()
 ### `LabSurfaceTuner` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabSurfaceTuner.cs`</sub>
 
-single most obviously wrong thing in the room. * The four vessel materials the player handles constantly - beaker 100/500, Erlenmeyer, graduated cylinder - sat at smoothness 0. Glass with NO specular and NO reflection is why they read as pale plastic blobs. The same pack ships CORRECT glass values on GlassMat/GlassInnerMat/GlassOuterMat (0.92-0.95), so the right answer was already sitting next to the wrong one. * Several non-metals sat at metallic 0 + smoothness 1 - a physically impossible "non-metal mirror" that produces a hard white specular blob instead of a highlight. Every value here is a judgement about what the surface IS, so they live in one table rather than being scattered. Suite-pinned (surface:) because a pack reimport or a stray inspector drag restores the bad values silently and pure math cannot see a material regression - the same lesson as the wiped MatchStrikerSurface. T
+a sealed indoor lab reads as wet plastic. * The benchtops sit at 1.00. A lab bench is matte epoxy resin. * The four vessel materials the player handles constantly - beaker 100/500, Erlenmeyer, graduated cylinder - sit at smoothness 0, and glass with NO specular and NO reflection reads as pale plastic blobs. The same pack ships CORRECT glass values on GlassMat/GlassInnerMat/GlassOuterMat (0.92-0.95). * Several non-metals sit at metallic 0 + smoothness 1 - a physically impossible "non-metal mirror" that produces a hard white specular blob instead of a highlight. Every value here is a judgement about what the surface IS, so they live in one table rather than being scattered. Suite-pinned (surface:) because a pack reimport or a stray inspector drag restores the bad values silently and pure math cannot see a material regression. Tools > PharmaSynth > Tune Lab Surfaces (edit mode, idempotent, 
 
 ### `Surface` <sub>struct</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabSurfaceTuner.cs`</sub>
@@ -4554,7 +4452,7 @@ static void Tune()
 ### `LabelForge` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabelForge.cs`</sub>
 
-Reagent-label compositor (§3, client style pick: MODERN). For every Reagent_* bottle on the shelf: renders LabelBase_Modern + the chemical's name (crisp TMP text — never AI typography) to a PNG, builds a material, and mounts a label quad on the bottle facing the aisle. Tools ▸ PharmaSynth ▸ Generate Reagent Labels — idempotent, re-run anytime.
+Reagent-label compositor (style: MODERN). For every Reagent_* bottle on the shelf: renders LabelBase_Modern + the chemical's name (crisp TMP text) to a PNG, builds a material, and mounts a label quad on the bottle facing the aisle. Tools ▸ PharmaSynth ▸ Generate Reagent Labels — idempotent, re-run anytime.
 
 ```csharp
 static void Run()
@@ -4563,7 +4461,7 @@ static void Run()
 ### `LayoutTidy` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LayoutTidy.cs`</sub>
 
-Re-seats every experiment layout onto the LayoutTidyMath zoning grid (W5.8: clean center table — stations across the back, vessels center-front, reagents right, tools left; the front strip stays free for the rack and spares). Deterministic + idempotent; also structurally removes the two historical clamped overlaps at (1.38, −3.88) in Acetone and Benzamide. Run AFTER `Apply W5.8 Verb Data` so new stations/props get slots too.
+Re-seats every experiment layout onto the LayoutTidyMath zoning grid (a clean center table — stations across the back, vessels center-front, reagents right, tools left; the front strip stays free for the rack and spares). Deterministic + idempotent; also structurally removes the two clamped overlaps at (1.38, −3.88) in Acetone and Benzamide. Run AFTER `Apply W5.8 Verb Data` so new stations/props get slots too.
 
 ```csharp
 static void Run()
@@ -4573,7 +4471,7 @@ static int Tidy(ExperimentLayout layout)
 ### `LockMyLayout` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LockMyLayout.cs`</sub>
 
-One-click self-service layout lock (user 2026-07-13: "after I move or duplicate assets I just want one button"). Does everything needed to make a hand-arranged workspace permanent — with NO rebuilding, so it can never reset placements: 1. Tidy duplicate names  — "Beaker (1)" → "Beaker_100mL_2", + full interaction wiring for any raw duplicate that was missing it. 2. Re-home every item     — current transform becomes its respawn home (moved originals AND duplicates), so nothing snaps back in Play. 3. Save the scene. Run this after ANY manual arrangement; then it's locked with no need to ping Claude. Purely additive — spawns/destroys nothing.
+One-click self-service layout lock: after moving or duplicating assets, one button does everything needed to make a hand-arranged workspace permanent — with NO rebuilding, so it can never reset placements: 1. Tidy duplicate names  — "Beaker (1)" → "Beaker_100mL_2", + full interaction wiring for any raw duplicate that was missing it. 2. Re-home every item     — current transform becomes its respawn home (moved originals AND duplicates), so nothing snaps back in Play. 3. Save the scene. Run this after ANY manual arrangement. Purely additive — spawns/destroys nothing.
 
 ```csharp
 static void Run()
@@ -4582,7 +4480,7 @@ static void Run()
 ### `ManualLayoutAdopter` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/ManualLayoutAdopter.cs`</sub>
 
-W5.12: the user hand-placed the whole workspace (kits, duplicates, reagent shelf, spawn point) — this adopts that layout as canonical in ONE run: 1. renames editor duplicates ("Beaker_100mL (1)") to clean unique names + display names, and gives them the full interaction wiring; 2. re-points the teleport target (FrontDoorSpawn) at the rig's current pose — the user moved the avatar to the new spawn spot; 3. re-homes every DropRespawn to its current transform; 4. creates + registers the missing DistillingFlask (the model existed only as an unimported .glb — that's why it couldn't be found) and parks it beside a graduated cylinder; 5. drops a ManualLayout_W512 marker that guards the shelf/kits builders from clobbering the hand layout on a re-run. Idempotent; run from SampleScene in edit mode.
+Adopts the hand-placed workspace (kits, duplicates, reagent shelf, spawn point) as the canonical layout in ONE run: 1. renames editor duplicates ("Beaker_100mL (1)") to clean unique names + display names, and gives them the full interaction wiring; 2. re-points the teleport target (FrontDoorSpawn) at the rig's current pose; 3. re-homes every DropRespawn to its current transform; 4. creates + registers the DistillingFlask if missing (its model is an unimported .glb, so no prefab exists) and parks it beside a graduated cylinder; 5. drops a ManualLayout_W512 marker that guards the shelf/kits builders from clobbering the hand layout on a re-run. Idempotent; run from SampleScene in edit mode.
 
 ```csharp
 const string MarkerName
@@ -4593,7 +4491,7 @@ static void Adopt()
 ### `MaterialsGuideGenerator` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MaterialsGuideGenerator.cs`</sub>
 
-Fills every module's MATERIALS guide (the watch-panel header, user 2026-07-17: "display all materials needed first, from reagents and apparatus… just there as a guide so the players can assemble them before they even proceed"). REAGENTS are DERIVED from the module's layout bindings — the ground truth of what the experiment actually consumes — with totals summed per chemical, so the guide can never drift from the tasks. Units follow the game's own convention (1 squeeze = 1 ml): liquids read "N ml", solids/powders "N g". APPARATUS is AUTHORED here per module, from the PROCEDURES — never from the manuscript's own apparatus lists, which are documented as defective (experiments-reference §Apparatus: "stage from the PROCEDURE, never the list"). Idempotent: re-run after any layout change.
+Fills every module's MATERIALS guide (the watch-panel header): every reagent and apparatus the module needs, listed first as a guide so the player can assemble them before starting. REAGENTS are DERIVED from the module's layout bindings — the ground truth of what the experiment actually consumes — with totals summed per chemical, so the guide can never drift from the tasks. Units follow the game's own convention (1 squeeze = 1 ml): liquids read "N ml", solids/powders "N g". APPARATUS is AUTHORED here per module, from the PROCEDURES — never from the manuscript's own apparatus lists, which are documented as defective (experiments-reference §Apparatus: "stage from the PROCEDURE, never the list"). Idempotent: re-run after any layout change.
 
 ```csharp
 static void Run()
@@ -4611,7 +4509,7 @@ static void RunNow()
 ### `MenuCubeRoomBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MenuCubeRoomBuilder.cs`</sub>
 
-Builds the futuristic CUBE SPAWN ROOM in the MainMenu scene (user 2026-07-10): a fully-enclosed, solid, dark room with cyan/teal emissive trim, a couple of soft lights and a glowing floor launch-pad under the menu panel. Sealed on all six sides so no skybox leaks. Re-runnable and idempotent — deletes the prior "MenuCubeRoom" and rebuilds it, and hides the old open "MenuRoom" dressing. Tools ▸ PharmaSynth ▸ Build Menu Cube Room. Run with the MainMenu scene open.
+Builds the futuristic CUBE SPAWN ROOM in the MainMenu scene: a fully-enclosed, solid, dark room with cyan/teal emissive trim, a couple of soft lights and a glowing floor launch-pad under the menu panel. Sealed on all six sides so no skybox leaks. Re-runnable and idempotent: deletes the prior "MenuCubeRoom" and rebuilds it, and hides the legacy open "MenuRoom" dressing. Tools ▸ PharmaSynth ▸ Build Menu Cube Room. Run with the MainMenu scene open.
 
 ```csharp
 static void Build()
@@ -4620,7 +4518,7 @@ static void Build()
 ### `MethaneAnchors` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MethaneAnchors.cs`</sub>
 
-Creates the draggable placement anchors the verbs read (user 2026-07-14: "can I drag these to the specific parts?"). After running this, each match/burner gets a "FlameAnchor" child and each scoopula/spatula a "ScoopAnchor" child, dropped at a best-guess spot. SELECT it in the Hierarchy (orange gizmo in the Scene view), drag it onto the exact part — match head, burner mouth, scoop bowl — then run Lock My Layout to bake it. Idempotent: never moves an anchor you've already positioned.
+Creates the draggable placement anchors the verbs read. Each match/burner gets a "FlameAnchor" child and each scoopula/spatula a "ScoopAnchor" child, dropped at a best-guess spot. SELECT it in the Hierarchy (orange gizmo in the Scene view), drag it onto the exact part (match head, burner mouth, scoop bowl), then run Lock My Layout to bake it. Idempotent: never moves an anchor you've already positioned.
 
 ```csharp
 static void Run()
@@ -4629,7 +4527,7 @@ static void Run()
 ### `MethaneApparatusGrab` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MethaneApparatusGrab.cs`</sub>
 
-Guarantee the methane apparatus is pick-up-able (user 2026-07-15: "I can't pick up the draw tubes"). Normalises every common grab-blocker on the hard-glass tube, collection tube and burner: active, on the Default layer, with an XRGrabInteractable (velocity-tracked + two-handed), a Rigidbody, a live convex collider, and the shelf/respawn policy. Idempotent.
+Guarantee the methane apparatus is pick-up-able ("I can't pick up the draw tubes"). Normalises every common grab-blocker on the hard-glass tube, collection tube and burner: active, on the Default layer, with an XRGrabInteractable (velocity-tracked + two-handed), a Rigidbody, a live convex collider, and the shelf/respawn policy. Idempotent.
 
 ```csharp
 static void Run()
@@ -4638,7 +4536,7 @@ static void Run()
 ### `MethaneBeakerSwap` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MethaneBeakerSwap.cs`</sub>
 
-Swap the sodium-acetate/soda-lime SOURCE from a sealed amber vial to an OPEN beaker (user 2026-07-14: "since this is scooped not poured, use an open beaker-looking container"). Solids belong in a wide-mouth vessel you can dip a scoop into. Preserves each jar's position + contents + wiring: instantiates Beaker_100mL in place, re-tags it "reagent-jar", refills it with the solid, rebuilds the powder mound (open top → the scoop reaches it), re-labels it, and destroys the old vial. Idempotent (skips jars that are already beakers).
+Swap the sodium-acetate/soda-lime SOURCE from a sealed amber vial to an OPEN beaker. The charge is scooped, not poured, so it belongs in a wide-mouth vessel you can dip a scoop into. Preserves each jar's position + contents + wiring: instantiates Beaker_100mL in place, re-tags it "reagent-jar", refills it with the solid, rebuilds the powder mound (open top → the scoop reaches it), re-labels it, and destroys the old vial. Idempotent (skips jars that are already beakers).
 
 ```csharp
 static void Run()
@@ -4647,7 +4545,7 @@ static void Run()
 ### `MethaneBenchPermanent` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MethaneBenchPermanent.cs`</sub>
 
-Make the methane bench TOOLS (mortar, pestle, scoopula, spatula) permanent fixtures — usable in BOTH Lab Tour and Campaign, all the time (user 2026-07-14: "the mortar must be usable for both modes all throughout"). They were parented under MethaneStage, which MethaneStageVisibility hides at play-start, so they vanished in Play. This lifts them OUT of the stage (world position preserved), makes sure they're active + rest kinematic (won't fall through the bench), and re-homes them so a Reset keeps them put. Idempotent.
+Make the methane bench TOOLS (mortar, pestle, scoopula, spatula) permanent fixtures, usable in BOTH Lab Tour and Campaign at all times. Parented under MethaneStage they vanish in Play, because MethaneStageVisibility hides the stage at play-start. This lifts them OUT of the stage (world position preserved), makes sure they're active + rest kinematic (won't fall through the bench), and re-homes them so a Reset keeps them put. Idempotent.
 
 ```csharp
 static void Run()
@@ -4656,7 +4554,7 @@ static void Run()
 ### `MethaneLocationFree` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MethaneLocationFree.cs`</sub>
 
-W5.12 (user 2026-07-13): convert the Methane tutorial to LOCATION-FREE completion. Deletes the 5 fixed Station_* zone objects (no more standing on a pad), and rewires the MethaneApparatusRig to own its TemperatureSim + GasCollection so heat/collect/splint fire by item PROXIMITY anywhere, and prepare-mixture completes by grinding a mortar. Run once. Idempotent.
+Convert the Methane tutorial to LOCATION-FREE completion. Deletes the 5 fixed Station_* zone objects (no standing on a pad), and rewires the MethaneApparatusRig to own its TemperatureSim + GasCollection so heat/collect/splint fire by item PROXIMITY anywhere, and prepare-mixture completes by grinding a mortar. Run once. Idempotent.
 
 ```csharp
 static void Run()
@@ -4665,7 +4563,7 @@ static void Run()
 ### `MethanePlaytestFix` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MethanePlaytestFix.cs`</sub>
 
-W5.12 playtest fixes (user 2026-07-13): the workspace burners had no BurnerController (couldn't be lit) and NOTHING in the scene was a MatchStrikerSurface (a match couldn't be struck), which blocked the whole heat step; and the Methane reagent jar had no LiquidPhysics so it couldn't be scooped/poured. This wires all three so the location-free Methane rig works: • every Bunsen/Alcohol burner gets BurnerController + MatchStrikerSurface (strike a match on the burner base to light it, then it lights the tube), • any matchbox-like object becomes a striker too, • the reagent jar becomes a scoopable solid (Sodium Acetate). Idempotent.
+Wires the location-free Methane rig's missing pieces: a workspace burner needs a BurnerController to be lit, striking a match needs a MatchStrikerSurface, and the Methane reagent jar needs a LiquidPhysics to be scooped/poured. Without them the heat step is blocked. • every Bunsen/Alcohol burner gets BurnerController + MatchStrikerSurface (strike a match on the burner base to light it, then it lights the tube), • any matchbox-like object becomes a striker too, • the reagent jar becomes a scoopable solid (Sodium Acetate). Idempotent.
 
 ```csharp
 static void Run()
@@ -4674,7 +4572,7 @@ static void Run()
 ### `MethaneRecover` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MethaneRecover.cs`</sub>
 
-Diagnose + recover the methane bench items (user 2026-07-14: "the mortar is still missing from the table where I placed it"). A likely cause: an item was moved AFTER the last Lock My Layout, so its respawn home was stale and a Reset teleported it away (often below the floor). This reports every methane item's position + active state, reactivates + lifts anything that fell, and RE-HOMES them all at their current spot so the next Reset keeps them put.
+Diagnose + recover the methane bench items. An item moved AFTER the last Lock My Layout has a stale respawn home, so a Reset teleports it away (often below the floor). This reports every methane item's position + active state, reactivates + lifts anything that fell, and RE-HOMES them all at their current spot so the next Reset keeps them put.
 
 ```csharp
 static void Run()
@@ -4683,7 +4581,7 @@ static void Run()
 ### `MethaneStageVisibilityBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MethaneStageVisibilityBuilder.cs`</sub>
 
-Wires the MethaneStageVisibility controller (user 2026-07-13: methane set present only in Lab Tour + the Methane attempt). Puts the component on ExperimentSystems (a manager that keeps running while the stage is hidden), binds the MethaneStage + runner + LabTourGuide, and re-hides the stage in the authored scene so it doesn't flash on lab entry. Idempotent.
+Wires the MethaneStageVisibility controller (methane set present only in Lab Tour + the Methane attempt). Puts the component on ExperimentSystems (a manager that keeps running while the stage is hidden), binds the MethaneStage + runner + LabTourGuide, and re-hides the stage in the authored scene so it doesn't flash on lab entry. Idempotent.
 
 ```csharp
 static void Wire()
@@ -4692,7 +4590,7 @@ static void Wire()
 ### `MusicSpeakerBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MusicSpeakerBuilder.cs`</sub>
 
-Builds the corner music speaker in the lab (user 2026-07-10): a floor-standing speaker cabinet in the empty back-right corner that plays the Background_Music/Lab playlist as a 3D positional source (louder as you approach) and fades in/out with the screen fade on menu<->lab transitions. Also disables the old 2D LabMusicPlayer bed and re-points the menu-room music to the user's supplied track. Tools ▸ PharmaSynth ▸ Build Lab Music Speaker (SampleScene, edit mode, idempotent).
+Builds the corner music speaker in the lab: a floor-standing speaker cabinet in the empty back-right corner that plays the Background_Music/Lab playlist as a 3D positional source (louder as you approach) and fades in/out with the screen fade on menu<->lab transitions. Also disables the legacy 2D LabMusicPlayer bed and re-points the menu-room music to the supplied track. Tools ▸ PharmaSynth ▸ Build Lab Music Speaker (SampleScene, edit mode, idempotent).
 
 ```csharp
 static void Build()
@@ -4701,7 +4599,7 @@ static void Build()
 ### `PPEWearablesBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/PPEWearablesBuilder.cs`</sub>
 
-Wires the per-piece wearable PPE (user 2026-07-10): 1. The locker's goggles + gloves become CLICKABLE (collider + XRSimpleInteractable + PPEDonOnSelect), the coat display forwards Coat, and the legacy don-everything paths are disabled (host donOnSelect off, coat display's old persistent calls cleared). 2. Worn visuals cloned from the locker models onto the mirror avatar's bones (coat→Spine01, goggles→Head, gloves→hand bones — PlayerAvatar layer, mirror-only) and first-person gloves onto the controllers (main-camera visible). 3. All visuals assigned to PPEController's per-piece arrays, initially hidden. Tools ▸ PharmaSynth ▸ Build PPE Wearables (run in SampleScene AFTER Build Player Avatar, edit mode, idempotent).
+Wires the per-piece wearable PPE: 1. The locker's goggles + gloves become CLICKABLE (collider + XRSimpleInteractable + PPEDonOnSelect), the coat display forwards Coat, and the legacy don-everything paths are disabled (host donOnSelect off, coat display's old persistent calls cleared). 2. Worn visuals cloned from the locker models onto the mirror avatar's bones (coat→Spine01, goggles→Head, gloves→hand bones — PlayerAvatar layer, mirror-only) and first-person gloves onto the controllers (main-camera visible). 3. All visuals assigned to PPEController's per-piece arrays, initially hidden. Tools ▸ PharmaSynth ▸ Build PPE Wearables (run in SampleScene AFTER Build Player Avatar, edit mode, idempotent).
 
 ```csharp
 static void Build()
@@ -4710,7 +4608,7 @@ static void Build()
 ### `PanelConsolidationBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/PanelConsolidationBuilder.cs`</sub>
 
-One procedures display (user 2026-07-10): the entrance LabTablet duplicated the wrist holo board, and the wrist mini-panel duplicated the holo header — three surfaces fighting over the same content, with the tablet's fixed rect overflowing into its reaction footer. This menu retires the LabTablet (deactivated, not deleted) and the MiniPanel, and upgrades the holo board to the single panel: status header (ex mini-panel) + focused checklist + the balanced-reaction footer (ex tablet). Idempotent.
+One procedures display. The entrance LabTablet duplicates the wrist holo board and the wrist mini-panel duplicates the holo header: three surfaces for the same content, with the tablet's fixed rect overflowing into its reaction footer. This menu retires the LabTablet (deactivated, not deleted) and the MiniPanel, and upgrades the holo board to the single panel: status header (ex mini-panel) + focused checklist + the balanced-reaction footer (ex tablet). Idempotent.
 
 ```csharp
 static void Consolidate()
@@ -4720,7 +4618,7 @@ static void FixHoloScroll()
 ### `PharmaSelfTests` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/PharmaSelfTests.cs`</sub>
 
-Re-runnable regression suite for the PharmaSynth engine. Run via menu: Tools ▸ PharmaSynth ▸ Run Self-Tests. Consolidates the assertions that were verified incrementally during W2–W3 into one permanent, one-click check. (Kept as an Editor-menu suite rather than an NUnit asmdef to avoid restructuring the runtime assembly; a formal EditMode asmdef migration can layer on later.)
+Re-runnable regression suite for the PharmaSynth engine. Run via menu: Tools ▸ PharmaSynth ▸ Run Self-Tests. One permanent, one-click check. (An Editor-menu suite rather than an NUnit asmdef, to avoid restructuring the runtime assembly; a formal EditMode asmdef migration can layer on later.)
 
 ```csharp
 static void Run()
@@ -4738,7 +4636,7 @@ static void Run()
 ### `PhysicsAudit` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/PhysicsAudit.cs`</sub>
 
-Physics-attributes / resting-pose audit (task #78). Tools ▸ PharmaSynth ▸ Physics Audit (Report)   — non-destructive scan of the scene apparatus + SceneAssetLibrary prefabs: colliders present/degenerate, Rigidbody settings, profile coverage. Writes Temp/physics-audit.md. Tools ▸ PharmaSynth ▸ Physics Audit (Drop Test) — drops every library prefab onto a plane 50 m above the lab for 3 simulated seconds (script-mode simulation, all other dynamic rigidbodies frozen for the sweep) and checks it neither tunnels, rolls away, nor balances implausibly.
+Physics-attributes / resting-pose audit. Tools ▸ PharmaSynth ▸ Physics Audit (Report)   — non-destructive scan of the scene apparatus + SceneAssetLibrary prefabs: colliders present/degenerate, Rigidbody settings, profile coverage. Writes Temp/physics-audit.md. Tools ▸ PharmaSynth ▸ Physics Audit (Drop Test) — drops every library prefab onto a plane 50 m above the lab for 3 simulated seconds (script-mode simulation, all other dynamic rigidbodies frozen for the sweep) and checks it neither tunnels, rolls away, nor balances implausibly.
 
 ```csharp
 static void Report()
@@ -4751,17 +4649,17 @@ static string PrefabNameFor(GameObject go)
 ### `PlayFromMenuBootstrap` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/PlayFromMenuBootstrap.cs`</sub>
 
-Every editor Play starts in the CUBE SPAWN ROOM (user 2026-07-10: "ensure that every start or play, I start at the cuberoom not at the lab right away") — exactly like the built game (MainMenu is build index 0). Uses the editor's play-mode start scene, so whatever scene is OPEN keeps its edits; Play simply boots MainMenu. Toggle off via the menu when a direct lab test is needed (e.g. iterating on stage layout with the DevExperimentDriver).
+Every editor Play starts in the CUBE SPAWN ROOM ("ensure that every start or play, I start at the cuberoom not at the lab right away") — exactly like the built game (MainMenu is build index 0). Uses the editor's play-mode start scene, so whatever scene is OPEN keeps its edits; Play simply boots MainMenu. Toggle off via the menu when a direct lab test is needed (e.g. iterating on stage layout with the DevExperimentDriver).
 
 ### `PlayModeSwitch` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/PlayModeSwitch.cs`</sub>
 
-One-click switch between the two ways to run PharmaSynth in the editor, so you never have to hunt the Hierarchy or Project Settings: • PC Dev Mode — OpenXR auto-init OFF + the "XR Device Simulator" GameObject ENABLED, so W/A/S/D + mouse move the view on the PC with no headset. • Headset Mode — OpenXR auto-init ON + the simulator DISABLED, so a Quest on Quest Link / Air Link drives the view. Each mode fixes BOTH halves (the XR init setting AND the scene's simulator object) and saves, which the old "Headset Play Mode" toggle did not — that one only flipped the init setting, leaving the simulator off, so nothing drove the camera. Menu shows a checkmark for the active mode. Android is left untouched.
+One-click switch between the two ways to run PharmaSynth in the editor, so you never have to hunt the Hierarchy or Project Settings: • PC Dev Mode — OpenXR auto-init OFF + the "XR Device Simulator" GameObject ENABLED, so W/A/S/D + mouse move the view on the PC with no headset. • Headset Mode — OpenXR auto-init ON + the simulator DISABLED, so a Quest on Quest Link / Air Link drives the view. Each mode fixes BOTH halves (the XR init setting AND the scene's simulator object) and saves. Flipping only the init setting leaves the simulator off, so nothing drives the camera. Menu shows a checkmark for the active mode. Android is left untouched.
 
 ### `PlayerAvatarBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/PlayerAvatarBuilder.cs`</sub>
 
-Builds the mirror-only first-person avatar (user 2026-07-10). Expects a rigged humanoid prefab (Tripo image→3D + Tripo Rigging v1, casual clothes, T-pose) in Art/Generated/Models with "player"/"avatar" in its name — or select it in the Project. Places it under the XR rig, puts it on the PlayerAvatar layer (culled by the main camera, shown by the mirror), and wires an Animation-Rigging IK setup: two-bone IK on each arm (hands→controllers) + a head rotation constraint (head→HMD), driven by PlayerAvatarRig. Raw-bone IK, so NO Humanoid retarget / T-pose calibration. Tools ▸ PharmaSynth ▸ Build Player Avatar (run in SampleScene, edit mode).
+Builds the mirror-only first-person avatar. Expects a rigged humanoid prefab (Tripo image→3D + Tripo Rigging v1, casual clothes, T-pose) in Art/Generated/Models with "player"/"avatar" in its name — or select it in the Project. Places it under the XR rig, puts it on the PlayerAvatar layer (culled by the main camera, shown by the mirror), and wires an Animation-Rigging IK setup: two-bone IK on each arm (hands→controllers) + a head rotation constraint (head→HMD), driven by PlayerAvatarRig. Raw-bone IK, so NO Humanoid retarget / T-pose calibration. Tools ▸ PharmaSynth ▸ Build Player Avatar (run in SampleScene, edit mode).
 
 ```csharp
 static void Build()
@@ -4770,7 +4668,7 @@ static void Build()
 ### `PlaytestAutopilot` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/PlaytestAutopilot.cs`</sub>
 
-⭐ Why this exists on top of Simulate Everything: that battery runs in EDIT mode, where Update never ticks, coroutines never run, physics never steps, XRI never selects anything and no audio plays. Every bug that only exists in MOTION is invisible to it — which is precisely where the §13 playtest findings live (items vanishing, dialogue stomping mid-typing, the holo panel not scrolling, quiz buttons not clickable), and where W5.34's "711 errors/second from SpawnVFX" lived. ⭐ No headset needed: PC Dev Mode leaves OpenXR auto-init OFF on Standalone and the scene's XR Device Simulator drives the rig. ⛔ Deliberately an EDITOR-assembly script ticked by EditorApplication.update (which keeps running during play) rather than a runtime MonoBehaviour. That way it can reuse the editor-only simulators, and nothing it does can ever leak into a player build.
+Plays the game in PLAY MODE, unattended, and reports what broke. ⭐ Why this exists on top of Simulate Everything: that battery runs in EDIT mode, where Update never ticks, coroutines never run, physics never steps, XRI never selects anything and no audio plays. Every bug that only exists in MOTION is invisible to it: items vanishing, dialogue stomping mid-typing, the holo panel not scrolling, quiz buttons not clickable, an error spammed every frame. ⭐ No headset needed: PC Dev Mode leaves OpenXR auto-init OFF on Standalone and the scene's XR Device Simulator drives the rig. ⛔ Deliberately an EDITOR-assembly script ticked by EditorApplication.update (which keeps running during play) rather than a runtime MonoBehaviour. That way it can reuse the editor-only simulators, and nothing it does can ever leak into a player build.
 
 ```csharp
 static void Launch()
@@ -4795,7 +4693,7 @@ static bool IsCompletionNoise(string bug)
 ### `QuizNavButtonsBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/QuizNavButtonsBuilder.cs`</sub>
 
-Add "< Back" / "Next >" buttons to the quiz tablet (user 2026-07-15: "so users can review their answers before submitting"). Clones the existing Submit button so styling matches, wires them to PostLabController.PreviousQuestion/NextQuestion, assigns the controller's prevButton/nextButton refs (which grey out at the ends), and makes sure the quiz canvas is XR-ray clickable. Idempotent.
+Add "< Back" / "Next >" buttons to the quiz tablet so players can review their answers before submitting. Clones the existing Submit button so styling matches, wires them to PostLabController.PreviousQuestion/NextQuestion, assigns the controller's prevButton/nextButton refs (which grey out at the ends), and makes sure the quiz canvas is XR-ray clickable. Idempotent.
 
 ```csharp
 static void Build()
@@ -4815,7 +4713,7 @@ static void Generate()
 ### `ReHomeSceneItems` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/ReHomeSceneItems.cs`</sub>
 
-Adopts every scene item's CURRENT transform as its DropRespawn home (user 2026-07-10: "I have manually relocated some equipment, please make those their default spawn point"). Without this, manually moved props teleport back to their old serialized homes after ~25 s idle / a kill-Z fall / a reset. Tools ▸ PharmaSynth ▸ Re-Home Scene Items (Adopt Current) — run in SampleScene edit mode after ANY manual re-arrangement, then save the scene. ⛔ NEVER run the ALL-items version straight after a simulator (W5.56). Every simulator calls `DropRespawn.ResetAllHome()`, which teleports all 120 items back to their BAKED homes — so "adopt current" then re-bakes the pose the reset just restored and writes it to disk, silently destroying whatever the user had placed by hand. That is exactly how two distilling flasks lost their placement twice, with nothing logged to say so: the result is self-consistent,
+Adopts every scene item's CURRENT transform as its DropRespawn home, so equipment relocated by hand keeps its new spot as its default spawn point. Without this, manually moved props teleport back to their previous serialized homes after ~25 s idle / a kill-Z fall / a reset. Tools ▸ PharmaSynth ▸ Re-Home Scene Items (Adopt Current) — run in SampleScene edit mode after ANY manual re-arrangement, then save the scene. ⛔ NEVER run the ALL-items version straight after a simulator. Every simulator calls `DropRespawn.ResetAllHome()`, which teleports all 120 items back to their BAKED homes, so "adopt current" then re-bakes the pose the reset just restored and writes it to disk, silently destroying whatever had been placed by hand. Nothing is logged and the result is self-consistent, just wrong. Safe order is REOPEN the scene (discarding), then re-home, then save. `Re-Home MOVED Items Only` below 
 
 ```csharp
 static void AdoptMoved()
@@ -4825,7 +4723,7 @@ static void Adopt()
 ### `ReachabilityAudit` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/ReachabilityAudit.cs`</sub>
 
-Asks the one question the run simulator structurally cannot: a step can be mechanically perfect while the bottle it needs sits inside a closed cabinet or above head height. `SimulatedRun` reaches every object by reference, so it will never notice — only a headset would, which is exactly the cost this is here to avoid. Its input is already built and already verified: `TutorialTargets.Build()` resolves taskId → the objects each step is about, for all 9 modules. So the audit asks, of every object a step needs, "could a player standing in this room actually get to it?" Deliberately GEOMETRIC rather than a navmesh walk. The player has continuous locomotion over the whole lab floor, so "can I stand near it" is nearly always true; what actually goes wrong is height and enclosure. A navmesh would be a week of work to answer a question two raycasts answer.
+Asks the one question the run simulator structurally cannot: a step can be mechanically perfect while the bottle it needs sits inside a closed cabinet or above head height. `SimulatedRun` reaches every object by reference, so it never notices; otherwise only a headset session would. Its input is already built and already verified: `TutorialTargets.Build()` resolves taskId → the objects each step is about, for all 9 modules. So the audit asks, of every object a step needs, "could a player standing in this room actually get to it?" Deliberately GEOMETRIC rather than a navmesh walk. The player has continuous locomotion over the whole lab floor, so "can I stand near it" is nearly always true; what goes wrong is height and enclosure, which two raycasts answer.
 
 ```csharp
 const float HardHigh
@@ -4847,7 +4745,7 @@ static List<string> RunAll(StringBuilder log)
 ### `ReagentCabinetBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/ReagentCabinetBuilder.cs`</sub>
 
-Builds the raw-reagent storage (user 2026-07-10: the manuscript's ~54 materials must exist in the lab): three open shelf units against the wall, stocked from RawReagentCatalog with nature-appropriate labware — reagent bottles, amber bottles for the light-sensitive, powder jars, dropper bottles, consumable boxes (litmus/matches/cotton/filter) and an ice bucket. Every bottle is grabbable, pourable, spill-graded and hover-explained. Chemicals already displayed on the legacy ReagentShelf are skipped. Re-runnable: the ReagentCabinets root is cleared and rebuilt deterministically.
+Builds the raw-reagent storage (the manuscript's ~54 materials must exist in the lab): three open shelf units against the wall, stocked from RawReagentCatalog with nature-appropriate labware — reagent bottles, amber bottles for the light-sensitive, powder jars, dropper bottles, consumable boxes (litmus/matches/cotton/filter) and an ice bucket. Every bottle is grabbable, pourable, spill-graded and hover-explained. Chemicals already displayed on the legacy ReagentShelf are skipped. Re-runnable: the ReagentCabinets root is cleared and rebuilt deterministically.
 
 ```csharp
 static string PrefabFor(RawReagentCatalog.LabwareKind kind)
@@ -4857,7 +4755,7 @@ static void Build()
 ### `RemoveLitSplint` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/RemoveLitSplint.cs`</sub>
 
-Delete the wooden splint prop (user 2026-07-15, backed by a manuscript review): "splint" appears NOWHERE in the client manuscript — every combustion/flame test is run with a "lighted matchstick" (Exp 3: "apply a lighted matchstick... blue flame indicates complete combustion"). The methane gas test already fires off a lit Matchstick (MethaneApparatusRig.SplintShouldFire checks Matchstick), so the splint prop is redundant. The method names keep the "splint" wording (suite-pinned); only the prop goes. Idempotent.
+Delete the wooden splint prop. "splint" appears NOWHERE in the client manuscript: every combustion/flame test is run with a "lighted matchstick" (Exp 3). The methane gas test already fires off a lit Matchstick (MethaneApparatusRig.SplintShouldFire checks Matchstick), so the splint prop is redundant. The method names keep the "splint" wording (suite-pinned); only the prop goes. Idempotent.
 
 ```csharp
 static void Run()
@@ -4866,7 +4764,7 @@ static void Run()
 ### `RemovePipette` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/RemovePipette.cs`</sub>
 
-W5.12 (user 2026-07-13): drop the modern mechanical pipette — the Dropper (drops) + graduated cylinder (ml) already cover its manuscript role. Removes the scene instance, the SceneAssetLibrary registration, and the generated prefab. The raw MechanicalPipette model pack is left on disk (harmless). Idempotent; safe to run once.
+Drop the modern mechanical pipette — the Dropper (drops) + graduated cylinder (ml) already cover its manuscript role. Removes the scene instance, the SceneAssetLibrary registration, and the generated prefab. The raw MechanicalPipette model pack is left on disk (harmless). Idempotent; safe to run once.
 
 ```csharp
 static void Run()
@@ -4875,7 +4773,7 @@ static void Run()
 ### `RemoveVrInappropriateApparatus` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/RemoveVrInappropriateApparatus.cs`</sub>
 
-Deletes the SCENE INSTANCES of apparatus that the manuscript lists but that carry no meaningful VR interaction — pure bench scaffolding and passive instruments the game already abstracts (user 2026-07-17: "they should be removed even from the table, but not from the folders just in case"). ⛔ DELIBERATE, DOCUMENTED EXCEPTION to the "ALL tools always present" client rule. These six are NOT a decluttering of usable tools — each is either a support rig the zone-free heat model made unnecessary or an instrument whose reading the game shows on-screen. The PREFAB ASSETS stay in the project, so a future experiment that genuinely needs one can re-place it. Do NOT let "Restore All Bench Items" or an all-tools audit re-add them — they are removed on purpose. Justifications live in experiments-reference.md.
+Deletes the SCENE INSTANCES of apparatus that the manuscript lists but that carry no meaningful VR interaction: pure bench scaffolding and passive instruments the game already abstracts. The prefabs stay in their folders. ⛔ DELIBERATE, DOCUMENTED EXCEPTION to the "ALL tools always present" client rule. These six are NOT a decluttering of usable tools — each is either a support rig the zone-free heat model made unnecessary or an instrument whose reading the game shows on-screen. The PREFAB ASSETS stay in the project, so a future experiment that genuinely needs one can re-place it. Do NOT let "Restore All Bench Items" or an all-tools audit re-add them — they are removed on purpose. Justifications live in experiments-reference.md.
 
 ```csharp
 static void Run()
@@ -4884,7 +4782,7 @@ static void Run()
 ### `RestoreBenchItems` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/RestoreBenchItems.cs`</sub>
 
-Re-activate every bench item that was hidden (client rule 2026-07-15: ALL tools and reagents are present across ALL experiments — nothing is ever hidden or removed per-experiment). Undoes any accidental deactivation. Idempotent.
+Re-activate every bench item that was hidden (client rule: ALL tools and reagents are present across ALL experiments — nothing is ever hidden or removed per-experiment). Undoes any accidental deactivation. Idempotent.
 
 ```csharp
 static void Run()
@@ -4893,7 +4791,7 @@ static void Run()
 ### `RevealExperimentStage` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/RevealExperimentStage.cs`</sub>
 
-mode only shown. dont remove any yet, I'll remove it myself. just show all prelims tools we have currently in edit mode as well"). ⛔ DELETES NOTHING. Same intent as RevealMethaneStage: the stage normally only exists at runtime, so there is no way to see what an experiment litters the bench with until you are inside VR. This makes it visible and named. Why the grouping matters: the spawn sources are independent, and only ONE of them is the layout's fault — • LAYOUT VESSELS   — authored per experiment (Exp 2's 20 tubes duplicate the bench) • SpawnRackKit     — a rack + 6 tubes, EVERY module, predates the permanent bench • SpawnSpares      — 2 spare beakers + a flask, EVERY module • StageConsumables — matches + a "Striker" cube at Heat experiments. The cube is redundant: since W5.8 the matchbox itself is the striker. Re-run after a rebuild; the builder clears the stage each time, so it is i
+object it spawned, grouped by WHO spawned it, so the stage can be reviewed and pruned by hand. ⛔ DELETES NOTHING. Same intent as RevealMethaneStage: the stage normally only exists at runtime, so there is no way to see what an experiment litters the bench with until you are inside VR. This makes it visible and named. The grouping matters because the spawn sources are independent, and only ONE of them is the layout's fault: • LAYOUT VESSELS   — authored per experiment (Exp 2's 20 tubes duplicate the bench) • SpawnRackKit     — a rack + 6 tubes, EVERY module, predates the permanent bench • SpawnSpares      — 2 spare beakers + a flask, EVERY module • StageConsumables — matches + a "Striker" cube at Heat experiments. The cube is redundant: the matchbox itself is the striker. Re-run after a rebuild; the builder clears the stage each time, so it is idempotent.
 
 ```csharp
 static void RevealCompounding()
@@ -4909,7 +4807,7 @@ static void RevealWine()
 ### `RevealMethaneAndWaypoint` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/RevealMethaneAndWaypoint.cs`</sub>
 
-W5.12 (user 2026-07-13): reveal the Methane set + the waypoint marker in the editor so the user can hand-align them, and permanently strip the waypoint's yellow ground glow (keep only the arrow). The Methane STATIONS carry the step-detection zones AND are what the waypoint arrow follows, so moving them with the props is how both detection and the arrow get aimed correctly.
+Reveal the Methane set + the waypoint marker in the editor so they can be hand-aligned, and permanently strip the waypoint's yellow ground glow (keep only the arrow). The Methane STATIONS carry the step-detection zones AND are what the waypoint arrow follows, so moving them with the props is how both detection and the arrow get aimed correctly.
 
 ```csharp
 static void Run()
@@ -4918,7 +4816,7 @@ static void Run()
 ### `RevealMethaneStage` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/RevealMethaneStage.cs`</sub>
 
-W5.12 (user 2026-07-13): the Methane tutorial stage is authored inactive (m_IsActive:0) so it stays hidden in the editor. The user wants to review / delete it by hand, so this switches it (and any other hidden methane roots) ON in edit mode and lists what became visible. Runtime is unaffected — ExperimentSceneBuilder still SetActive(moduleId==methane) each build. ⚠ Deleting these breaks Experiment 1 until Methane is rewired to build on the workspace (the splint-pop rig especially is wired to the stage's tube).
+The Methane tutorial stage is authored inactive (m_IsActive:0) so it stays hidden in the editor. To review / delete it by hand, so this switches it (and any other hidden methane roots) ON in edit mode and lists what became visible. Runtime is unaffected — ExperimentSceneBuilder still SetActive(moduleId==methane) each build. ⚠ Deleting these breaks Experiment 1 until Methane is rewired to build on the workspace (the splint-pop rig especially is wired to the stage's tube).
 
 ```csharp
 static void Run()
@@ -4927,7 +4825,7 @@ static void Run()
 ### `ReviewCornerBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/ReviewCornerBuilder.cs`</sub>
 
-Wires the post-experiment review corner (user 2026-07-11): a ReviewCornerSpawn marker in front of the PostLabTablet (biased toward Dr. Jimenez's spot) that the gatekeeper fade-teleports the player to for the quiz-review flow, plus the gatekeeper's postLab/examiner refs and the quiz's autoOpen=false (the gate now opens the quiz after Jimenez's briefing). Idempotent.
+Wires the post-experiment review corner: a ReviewCornerSpawn marker in front of the PostLabTablet (biased toward Dr. Jimenez's spot) that the gatekeeper fade-teleports the player to for the quiz-review flow, plus the gatekeeper's postLab/examiner refs and the quiz's autoOpen=false (the gate opens the quiz after Jimenez's briefing). Idempotent.
 
 ```csharp
 static void Build()
@@ -4936,7 +4834,7 @@ static void Build()
 ### `RobotVoiceBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/RobotVoiceBuilder.cs`</sub>
 
-Wires Pharmee's robot voice colouring onto HIS narration channel only (2026-07-27). Dr. Jimenez is a human examiner and must stay untouched — the whole point of the two-NPC contrast is that one is a machine and one is not. Ring modulation does the robot work (RobotVoiceFx); Unity's stock filters do the colouring — a band limit so he sounds like he is coming through a speaker grille, and a short chorus for the metallic doubling. All of it is live-tunable in the Inspector during Play, so the character can be dialled in by ear without regenerating a single clip.
+Wires Pharmee's robot voice colouring onto HIS narration channel only Dr. Jimenez is a human examiner and must stay untouched — the whole point of the two-NPC contrast is that one is a machine and one is not. Ring modulation does the robot work (RobotVoiceFx); Unity's stock filters do the colouring — a band limit so he sounds like he is coming through a speaker grille, and a short chorus for the metallic doubling. All of it is live-tunable in the Inspector during Play, so the character can be dialled in by ear without regenerating a single clip.
 
 ```csharp
 static void Apply()
@@ -4946,7 +4844,7 @@ static void Remove()
 ### `ScoopSoundWiring` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/ScoopSoundWiring.cs`</sub>
 
-Wire the generated solid-material SFX into the SoundBank (user 2026-07-15: "scooping powder still sounds like liquid"). The scoop verb calls the "scoop" and "powder-pour" keys via AudioService.TryPlayFirstAt, which deliberately has NO liquid fallback — so these clips are what make it audible. Clips generated with elevenlabs-sound-effects-v2 into Audio/Generated/. Idempotent: updates the entries in place if they already exist.
+Wire the generated solid-material SFX into the SoundBank so scooping powder doesn't sound like liquid. The scoop verb calls the "scoop" and "powder-pour" keys via AudioService.TryPlayFirstAt, which deliberately has NO liquid fallback, so these clips are what make it audible. Clips generated with elevenlabs-sound-effects-v2 into Audio/Generated/. Idempotent: updates the entries in place if they already exist.
 
 ```csharp
 static void Run()
@@ -4960,7 +4858,7 @@ One-shot self-test runner for when the MCP bridge is down: if Temp/selftest-auto
 ### `ShelfPourBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/ShelfPourBuilder.cs`</sub>
 
-Wires the hand-placed reagent bottles for visible pouring (user 2026-07-10: tipping a shelf bottle showed nothing — LiquidPourer only existed on runtime-spawned props). Sweeps every LiquidPhysics under the ReagentShelf (and, once batch H lands, ReagentCabinets) root through ShelfPourWiring.WireBottle, and ensures the persisted particle material asset exists so device builds don't strip the URP particle shader. Idempotent — re-running reports 0 additions.
+Wires the hand-placed reagent bottles for visible pouring (LiquidPourer is otherwise only on runtime-spawned props, so tipping a shelf bottle shows nothing). Sweeps every LiquidPhysics under the ReagentShelf and ReagentCabinets roots through ShelfPourWiring.WireBottle, and ensures the persisted particle material asset exists so device builds don't strip the URP particle shader. Idempotent; re-running reports 0 additions.
 
 ```csharp
 static void Wire()
@@ -4970,7 +4868,7 @@ static Material EnsureFxMaterial()
 ### `SimulateEverything` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SimulateEverything.cs`</sub>
 
-ONE command that plays the whole game and answers one question: is every experiment actually doable right now? (user 2026-09-02: "there are too many experiments and it would take me time to play and find bugs each by each"). It adds no new simulation of its own — `SimulatedRun.Run` and `SimulatedCampaign.Run` were already public and already return structured results. What was missing was a single entry point and a single verdict: before this you clicked 8 Simulate Run items, then Campaign, then two tutorial audits, and read 11 separate log files hoping to spot the one line that mattered. Everything lands in Logs/simulate-everything.txt, worst module FIRST — a report you have to scroll to find the failure in is a report that gets skimmed.
+ONE command that plays the whole game and answers one question: is every experiment actually doable right now? It adds no simulation of its own. `SimulatedRun.Run` and `SimulatedCampaign.Run` already return structured results; this is the single entry point and the single verdict over them and the two tutorial audits. Everything lands in Logs/simulate-everything.txt, worst module FIRST: a report you have to scroll to find the failure in is a report that gets skimmed.
 
 ```csharp
 static void RunMenu()
@@ -4982,7 +4880,7 @@ static void RunMenu()
 ### `SimulatedCampaign` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SimulatedCampaign.cs`</sub>
 
-• the module picked from its period through the two-step picker, with the real ProgressionFlow.IsUnlocked gating each pick • the honest pour-through of the experiment (SimulatedRun) • the REAL PostLabController quiz — Open, answer, SubmitAndFinish → Finish • the REAL ExperimentGrader result + the floored grade-screen text • the REAL cutscene outro selection + its subtitle beats • the REAL ProgressionService record + ProgressionFlow unlock + UnlockDiff announcement, then the pick of the NEXT experiment — looping to the campaign-complete celebration after Exp 9. The transcript (Logs/simcampaign.txt) is written as the PLAYER EXPERIENCE: every line Pharmee/Jimenez speaks, every panel prompt, every grade/outro beat — so it can be read as a clueless player and critiqued. SAFETY: progression is recorded to a TEMP save file (Application. temporaryCachePath), never the user's real pharmasynth_pro
+• the module picked from its period through the two-step picker, with the real ProgressionFlow.IsUnlocked gating each pick • the honest pour-through of the experiment (SimulatedRun) • the REAL PostLabController quiz — Open, answer, SubmitAndFinish → Finish • the REAL ExperimentGrader result + the floored grade-screen text • the REAL cutscene outro selection + its subtitle beats • the REAL ProgressionService record + ProgressionFlow unlock + UnlockDiff announcement, then the pick of the NEXT experiment — looping to the campaign-complete celebration after Exp 9. The transcript (Logs/simcampaign.txt) is written as the PLAYER EXPERIENCE: every line Pharmee/Jimenez speaks, every panel prompt, every grade/outro beat — so it can be read as a clueless player and critiqued. SAFETY: progression is recorded to a TEMP save file (Application. temporaryCachePath), never the real pharmasynth_progress.j
 
 ### `Result` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SimulatedCampaign.cs`</sub>
@@ -5005,7 +4903,7 @@ static List<string> RunAll(StringBuilder log)
 ### `SimulatedRun` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SimulatedRun.cs`</sub>
 
-• correct play being flagged as a mistake (mis-authored bindings) HOW it simulates — the PLAYER PATH, not the plumbing (user 2026-07-17: "do not cheat by programmatically connecting things; you wouldn't see issues"): builder.Build() wires the real scene, runner.StartExperiment() opens the real graph, and every reagent is then TRANSFERRED the way a hand would — drawn out of the actual bench source bottle (PourOut) and landed through LiquidPhysics.AddLiquid in VERB-CONTRACT increments (1 ml a squeeze, 0.1 g a spatula dip, 0.5 ml tilt-pour ticks WITH human overshoot). Completion may only arrive through the real event chain: AddLiquid → LiquidAdded → binding → CompleteTask, rack-group polls, ZoneSimStation sims. The first version drove binding.HandleReagent directly and reported Exp 2 CLEAN while a real player was hard-stuck — the binding had never subscribed to its vessel's events, a bug th
+• a required chemical with NO source on the bench, or too little of it • pours that land invisibly small in their vessel • correct play being flagged as a mistake (mis-authored bindings) HOW it simulates: the PLAYER PATH, not the plumbing. builder.Build() wires the real scene, runner.StartExperiment() opens the real graph, and every reagent is then TRANSFERRED the way a hand would: drawn out of the actual bench source bottle (PourOut) and landed through LiquidPhysics.AddLiquid in VERB-CONTRACT increments (1 ml a squeeze, 0.1 g a spatula dip, 0.5 ml tilt-pour ticks WITH human overshoot). Completion may only arrive through the real event chain: AddLiquid → LiquidAdded → binding → CompleteTask, rack-group polls, ZoneSimStation sims. Calling binding.HandleReagent directly bypasses the binding's subscription to its vessel's events, so a binding that never subscribed (a hard-stuck player) woul
 
 ### `Result` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SimulatedRun.cs`</sub>
@@ -5035,7 +4933,7 @@ One honest run's working state: the mechanisms the build produced, the reaction 
 ### `SolidJarFitter` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SolidJarFitter.cs`</sub>
 
-Gives every solid reagent jar on the shelf its powder mound (W5.59, user: "brown sugar is liquid in its beaker, but it can be scooped when I try the scoopula on it"). Both halves of that report are true and explain each other. `Build Reagent Cabinets` stocks a PowderJar row from the `Beaker_100mL_WithLiquid` prefab, which carries a `Liquid` surface and nothing else, so 150 units of a SOLID were drawn as a column of brown liquid — `LiquidPhysics.DrawsLiquidColumn` had no mound to show instead. The scoopula never looked: `ScoopMath.CanPickUp` keys on the chemical's `state`, so it dipped into "liquid" sugar and came up with 2 g of solid. Six jars were in this state. The mound itself is `ExperimentSceneBuilder.EnsurePowderVisual`, the same helper the stage builder and the scoop already use; this only points it at the shelf. Idempotent: a jar that already has its mound is left alone. Called b
+Gives every solid reagent jar on the shelf its powder mound. `Build Reagent Cabinets` stocks a PowderJar row from the `Beaker_100mL_WithLiquid` prefab, which carries a `Liquid` surface and nothing else, so without a mound a SOLID is drawn as a column of liquid (`LiquidPhysics.DrawsLiquidColumn` has no mound to show instead). The scoopula is unaffected either way: `ScoopMath.CanPickUp` keys on the chemical's `state`. The mound itself is `ExperimentSceneBuilder.EnsurePowderVisual`, the same helper the stage builder and the scoop already use; this only points it at the shelf. Idempotent: a jar that already has its mound is left alone. Called by `Build Reagent Cabinets` at the end of a rebuild, and available on its own for the saved scene.
 
 ```csharp
 static bool IsHeap(ChemicalData chem)
@@ -5046,7 +4944,7 @@ static int FitAll(out string names)
 ### `SpatulaPorcelain` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SpatulaPorcelain.cs`</sub>
 
-W5.12 (user): the manuscript specifies a PORCELAIN spatula, but our Spatula prefab shipped with the shared metal EquipmentMat and read as steel. This finds every Spatula prefab instance in the scene (by SOURCE prefab, so it catches hand-placed/renamed copies like "Eq_Spatula" that carry no LabItem), applies the pack's white PorcelainMat, renames + labels it "Porcelain Spatula", gives it the full interaction wiring, and fixes the source prefab. Via the Mishandling table it now clinks like ceramic instead of clattering like metal. Idempotent.
+The manuscript specifies a PORCELAIN spatula, but the Spatula prefab uses the shared metal EquipmentMat and reads as steel. This finds every Spatula prefab instance in the scene (by SOURCE prefab, so it catches hand-placed/renamed copies like "Eq_Spatula" that carry no LabItem), applies the pack's white PorcelainMat, renames + labels it "Porcelain Spatula", gives it the full interaction wiring, and fixes the source prefab. Via the Mishandling table it clinks like ceramic instead of clattering like metal. Idempotent.
 
 ```csharp
 static void Run()
@@ -5055,7 +4953,7 @@ static void Run()
 ### `SpawnHeightWiring` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SpawnHeightWiring.cs`</sub>
 
-Wires the fixed per-scene eye height onto the open scene's XR rig (user 2026-07-11: menu room and lab need DIFFERENT fixed heights, not relative to the player's real height). Run once per scene (MainMenu + SampleScene). Idempotent. Tune the two constants below and re-run to adjust.
+Wires the fixed eye height onto the open scene's XR rig (fixed, not relative to the player's real height). Run once per scene (MainMenu + SampleScene). Idempotent. Tune the constants below and re-run to adjust.
 
 ```csharp
 const float EyeHeight
@@ -5065,7 +4963,7 @@ static void Wire()
 ### `SpawnVfxBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SpawnVfxBuilder.cs`</sub>
 
-Builds the cyan "materialize" spawn burst (user 2026-07-10): a one-shot column of cyan particles that rises from the player's feet like smoke, played on every teleport / reset / spawn. Creates a shared soft-dot texture + additive material, then drops a configured `SpawnVFX` object (SpawnBurstFX + ParticleSystem) into the ACTIVE scene. Re-runnable. Run it once in MainMenu and once in SampleScene. Tools ▸ PharmaSynth ▸ Build Spawn VFX.
+Builds the cyan "materialize" spawn burst: a one-shot column of cyan particles that rises from the player's feet like smoke, played on every teleport / reset / spawn. Creates a shared soft-dot texture + additive material, then drops a configured `SpawnVFX` object (SpawnBurstFX + ParticleSystem) into the ACTIVE scene. Re-runnable. Run it once in MainMenu and once in SampleScene. Tools ▸ PharmaSynth ▸ Build Spawn VFX.
 
 ```csharp
 static void Build()
@@ -5074,7 +4972,7 @@ static void Build()
 ### `StoolTools` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/StoolTools.cs`</sub>
 
-Edit-mode helper (user 2026-07-10: "let me select + reposition the stools in the editor, not in Play mode"). The stools sit tucked under the tables, so clicking them in a crowded Scene view is fiddly. This selects all of them in one go — then move them with the transform gizmo and run Re-Home Scene Items to make it stick. Tools ▸ PharmaSynth ▸ Select Stools (edit mode).
+Edit-mode helper ("let me select + reposition the stools in the editor, not in Play mode"). The stools sit tucked under the tables, so clicking them in a crowded Scene view is fiddly. This selects all of them in one go — then move them with the transform gizmo and run Re-Home Scene Items to make it stick. Tools ▸ PharmaSynth ▸ Select Stools (edit mode).
 
 ```csharp
 static void SelectStools()
@@ -5083,7 +4981,7 @@ static void SelectStools()
 ### `TubeRackSlotBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/TubeRackSlotBuilder.cs`</sub>
 
-TOGETHER WITH their kit holders, so every copy arrived already seated correctly relative to its rack. A first pass here also shipped a "Seat Tubes In Slots" menu that would have MOVED all 19 perfectly-placed tubes onto bounds-GUESSED slots and destroyed that placement — it is deleted. Never re-derive rack positions the scene already has right. Only the workspace holders need anchors, because they are the only racks that start EMPTY (the player drags tubes in mid-experiment), so there is no seated tube to copy a position from. Workflow: 1. Tools ▸ PharmaSynth ▸ Name Tubes + Build Rack Slots   (this) 2. Drag each green Slot_* gizmo until its ghost tube sits in the holder's hole 3. Tools ▸ PharmaSynth ▸ Re-Home Scene Items (Adopt Current)  (bakes homes — a broken tube respawns at its baked home via BreakableGlassware→DropRespawn)
+⛔ STORAGE RACKS GET NO SLOTS. The tubes were duplicated TOGETHER WITH their kit holders, so every copy is already seated correctly relative to its rack. Moving them onto bounds-GUESSED slots would destroy that placement. Never re-derive rack positions the scene already has right. Only the workspace holders need anchors, because they are the only racks that start EMPTY (the player drags tubes in mid-experiment), so there is no seated tube to copy a position from. Workflow: 1. Tools ▸ PharmaSynth ▸ Name Tubes + Build Rack Slots   (this) 2. Drag each green Slot_* gizmo until its ghost tube sits in the holder's hole 3. Tools ▸ PharmaSynth ▸ Re-Home Scene Items (Adopt Current)  (bakes homes — a broken tube respawns at its baked home via BreakableGlassware→DropRespawn)
 
 ```csharp
 static void Build()
@@ -5092,7 +4990,7 @@ static void Build()
 ### `TutorialModeBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/TutorialModeBuilder.cs`</sub>
 
-Tutorial Mode scene wiring (2026-08-07). Mirrors DemoModeBuilder's shape so the two special modes are built the same way: • Build Tutorial Menu Button — MainMenu scene: clones the Laboratory button into a "Tutorial" button wired to MainMenuController.OnTutorialLaboratory. Unlike the Demo button this one is ALWAYS visible — practice mode is a shipped feature, not a config-gated demo affordance. Idempotent: re-running re-labels and re-wires the existing button in place.
+Tutorial Mode scene wiring. Mirrors DemoModeBuilder's shape so the two special modes are built the same way: • Build Tutorial Menu Button — MainMenu scene: clones the Laboratory button into a "Tutorial" button wired to MainMenuController.OnTutorialLaboratory. Unlike the Demo button this one is ALWAYS visible — practice mode is a shipped feature, not a config-gated demo affordance. Idempotent: re-running re-labels and re-wires the existing button in place.
 
 ```csharp
 static void BuildMenuButton()
@@ -5104,7 +5002,7 @@ static void BuildSceneWiring()
 ### `UprightPourables` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/UprightPourables.cs`</sub>
 
-lying down — adoption bakes whatever pose it finds, tipped or not. ⛔ An item whose visible mesh is not on its own PIVOT cannot be placed by anyone and is held nowhere near the player's hand (W5.57). Four Tripo/USD imports carried their geometry 0.7–1.9 m from their origin: both distilling flasks, the ice bucket and the matchstick. Dragging the object in the Scene view moves the pivot; the mesh keeps its offset and hangs in the air wherever it is put. Worse, the runtime reads `transform.position` — `Matchstick` measures its strike distance from it, `VaporCollectController` its receiver radius, `DropRespawn` its home — so a grabbed match was "held" 1.9 m from the hand and no burner could be lit in VR. The simulators never noticed: they drive the APIs directly. Straightening or re-pivoting the transform alone never sticks: `DropRespawn.ResetAllHome` puts the baked pose back at the start of 
+because adoption bakes whatever pose it finds, tipped or not. ⛔ An item whose visible mesh is not on its own PIVOT cannot be placed by anyone and is held nowhere near the player's hand. Tripo/USD imports can carry their geometry 0.7–1.9 m from their origin (both distilling flasks, the ice bucket and the matchstick). Dragging the object in the Scene view moves the pivot; the mesh keeps its offset and hangs in the air wherever it is put. The runtime also reads `transform.position` (`Matchstick` measures its strike distance from it, `VaporCollectController` its receiver radius, `DropRespawn` its home), so a grabbed match would be "held" 1.9 m from the hand and light no burner. The simulators cannot see this: they drive the APIs directly. Straightening or re-pivoting the transform alone never sticks: `DropRespawn.ResetAllHome` puts the baked pose back at the start of every run, so the HOME i
 
 ```csharp
 const float Tolerance
@@ -5116,7 +5014,7 @@ static void Run()
 ### `VisualSweep` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/VisualSweep.cs`</sub>
 
-The photographer behind the VISUAL autopilot (W5.45): after each honestly-performed step it frames the vessel the step happened in, renders a close-up, reads the numbers behind the picture (fill, colour, precipitate, boil, temperature, live particles, popups) and judges them against what the fired ReactionRule / the verb promised. One manifest row per step feeds Tools/visual-sheet.py (a captioned contact sheet per module). ⭐ Why numbers as well as pixels: a screenshot cannot say "the flask is at 3% fill" or "no particle system is alive within 60 cm" — and a reviewer skimming seventy thumbnails misses both. Every verdict names the exact quantity it judged, so a FAIL is actionable on its own (the W5.40 lesson: make the failure message print the state it judged).
+The photographer behind the VISUAL autopilot: after each honestly-performed step it frames the vessel the step happened in, renders a close-up, reads the numbers behind the picture (fill, colour, precipitate, boil, temperature, live particles, popups) and judges them against what the fired ReactionRule / the verb promised. One manifest row per step feeds Tools/visual-sheet.py (a captioned contact sheet per module). ⭐ Why numbers as well as pixels: a screenshot cannot say "the flask is at 3% fill" or "no particle system is alive within 60 cm", and a reviewer skimming seventy thumbnails misses both. Every verdict names the exact quantity it judged, so a FAIL is actionable on its own.
 
 ```csharp
 const string Dir
@@ -5156,7 +5054,7 @@ static void BeginStep(int moduleIndex, string module, int step, string taskId)
 ### `VoiceAudioBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/VoiceAudioBuilder.cs`</sub>
 
-Makes the generated voice-over actually AUDIBLE and well-behaved (2026-07-27). Three separate faults, one pass: 1. Dr. Jimenez was silent. His narration channel had NO narratorAudioSource, and SayRoutine only plays a clip when one exists — so every one of his 37 lines fell straight through to the placeholder blips. 2. Voices were fully 3D, so they faded to nothing a couple of metres away. The client wants them heard across the room but LOUDER up close, which is a partial spatial blend: the 2D share guarantees a floor everywhere, the 3D share still swells as you approach. 3. The music sat at full level under dialogue.
+Makes the generated voice-over AUDIBLE and well-behaved. Three separate concerns, one pass: 1. Dr. Jimenez's narration channel needs a narratorAudioSource. SayRoutine only plays a clip when one exists, so without it every one of his 37 lines falls through to the placeholder blips. 2. Fully 3D voices fade to nothing a couple of metres away. The client wants them heard across the room but LOUDER up close, which is a partial spatial blend: the 2D share guarantees a floor everywhere, the 3D share still swells as you approach. 3. The music ducks under dialogue.
 
 ```csharp
 const float VoiceSpatialBlend
@@ -5180,7 +5078,7 @@ static void ImportAndWire()
 ### `VoiceManifestExporter` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/VoiceManifestExporter.cs`</sub>
 
-Exports the full voice-over manifest (user 2026-07-10: NPCs speak): every code-authored line (VoiceCorpus) plus every cutscene beat, one row per unique (speaker, text) with its stable id. Tools/voice/generate-voice.ps1 consumes the manifest; changed lines re-key and regenerate individually.
+Exports the full voice-over manifest (NPCs speak): every code-authored line (VoiceCorpus) plus every cutscene beat, one row per unique (speaker, text) with its stable id. Tools/voice/generate-voice.ps1 consumes the manifest; changed lines re-key and regenerate individually.
 
 ### `ManifestLine` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/VoiceManifestExporter.cs`</sub>
@@ -5199,7 +5097,7 @@ static void Export()
 ### `VoicePolish` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/VoicePolish.cs`</sub>
 
-Pre-recording copy pass over the CUTSCENE beats (2026-07-27). Every beat is a SUBTITLE **and** a text-to-speech script, so a line can be perfectly good on screen and wrong in the ear — or, worse, describe apparatus that no longer exists. Run this before spending voice credits: changing a line changes its VoiceLineId, so the manifest must be re-exported afterwards anyway. Edits the assets through SerializedObject rather than the YAML, because these subtitles contain ": " (e.g. "Welcome back! Today: Acetone.") which a hand-written scalar silently truncates.
+Pre-recording copy pass over the CUTSCENE beats. Every beat is a SUBTITLE **and** a text-to-speech script, so a line can be perfectly good on screen and wrong in the ear, or describe apparatus that is not in the scene. Run this before spending voice credits: changing a line changes its VoiceLineId, so the manifest must be re-exported afterwards anyway. Edits the assets through SerializedObject rather than the YAML, because these subtitles contain ": " (e.g. "Welcome back! Today: Acetone.") which a hand-written scalar silently truncates.
 
 ```csharp
 static void Polish()
@@ -5211,7 +5109,7 @@ static bool IsRecordingSafe(string line)
 ### `VrAffordanceBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/VrAffordanceBuilder.cs`</sub>
 
-Wires the 2026-07-10 VR affordance batch into the open scene: 1. HAPTICS — every hand interactor (NearFar + Poke) gets a HapticImpulsePlayer + SimpleHapticFeedback so grabbing, socket-snapping and poking UI buzz. 2. HOVER HIGHLIGHT — every grabbable gets a HoverHighlight so it brightens + pops when a hand/ray hovers it (small real-scale tools are easy to find). 3. SOCKET GHOST — every station socket shows a translucent preview of the correct item snapped in place. (Runtime-spawned experiment props/sockets get 2 & 3 from ExperimentSceneBuilder; haptics is interactor-side so it covers everything automatically.) Tools ▸ PharmaSynth ▸ Wire VR Affordances (edit mode, idempotent).
+Wires the VR affordance batch into the open scene: 1. HAPTICS — every hand interactor (NearFar + Poke) gets a HapticImpulsePlayer + SimpleHapticFeedback so grabbing, socket-snapping and poking UI buzz. 2. HOVER HIGHLIGHT — every grabbable gets a HoverHighlight so it brightens + pops when a hand/ray hovers it (small real-scale tools are easy to find). 3. SOCKET GHOST — every station socket shows a translucent preview of the correct item snapped in place. (Runtime-spawned experiment props/sockets get 2 & 3 from ExperimentSceneBuilder; haptics is interactor-side so it covers everything automatically.) Tools ▸ PharmaSynth ▸ Wire VR Affordances (edit mode, idempotent).
 
 ```csharp
 static void Build()
@@ -5220,7 +5118,7 @@ static void Build()
 ### `VrUiFixes` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/VrUiFixes.cs`</sub>
 
-Two VR-UI scene fixes (user 2026-07-15). • Quiz answers unclickable: a world-space Canvas needs a TrackedDeviceGraphicRaycaster for the XR ray to hit it — a plain GraphicRaycaster is mouse-only. The scene had 10 GraphicRaycasters but only 3 tracked ones, so most panels (incl. the quiz) ignored the controller ray. • Dr. Jimenez's subtitles floated at local y=2.15 — above head height, up by the ceiling and unreadable. Lowered to just above his head. Both idempotent.
+Two VR-UI scene fixes. • Quiz answers clickable: a world-space Canvas needs a TrackedDeviceGraphicRaycaster for the XR ray to hit it; a plain GraphicRaycaster is mouse-only, so a panel without one ignores the controller ray. • Dr. Jimenez's subtitles sit just above his head (at local y=2.15 they float up by the ceiling, unreadable). Both idempotent.
 
 ```csharp
 static void FixRaycasters()
@@ -5230,7 +5128,7 @@ static void FixDialogueHeight()
 ### `W533Fixes` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/W533Fixes.cs`</sub>
 
-W5.33 playtest batch (user 2026-07-27) — the SCENE half of the fixes whose code half lives in the runtime scripts. One idempotent menu per symptom so a single broken area can be re-run alone; "Fix Everything" runs them in order. Why a new pass instead of re-running the old builders: three apparatus were dropped into the scene as RAW model prefabs that never went through any wiring (no collider, no rigidbody, no XRGrabInteractable — literally ungrabbable), the wash bottle was never given contents, and the balance was pure set dressing. None of the existing menus own those.
+The SCENE half of a set of fixes whose code half lives in the runtime scripts. One idempotent menu per symptom so a single broken area can be re-run alone; "Fix Everything" runs them in order. These are separate from the existing builders because none of them own these objects: three apparatus sit in the scene as RAW model prefabs with no wiring (no collider, no rigidbody, no XRGrabInteractable, so ungrabbable), the wash bottle has no contents, and the balance is pure set dressing.
 
 ```csharp
 static readonly string[] UngrabbableReport
@@ -5250,7 +5148,7 @@ static void FixBalance()
 ### `W58VerbDataApplier` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/W58VerbDataApplier.cs`</sub>
 
-One-shot, idempotent data pass for the W5.8 verb overhaul: re-points the layouts whose tasks are now TOOL verbs (weigh/stir/grind) and wires the scene-side pieces (Methane's hand-built mortar, the matches-box striker). • Acetone: `weigh-acetates` zone-touch → Weigh (scoopula on the pan). • Benzamide: `stand` ("Stir & stand") zone-touch → Stir (glass rod). • Scene: Methane's Eq_Motar/Eq_Pestle get a GrindController completing `prepare-mixture` (dual-path with the legacy zone-touch), and the matches dispenser box becomes a MatchStrikerSurface. (The Aspirin + Caffeine passes were dropped 2026-07-16 with their modules.)
+One-shot, idempotent data pass for the tool verbs: re-points the layouts whose tasks are TOOL verbs (weigh/stir/grind) and wires the scene-side pieces (Methane's hand-built mortar, the matches-box striker). • Acetone: `weigh-acetates` zone-touch → Weigh (scoopula on the pan). • Benzamide: `stand` ("Stir & stand") zone-touch → Stir (glass rod). • Scene: Methane's Eq_Motar/Eq_Pestle get a GrindController completing `prepare-mixture` (dual-path with the legacy zone-touch), and the matches dispenser box becomes a MatchStrikerSurface.
 
 ```csharp
 static void Apply()
@@ -5259,7 +5157,7 @@ static void Apply()
 ### `W59ManuscriptDataApplier` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/W59ManuscriptDataApplier.cs`</sub>
 
-sulfuric acid; no alcohol anywhere) → propyl alcohol staged + bound, rule re-pointed to it (manuscript/test intent: ester with propyl). M2  Chloroform was missing the manuscript's oxidation confirmatory test (K-dichromate + conc H2SO4, procedure L3419-21 + results sheet) → new task + reagent + reaction rule. M3  Wine Making fermented GRAPE juice against the manuscript's explicit grape exclusion (L3830-31) → Chem_GrapeJuice renamed "Mixed Fruit Juice" (GUID refs untouched; string lookups updated). M4  Reagent fidelity: Acetanilide prep-HCl 6N→0.1N; iodoform tests gain their missing KI (Ethyl Alcohol + Acetone); ester/acid tests use the manuscript's DILUTED acids — with the matching RULE inputs re-pointed (rules match by asset; a layout-only swap would kill the reactions). M5a Chemical Compounding quiz Q3 asked about unsaturation (bromine) in an all-saturated module → replaced with the man
+alone is chemically INERT) → propyl alcohol staged + bound, rule pointed at it (manuscript/test intent: ester with propyl). M2  Chloroform gets the manuscript's oxidation confirmatory test (K-dichromate + conc H2SO4, procedure L3419-21 + results sheet) → new task + reagent + reaction rule. M3  Wine Making ferments non-grape juice, per the manuscript's explicit grape exclusion (L3830-31) → Chem_GrapeJuice renamed "Mixed Fruit Juice" (GUID refs untouched; string lookups updated). M4  Reagent fidelity: Acetanilide prep-HCl 0.1N (not 6N); iodoform tests get their KI (Ethyl Alcohol + Acetone); ester/acid tests use the manuscript's DILUTED acids, with the matching RULE inputs re-pointed (rules match by asset; a layout-only swap would kill the reactions). M5a Chemical Compounding quiz Q3 uses the manuscript's KMnO4 oxidation (a bromine unsaturation question does not fit an all-saturated module)
 
 ```csharp
 static void Apply()
@@ -5268,7 +5166,7 @@ static void Apply()
 ### `WorkspaceKitsBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/WorkspaceKitsBuilder.cs`</sub>
 
-apparatus that belong together… place them tightly but not overlapping… generous duplicates of high-use glass"). Kit composition follows the manuscript's Appendix C Equipment lists + the game's Methane heating rig: TOP row   — Heating Set A (full Bunsen rig), Heating Set B (compact Bunsen rig), Alcohol-Burner Set (spirit lamp + clay triangle + crucible: the crucible-work set — the manuscript names no burner, so Bunsen = sustained heat, alcohol lamp = crucible). LOWER row — 4 test-tube rack kits (regular tubes / amber HARD-GLASS tubes / vials / empty drying rack) + brush & wash bottle, then the duplicate glassware and small tools. Existing loose apparatus under "EquipmentShelf" is ADOPTED into matching slots (moved + re-homed); anything missing spawns fresh from the SceneAssetLibrary under a "WorkspaceKits" root. Every placed item gets the full interaction treatment (PhysicsAudit.WireScen
+apparatus that belong together, tightly but not overlapping, with generous duplicates of high-use glass). Kit composition follows the manuscript's Appendix C Equipment lists + the game's Methane heating rig: TOP row   — Heating Set A (full Bunsen rig), Heating Set B (compact Bunsen rig), Alcohol-Burner Set (spirit lamp + clay triangle + crucible: the crucible-work set — the manuscript names no burner, so Bunsen = sustained heat, alcohol lamp = crucible). LOWER row — 4 test-tube rack kits (regular tubes / amber HARD-GLASS tubes / vials / empty drying rack) + brush & wash bottle, then the duplicate glassware and small tools. Existing loose apparatus under "EquipmentShelf" is ADOPTED into matching slots (moved + re-homed); anything missing spawns fresh from the SceneAssetLibrary under a "WorkspaceKits" root. Every placed item gets the full interaction treatment (PhysicsAudit.WireSceneItem +
 
 ### `KitSlot` <sub>struct</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/WorkspaceKitsBuilder.cs`</sub>
@@ -5283,7 +5181,7 @@ static void Build()
 ### `WorkspaceLabelPurge` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/WorkspaceLabelPurge.cs`</sub>
 
-Removes the stale Methane-tutorial text labels that float over the center workspace (user 2026-07-12: "delete the texts still floating around the main workspace"). They were authored directly under WorldLabels (NOT under MethaneStage), so toggling the Methane stage never hid them, and the table-merge left them orphaned at the old x≈1.15 position. Pure scene leftovers — no script references them. Landmark labels (PPE locker, fume hood) and runtime DynLabel_* are kept. Idempotent + re-runnable.
+Removes the stale Methane-tutorial text labels that float over the center workspace. They sit directly under WorldLabels (NOT under MethaneStage), so toggling the Methane stage never hides them, and they are orphaned at the x≈1.15 position. Pure scene leftovers: no script references them. Landmark labels (PPE locker, fume hood) and runtime DynLabel_* are kept. Idempotent + re-runnable.
 
 ```csharp
 static void Purge()
@@ -5292,7 +5190,7 @@ static void Purge()
 ### `WorkspaceShelfBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/WorkspaceShelfBuilder.cs`</sub>
 
-Builds the equipment-shelf platforms on the center-table overhead gantry. W5.10 built one row on the rail tops; W5.12 adds the SECOND, lower row the user hand-planked at y≈1.20 (four duplicated cabinet shelves — replaced here by clean full-width tiles + slim side posts so the lower row reads as built in, not floating). Idempotent + re-runnable. Geometry lives in the pure WorkspaceShelfMath; the apparatus kits go on via Build Workspace Kits.
+Builds the equipment-shelf platforms on the center-table overhead gantry. One row sits on the rail tops; this also adds the SECOND, lower row at y≈1.20 (clean full-width tiles + slim side posts, so the lower row reads as built in, not floating). Idempotent + re-runnable. Geometry lives in the pure WorkspaceShelfMath; the apparatus kits go on via Build Workspace Kits.
 
 ```csharp
 static void Build()
