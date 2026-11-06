@@ -135,11 +135,8 @@ public class PharmeeBrain : MonoBehaviour
         string praise = (_praiseToggle = !_praiseToggle) ? PharmeeLines.Pick(PharmeeLines.Praise, _variant++) : null;
         if (!string.IsNullOrEmpty(praise))
             Speak(PharmeeState.Instructing, PharmeeFaceExpression.Happy, praise);
-        foreach (var nx in runner.Graph.AvailableTasks())
-        {
-            Speak(PharmeeState.Instructing, PharmeeFaceExpression.Happy, InstructionFor(nx));
-            return;
-        }
+        var next = runner.Graph.FirstAvailable();
+        if (next != null) Speak(PharmeeState.Instructing, PharmeeFaceExpression.Happy, InstructionFor(next));
     }
 
     /// Idle chatter: after a stretch of quiet mid-run, Pharmee offers a friendly
@@ -213,12 +210,9 @@ public class PharmeeBrain : MonoBehaviour
     {
         if (_assessment) return;                       // no procedural hints in assessment mode
         if (runner == null || runner.Graph == null) return;
-        foreach (var t in runner.Graph.AvailableTasks())
-        {
-            Speak(PharmeeState.Instructing, PharmeeFaceExpression.Neutral, InstructionFor(t));
-            return;
-        }
-        // nothing available (all complete) — stay in current state
+        // Nothing available (all complete): stay in the current state.
+        var current = runner.Graph.FirstAvailable();
+        if (current != null) Speak(PharmeeState.Instructing, PharmeeFaceExpression.Neutral, InstructionFor(current));
     }
 
     private void Speak(PharmeeState state, PharmeeFaceExpression face, string line)

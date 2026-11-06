@@ -251,7 +251,7 @@ public class MethaneApparatusRig : MonoBehaviour
         if (_tube == null) return;
 
         // Heat: any LIT burner within reach of the hard-glass tube — anywhere.
-        bool heating = AnyLitBurnerNear(_tube.position);
+        bool heating = BurnerController.AnyLitWithin(_tube.position, heatDistance);
         if (temperature != null) temperature.SetHeating(heating, burnerSourceC);
         if (heating && !_prevHeating) EffectVfx.FlamePop(_tube.position + Vector3.up * 0.08f);
         _prevHeating = heating;
@@ -406,11 +406,4 @@ public class MethaneApparatusRig : MonoBehaviour
         }
     }
 
-    private bool AnyLitBurnerNear(Vector3 pos)
-    {
-        foreach (var b in BurnerController.Active)
-            if (b != null && b.IsLit && WithinReach(Vector3.Distance(b.transform.position, pos), heatDistance))
-                return true;
-        return false;
-    }
 }

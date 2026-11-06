@@ -141,8 +141,7 @@ public class WaypointGuide : MonoBehaviour
         if (marker == null || TimeSkipController.IsSkipping) { Hide(); return; }
         bool running = runner != null && runner.Graph != null && runner.IsRunning;
 
-        string id = null;
-        if (running) foreach (var t in runner.Graph.AvailableTasks()) { id = t.taskId; break; }
+        string id = running ? runner.Graph.FirstAvailable()?.taskId : null;
         CurrentTargetTaskId = id;
 
         // ONE arrow, never two — pick the SOURCE first ("go fetch that"), and hop to

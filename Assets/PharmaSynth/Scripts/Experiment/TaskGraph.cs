@@ -73,6 +73,15 @@ public class TaskGraph
                 yield return t;
     }
 
+    /// The step the player is guided to: the first available task in authored order,
+    /// or null when none is open.
+    public ExperimentTask FirstAvailable()
+    {
+        foreach (var t in _tasks)
+            if (IsAvailable(t.taskId)) return t;
+        return null;
+    }
+
     /// Bind a world-state predicate to a task; Tick() auto-completes it when true.
     public void RegisterCondition(string taskId, Func<bool> condition)
     {

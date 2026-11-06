@@ -23,6 +23,14 @@ public class BurnerController : MonoBehaviour
         => Application.isPlaying ? (System.Collections.Generic.IReadOnlyList<BurnerController>)s_live
                                  : FindObjectsByType<BurnerController>();
     private void OnEnable() { if (!s_live.Contains(this)) s_live.Add(this); }
+
+    /// True when any lit burner's base is within `radius` metres of `pos`.
+    public static bool AnyLitWithin(Vector3 pos, float radius)
+    {
+        foreach (var b in Active)
+            if (b != null && b.IsLit && Vector3.Distance(b.transform.position, pos) <= radius) return true;
+        return false;
+    }
     private void OnDisable() => s_live.Remove(this);
 
     /// Pure ignition predicate (suite-pinned).
@@ -43,7 +51,7 @@ public class BurnerController : MonoBehaviour
         if (_grab != null && _grab.isSelected) return;   // don't light while being carried
         if (Time.time < _nextScan) return;
         _nextScan = Time.time + 0.25f;
-        foreach (var match in FindObjectsByType<Matchstick>())
+        foreach (var match in Matchstick.Active)
         {
             // Measure flame-to-flame: the burner's MOUTH to the match HEAD. Pivot to match
             // origin put the target at the burner's foot, so a match held where a person

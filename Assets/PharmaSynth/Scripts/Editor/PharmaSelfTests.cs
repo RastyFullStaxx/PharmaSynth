@@ -145,6 +145,7 @@ public static class PharmaSelfTests
             T("mix", TaskPhase.Synthesis, 2, LabSkill.Transfer, RubricCategory.Procedure, "prep"),
             T("test", TaskPhase.ChemicalTests, 1, LabSkill.TestInterpretation, RubricCategory.ChemicalTests, "mix"),
         });
+        A("graph: the guided step is the first open task", g.FirstAvailable()?.taskId == "prep");
         A("graph: mix blocked before prep", g.TryComplete("mix") == TaskCompletionResult.BlockedByPrerequisite);
         A("graph: prep completes", g.TryComplete("prep") == TaskCompletionResult.Completed);
         A("graph: progress 0.25", Near(g.Progress01, 0.25f));
@@ -153,6 +154,7 @@ public static class PharmaSelfTests
         A("graph: progress 0.75", Near(g.Progress01, 0.75f));
         bool sensor = false; g.RegisterCondition("test", () => sensor); g.Tick();
         A("graph: auto-check waits", !g.IsComplete("test"));
+        A("graph: the guided step follows the prerequisites", g.FirstAvailable()?.taskId == "test");
         sensor = true; g.Tick();
         A("graph: auto-check fires", g.IsComplete("test"));
         A("graph: progress 1.0", Near(g.Progress01, 1f));

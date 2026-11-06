@@ -98,8 +98,8 @@ public class TutorialCoach : MonoBehaviour
         if (!TutorialSession.Active || runner == null || runner.Graph == null || !runner.IsRunning) return;
         if (TimeSkipController.IsSkipping) return;
 
-        string id = null; string hint = null;
-        foreach (var t in runner.Graph.AvailableTasks()) { id = t.taskId; hint = t.hint; break; }
+        var first = runner.Graph.FirstAvailable();
+        string id = first?.taskId, hint = first?.hint;
         if (id != _currentTaskId)
         {
             // Progress resets the ladder — the player is moving, leave them alone.
@@ -158,8 +158,8 @@ public class TutorialCoach : MonoBehaviour
     public void HelpNow()
     {
         if (!TutorialSession.Active || runner == null || runner.Graph == null || !runner.IsRunning) return;
-        string id = null, hint = null;
-        foreach (var t in runner.Graph.AvailableTasks()) { id = t.taskId; hint = t.hint; break; }
+        var first = runner.Graph.FirstAvailable();
+        string id = first?.taskId, hint = first?.hint;
         if (string.IsNullOrEmpty(id)) return;
         PointAtTarget();
         Demo(id);

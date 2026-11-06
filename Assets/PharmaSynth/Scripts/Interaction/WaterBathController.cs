@@ -105,11 +105,7 @@ public class WaterBathController : MonoBehaviour
     private bool AnyLitBurnerNear()
     {
         var center = _burnerZone != null ? _burnerZone.position : transform.position;
-        foreach (var b in FindObjectsByType<BurnerController>())
-            if (b != null && b.IsLit
-                && Vector3.Distance(b.transform.position, center) <= BurnerZoneRadius)
-                return true;
-        return false;
+        return BurnerController.AnyLitWithin(center, BurnerZoneRadius);
     }
 
     private void PushHeat()

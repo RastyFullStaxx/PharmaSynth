@@ -89,8 +89,7 @@ public class GuidePath : MonoBehaviour
         Transform target = null;
         if (runner != null && runner.Graph != null && runner.IsRunning)
         {
-            string id = null;
-            foreach (var t in runner.Graph.AvailableTasks()) { id = t.taskId; break; }
+            string id = runner.Graph.FirstAvailable()?.taskId;
             if (TaskTargetRegistry.TaskCount == 0) TutorialTargets.Build();
             // Position-aware: a pool of interchangeable tubes resolves to the one in
             // the player's hand, else the nearest — the arrow follows the tube they picked up.

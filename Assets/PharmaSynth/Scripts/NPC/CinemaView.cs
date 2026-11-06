@@ -304,7 +304,7 @@ public class CinemaView : MonoBehaviour
     public static bool HoldsProduct(string objectName, string liquid, string precipitate, string product)
     {
         if (string.IsNullOrEmpty(product) || objectName == null) return false;
-        if (objectName.StartsWith("Raw_") || objectName.StartsWith("Reagent_")) return false;
+        if (LabReset.IsReagent(objectName)) return false;
         return string.Equals(liquid, product, System.StringComparison.OrdinalIgnoreCase)
             || string.Equals(precipitate, product, System.StringComparison.OrdinalIgnoreCase);
     }
@@ -313,7 +313,7 @@ public class CinemaView : MonoBehaviour
     private static string StockName(Transform t)
     {
         for (var p = t; p != null; p = p.parent)
-            if (p.name.StartsWith("Raw_") || p.name.StartsWith("Reagent_")) return p.name;
+            if (LabReset.IsReagent(p.name)) return p.name;
         return t.name;
     }
 
