@@ -549,3 +549,7 @@ Ten items from one headset session, diagnosed by reading the live run rather tha
 - [x] **Simulate Everything 9/9 CLEAN, campaign COMPLETE. VISUAL sweep 64/64, 0 FAIL, 0 SKIP, 0 findings.**
 - [ ] ⬜ **Headset**: tip the sugar jar (nothing pours), scoop it into the dry beaker (a heap), pour the juice (it dissolves); restart mid-experiment and find every vessel empty, cool and unlabelled.
 - [ ] ⬜ **Headset**: pour the five alcohols into any five tubes and watch the checklist tick them off; rinse a spoiled tube and reuse it; walk to the locker and door on the arrows; check the door swings and blocks; read two adjacent tube labels.
+
+## §37 Quest performance backlog (checked 2026-11-07)
+- [ ] **Texture import sizes**: 60 environment textures import at 2048 with no crunch compression. Right-size them per use and compress for Quest, after the headset pass measures the frame budget.
+- [ ] **Occlusion culling is not baked** (no `OcclusionCullingData` in `Assets/Scenes`). Bake it if profiling on the device shows the lab is draw-call bound.
