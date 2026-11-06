@@ -22,7 +22,7 @@ public class ProctorRoamer : MonoBehaviour
     [SerializeField] private float idleMax = 28f;
     [SerializeField] private float observeSeconds = 5f;
 
-    [Header("Never-escape failsafes (user 2026-07-10: he ran through a wall endlessly)")]
+    [Header("Never-escape failsafes")]
     [SerializeField] private float stuckSeconds = 2f;      // no progress this long → give up on the walk
     [SerializeField] private float maxLeash = 9f;          // farther than this from home → teleport back
 

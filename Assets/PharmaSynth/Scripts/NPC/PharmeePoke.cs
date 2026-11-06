@@ -14,8 +14,6 @@ public class PharmeePoke : MonoBehaviour
     private XRSimpleInteractable _interactable;
     private float _lastPoke = -999f;
 
-    public void SetBrain(PharmeeBrain b) => brain = b;
-
     private void OnEnable()
     {
         if (brain == null) brain = GetComponentInParent<PharmeeBrain>();

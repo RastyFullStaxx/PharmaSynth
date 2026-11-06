@@ -76,19 +76,6 @@ public class HandPoseController : MonoBehaviour
         _cached = false;
     }
 
-    /// Test seam: force a pose immediately (editor visual checks).
-    public void SetPoseImmediate(HandPoseKind pose)
-    {
-        EnsureJoints();
-        for (int i = 0; i < _joints.Count; i++)
-        {
-            var j = _joints[i];
-            j.angle = HandPosePolicy.AngleFor(pose, j.thumb, j.index, j.segment);
-            _joints[i] = j;
-        }
-        ApplyPose();
-    }
-
     private void EnsureJoints()
     {
         if (_cached || handRoot == null) return;

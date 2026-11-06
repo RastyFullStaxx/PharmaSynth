@@ -28,9 +28,6 @@ public class SpawnBurstFX : MonoBehaviour
             Invoke(nameof(PlayAtPlayer), Mathf.Max(0f, startDelay));
     }
 
-    /// Edit-mode/test seam.
-    public void SetSystem(ParticleSystem ps) => burst = ps;
-
     /// Emit at the player's feet: camera XZ, floor Y (ray-cast down, else eye − height).
     public void PlayAtPlayer()
     {

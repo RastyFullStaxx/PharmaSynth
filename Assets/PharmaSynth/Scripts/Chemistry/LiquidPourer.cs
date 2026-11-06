@@ -61,7 +61,7 @@ public class LiquidPourer : MonoBehaviour
     // the beaker would not catch the spills): VR aim is imprecise, so when the
     // precise ray misses, a forgiving sphere sweep catches a receiver whose
     // mouth is within this radius of the stream line.
-    [Header("Pour Assist (W5.12)")]
+    [Header("Pour Assist")]
     public float assistRadius = 0.045f;
 
     /// Dev toggle (DevExperimentDriver 'P'): shows what each PourTick actually

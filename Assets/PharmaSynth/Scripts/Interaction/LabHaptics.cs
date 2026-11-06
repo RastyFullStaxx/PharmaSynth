@@ -50,6 +50,4 @@ public static class LabHaptics
     public static void StepComplete() => Pulse(StepAmplitude, StepSeconds);
     public static void Mistake() => Pulse(ErrorAmplitude, ErrorSeconds);
 
-    /// Test seam — drops the cache so a rebuilt rig is picked up immediately.
-    public static void Forget() => _players = null;
 }

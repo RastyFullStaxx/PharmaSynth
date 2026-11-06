@@ -37,7 +37,7 @@ public class PharmeeBrain : MonoBehaviour
     [Tooltip("When a CutsceneDirector handles intro/outro, let it greet — the brain only instructs/warns.")]
     [SerializeField] private bool deferIntroToDirector = false;
 
-    [Header("Ambient chatter (user 2026-07-10: richer interactions)")]
+    [Header("Ambient chatter")]
     [Tooltip("Seconds of quiet before Pharmee offers an idle comment while a run is active.")]
     [SerializeField] private float idleChatterGap = 80f;   // seconds; long enough that idle chatter stays rare
     [SerializeField] private bool idleChatterEnabled = true;

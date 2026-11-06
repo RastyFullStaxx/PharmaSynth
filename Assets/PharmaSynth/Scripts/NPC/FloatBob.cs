@@ -14,8 +14,6 @@ public class FloatBob : MonoBehaviour
     [Tooltip("Turn OFF when a FaceCamera controls this object's rotation (e.g. Pharmee looking at the player), so the two don't fight.")]
     [SerializeField] private bool applyRotation = true;
 
-    public void SetApplyRotation(bool on) => applyRotation = on;
-
     [Tooltip("How fast the give-way sidestep offset eases in/out (higher = snappier).")]
     [SerializeField] private float giveWaySmooth = 6f;
 

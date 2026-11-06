@@ -26,7 +26,7 @@ public class ZoneSimStation : MonoBehaviour
     public float filtrateMlPerSec = 30f;
     public float gasMlPerSec = 25f;
     [Range(0.1f, 1f)] public float doneFraction = 0.95f;
-    [Tooltip("A Heat station warms any vessel within this radius to its sim temperature — the water-bath zone that fires temperature-gated reactions (2026-07-17).")]
+    [Tooltip("A Heat station warms any vessel within this radius to its sim temperature — the water-bath zone that fires temperature-gated reactions.")]
     public float heatRadius = 0.5f;
     private float _nextHeatPush;
 

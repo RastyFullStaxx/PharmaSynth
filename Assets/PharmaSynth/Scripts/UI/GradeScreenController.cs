@@ -140,9 +140,6 @@ public class GradeScreenController : MonoBehaviour
     }
     public void OnBackPressed() { Hide(); onBackToEntrance?.Invoke(); }   // fail-path exit
 
-    /// Builder seam: lets Build Review Corner wire the fail-path button.
-    public void SetBackButton(GameObject b) => backButton = b;
-
     /// Per-criteria lines + the gate reason (why passed / what fell short).
     public static string BuildBreakdown(ExperimentResult r)
     {

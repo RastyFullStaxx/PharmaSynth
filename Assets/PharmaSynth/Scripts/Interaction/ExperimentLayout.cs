@@ -52,7 +52,7 @@ public class ExperimentLayout : ScriptableObject
             public string taskId;
             [Tooltip("Minimum ml poured before the step completes (0 = any amount).")]
             public float requiredMl;
-            [Tooltip("False = pouring only ACCUMULATES (expected, never a wrong-reagent mistake); something else — e.g. the weigh station — completes the task. (W5.8)")]
+            [Tooltip("False = pouring only ACCUMULATES (expected, never a wrong-reagent mistake); something else — e.g. the weigh station — completes the task.")]
             public bool completesTask = true;
         }
         [Tooltip("BIND to an existing bench object by NAME (e.g. Kit_TestTube_0) instead of spawning a twin. " +
@@ -71,7 +71,7 @@ public class ExperimentLayout : ScriptableObject
         [Tooltip("Vessels sharing a rackGroup are ONE SET: a step they share only completes once EVERY member has had its reagent (RackTaskGroup). Exp 2's five enol tubes, its butyl alcohols, acetone-vs-acetaldehyde. Empty = a standalone vessel. Members author their shared bindings completesTask:false — the group completes them.")]
         public string rackGroup = "";
 
-        [Tooltip("ZONE-FREE heat step (2026-07-17, replaces fixed Heat stations): >0 = the vessel's deferred (completesTask:false, no rack) task completes when the vessel has ALL its reagents AND has been heated to this temperature — wherever the player does it (water bath + lit burner, anywhere in the lab). VesselHeatTask registers the graph condition.")]
+        [Tooltip("ZONE-FREE heat step: >0 = the vessel's deferred (completesTask:false, no rack) task completes when the vessel has ALL its reagents AND has been heated to this temperature — wherever the player does it (water bath + lit burner, anywhere in the lab). VesselHeatTask registers the graph condition.")]
         public float heatToC = 0f;
 
         [Tooltip("FERMENTATION flask (Exp 3): set to the ferment taskId. Once prepare-must is done, this flask evolves CO₂ into any nearby limewater vessel (turning it milky); the named task completes when that vessel clouds. FermentationController; zone-free like the water bath.")]

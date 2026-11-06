@@ -26,7 +26,7 @@ public class NPCNarrationController : MonoBehaviour
     [SerializeField] private List<NarrationLine> tutorialLines = new List<NarrationLine>();
     [SerializeField] private bool playOnStart = true;
 
-    [Header("Typewriter (user 2026-07-10: type lines out + talking blips)")]
+    [Header("Typewriter")]
     [SerializeField] private bool typewriter = true;
     // 22 cps ≈ 260 wpm: brisk but legible. 32 cps (≈ 384 wpm) is past comfortable
     // reading and sounds rushed.
@@ -37,7 +37,7 @@ public class NPCNarrationController : MonoBehaviour
     [SerializeField] private string voiceBlipKey = "";          // this speaker's talking blip (SoundBank key)
     [SerializeField, Range(0f, 1f)] private float blipVolume = 0.5f;
 
-    [Header("Voice-over (user 2026-07-10: NPCs speak their lines)")]
+    [Header("Voice-over")]
     [SerializeField] private VoiceBank voiceBank;               // hash-keyed clip lookup (optional)
     [SerializeField] private VoiceSpeaker speaker = VoiceSpeaker.Pharmee;
 
@@ -73,7 +73,7 @@ public class NPCNarrationController : MonoBehaviour
         = new Queue<(string, float, AudioClip)>();
     private const int MaxQueued = 2;
 
-    [Header("Pacing (user 2026-07-19: lines felt rapid + ran together)")]
+    [Header("Pacing")]
     [Tooltip("Minimum time a FULLY revealed line stays up, whatever the authored dwell.")]
     [SerializeField] private float minHoldSeconds = 1.9f;
     [Tooltip("Clear beat between consecutive lines so they never run together.")]

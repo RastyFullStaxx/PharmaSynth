@@ -24,8 +24,6 @@ public class WalkBob : MonoBehaviour
     private float _weight;
     private SeatedHeightBoost _height;   // owns the Camera Offset's fixed-height Y
 
-    public void SetAmplitude(float a) => amplitude = a;   // comfort toggle → 0
-
     private void Start()
     {
         if (originRoot == null) originRoot = transform;

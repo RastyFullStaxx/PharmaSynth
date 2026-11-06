@@ -18,12 +18,6 @@ public class WaypointBeacon : MonoBehaviour
     private Vector3 _arrowHome;
     private Vector3 _glowHomeScale;
 
-    public void SetParts(Transform arrowT, Transform glowT)
-    {
-        arrow = arrowT; glow = glowT;
-        CacheHomes();
-    }
-
     private void Awake() => CacheHomes();
 
     private void CacheHomes()

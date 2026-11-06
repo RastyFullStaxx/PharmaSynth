@@ -260,7 +260,6 @@ float Progress
 bool IsDone
 void BeginCrystallization()
 void Tick(float dt)
-bool Crystallized01(float fraction)
 void ResetProcess()
 ```
 
@@ -440,19 +439,6 @@ Overheat consequence at a Heat station (error-effects pass): when the station's 
 
 ```csharp
 void Bind(TemperatureSim sim, ExperimentRunner runner, ChemicalData ruined)
-```
-
-### `PowderPhysics` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Chemistry/PowderPhysics.cs`</sub>
-
-```csharp
-Transform powderMesh
-Renderer powderRenderer
-float maxVolume
-float currentPowderVolume
-ChemicalData currentChemical
-void AddPowder(ChemicalData incomingChemical, float amountToAdd)
-ChemicalData PourOut(float amountToRemove)
 ```
 
 ### `RackRoles` <sub>class</sub>
@@ -838,7 +824,6 @@ Swings a hinged door leaf open/closed and toggles its colliders — the lab entr
 ```csharp
 bool IsOpen
 Transform Door
-void SetDoor(Transform d, float yaw)
 void SetOpen(bool open)
 ```
 
@@ -864,7 +849,6 @@ Sends a dropped prop home: below kill-Z → instant respawn; resting far from ho
 void Bind(Rigidbody rb, XRGrab grab)
 void SetHome(Vector3 pos, Quaternion rot)
 bool Suspended
-void SetKillZ(float y)
 void CaptureSupply()
 static void ResetAllHome()
 void GoHome()
@@ -943,7 +927,6 @@ ExperimentLibrary Library
 LaunchMode StartupMode
 void SetLibrary(ExperimentLibrary l)
 void SetRunner(ExperimentRunner r)
-void SetStartupMode(LaunchMode m)
 ExperimentModuleDefinition LaunchSelected()
 ExperimentModuleDefinition Launch(string moduleId)
 ExperimentModuleDefinition Launch(string moduleId, LaunchMode mode)
@@ -1112,12 +1095,10 @@ OrbitMath Math
 bool IsGrindComplete()
 static bool CanGrind(bool hasVessel, float contentsMl)
 void Bind(ExperimentRunner runner, string taskId, Transform pestle,
-void SetPestle(Transform pestle)
 void BindRunner(ExperimentRunner runner)
 void SetTaskId(string taskId)
 string TaskId
 void Register()
-bool PestleInBowl()
 void Tick(float x, float z, bool inside)
 ```
 
@@ -1202,7 +1183,6 @@ Runtime driver on each controller: shows the skinned hand (XR Hands sample mesh)
 
 ```csharp
 void Bind(Transform hand, GameObject ctrlVisual, SkinnedMeshRenderer smr,
-void SetPoseImmediate(HandPoseKind pose)
 ```
 
 ### `HandSwap` <sub>class</sub>
@@ -1316,7 +1296,6 @@ const float ErrorAmplitude
 static void Pulse(float amplitude, float seconds)
 static void StepComplete()
 static void Mistake()
-static void Forget()
 ```
 
 ### `LabItem` <sub>class</sub>
@@ -1712,7 +1691,6 @@ Cyan "materialize" spawn burst: a one-shot column of cyan particles that rises f
 
 ```csharp
 static SpawnBurstFX Instance
-void SetSystem(ParticleSystem ps)
 void PlayAtPlayer()
 void PlayAt(Vector3 feet)
 ```
@@ -1782,7 +1760,6 @@ The STIR verb: circle the glass rod inside this vessel's mouth while it holds li
 OrbitMath Math
 string TaskId
 void Bind(ExperimentRunner runner, string taskId, LiquidPhysics lp, Transform rod,
-void SetRod(Transform rod)
 void Detach()
 void Register()
 bool RodInMouth()
@@ -1968,12 +1945,10 @@ Tutorial Mode's verb demonstration: a translucent ghost of the object the player
 
 ```csharp
 void Bind(ExperimentRunner r, Material ghost)
-void SetGhostMaterial(Material m)
 bool IsPlaying
 static List<TaskTarget> CollapsePool(IReadOnlyList<TaskTarget> targets, Transform chosen)
 static bool Endpoints(IReadOnlyList<TaskTarget> targets,
 void Show(string taskId)
-void ShowCurrent()
 void Stop()
 ```
 
@@ -2069,10 +2044,6 @@ void Detach()
 
 Subtle head-bob while the player is locomoting, for a grounded, "walking" feel. Applied to the XR camera's local offset so it never fights head tracking — and kept small + speed-scaled for VR comfort (bob only when actually moving). Amplitude is intentionally low; expose it so a comfort setting can zero it out.
 
-```csharp
-void SetAmplitude(float a)
-```
-
 ### `WatchMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/WatchMath.cs`</sub>
 
@@ -2134,10 +2105,6 @@ void DriveForTest(float dt)
 
 Animates the waypoint marker: a circular glow that sits on the target surface (pulsing gently) and a downward arrow bobbing above it — a clear "go/act here" signal instead of an ambiguous floating blob. WaypointGuide moves the root; this only animates the children in local space.
 
-```csharp
-void SetParts(Transform arrowT, Transform glowT)
-```
-
 ### `WaypointGuide` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/WaypointGuide.cs`</sub>
 
@@ -2197,8 +2164,6 @@ string DisplayText
 void Bind(TMP_Text display)
 void Tick(float dt)
 void SetTargetMass(float newTarget)
-void AddMass(float delta)
-void RemoveMass(float delta)
 static float Reading(float shown, float target, float wobbleG, float phase)
 static string Typed(string text, float t, float charsPerSecond)
 static string Format(float grams, string unit)
@@ -2237,7 +2202,6 @@ string ItemId
 LabItem Occupant
 void SetItemId(string id)
 void ForceOccupied(bool on)
-void ForceOccupant(LabItem item)
 ```
 
 ### `ZoneSimStation` <sub>class</sub>
@@ -2754,7 +2718,6 @@ float SecondsFor(string line)
 Gentle hover animation for a floating character/prop (Pharmee): sinusoidal vertical bob plus a slight sway tilt and a bounded Perlin jitter ("alive" wiggle), around a movable home pose. Local-space so it composes with any parent motion; a mover may drive the home via SetHome.
 
 ```csharp
-void SetApplyRotation(bool on)
 Vector3 Home
 void SetHome(Vector3 localPos)
 void SetGiveWayOffset(Vector3 localOffset)
@@ -2816,7 +2779,6 @@ static float SleeveRadiusFor(float meshHeight)
 static bool IsArmBone(string boneName)
 static bool IsTwistBone(string boneName)
 static bool IsBetterSegmentEnd(float candidateDistance, float bestSoFar)
-static bool IsTorsoBone(string boneName)
 static bool IsBleed(float distanceToBone, float sleeveRadius)
 static bool IsSleeve(float distanceToArm, float distanceToSpine, float sleeveRadius)
 const float BlendFraction
@@ -2825,6 +2787,7 @@ static float TransferFraction(float distanceToArm, float sleeveRadius, float ble
 static float DistanceToSegment(Vector3 p, Vector3 a, Vector3 b)
 static float Redistribute(ref BoneWeight w, int fromBone, int toBone)
 static float Redistribute(ref BoneWeight w, int fromBone, int toBone, float fraction)
+static void Normalise(ref BoneWeight w)
 ```
 
 ### `LabTourGuide` <sub>class</sub>
@@ -3115,7 +3078,6 @@ void TickSolve(float dt)
 Makes Pharmee interactable: poking/selecting the robot repeats the current step's guidance (PharmeeBrain.InstructCurrent). Debounced so rapid pokes don't spam the narration.
 
 ```csharp
-void SetBrain(PharmeeBrain b)
 void Poke()
 ```
 
@@ -3300,7 +3262,6 @@ void Hide()
 void OnRetryPressed()
 void OnContinuePressed()
 void OnBackPressed()
-void SetBackButton(GameObject b)
 static string BuildBreakdown(ExperimentResult r)
 ```
 
@@ -3314,7 +3275,6 @@ static float NextPage(float current01, float pageFrac, int direction)
 void Bind(ScrollRect sr)
 void PageUp()
 void PageDown()
-void SnapToTop()
 ```
 
 ### `HoverInfoPanel` <sub>class</sub>
@@ -3408,7 +3368,6 @@ Driver for the HUD canvas. Two modes: ScreenLocked (default, storyboard style) �
 ```csharp
 Mode CurrentMode
 HudFollowSolver.Params Follow
-void SetCamera(Camera c)
 void SnapToCamera()
 ```
 
@@ -3509,7 +3468,6 @@ bool IsOpen
 QuizBank Bank
 int CurrentIndex
 void SetRefs(ExperimentRunner r, QuizBankLibrary lib)
-void SetAutoOpen(bool on)
 void Open()
 void OpenFor(QuizBank bank)
 void OnOptionSelected(int optionIndex)
@@ -3519,6 +3477,7 @@ void PreviousQuestion()
 void NextQuestion()
 void AnswerCurrent(int optionIndex)
 void Answer(int questionIndex, int optionIndex)
+bool AllAnswered
 ```
 
 ### `ProcessReadout` <sub>class</sub>
@@ -3700,14 +3659,9 @@ Wrist-flip progress tracker (the headline feature). Flipping the wrist so the wa
 
 ```csharp
 static bool SuppressNpcPokes
-void BindHolo(GameObject panel, TMP_Text title, TMP_Text body)
-void BindHolo(GameObject panel, TMP_Text title, TMP_Text summary, TMP_Text body, TMP_Text reaction)
-void SetReaction(string reaction)
 const float PreviewSeconds
 void ShowProcedurePreview(float seconds
-void CancelPreview()
 static string StepText(string label, string hint, bool tutorial)
-static string BuildSummary(ExperimentRunner runner)
 static bool IsGazingAt(Vector3 headPos, Vector3 headForward, Vector3 targetPos, float dotThreshold)
 ```
 
@@ -3777,9 +3731,6 @@ bool PPEWorn
 bool IsWorn(PPEPiece p)
 string MissingSummary()
 void Don(PPEPiece piece)
-void DonCoat()
-void DonGoggles()
-void DonGloves()
 void DonPPE()
 void RemovePPE()
 void BindVisuals(GameObject[] coat, GameObject[] goggles, GameObject[] gloves)
@@ -3918,7 +3869,6 @@ Subtle positional footsteps for a walking NPC (Dr. Jimenez). Tracks its own tran
 Plays a SoundBank key through the AudioService when the scene starts — used for looping beds (menu music, lab ambient). No-op if there's no AudioService/clip.
 
 ```csharp
-void SetKey(string k)
 void Play()
 ```
 

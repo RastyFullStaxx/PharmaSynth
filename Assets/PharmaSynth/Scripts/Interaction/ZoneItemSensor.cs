@@ -23,9 +23,6 @@ public class ZoneItemSensor : MonoBehaviour
     /// Test hook — lets edit-mode suites simulate occupancy without physics.
     public void ForceOccupied(bool on) { _count = on ? 1 : 0; if (!on) Occupant = null; }
 
-    /// Test hook — simulate a specific occupant.
-    public void ForceOccupant(LabItem item) { Occupant = item; _count = item != null ? 1 : 0; }
-
     private void OnTriggerEnter(Collider other)
     {
         var item = LabItem.Resolve(other);

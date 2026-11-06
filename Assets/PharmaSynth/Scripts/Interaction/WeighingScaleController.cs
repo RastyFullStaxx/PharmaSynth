@@ -17,7 +17,7 @@ public class WeighingScaleController : MonoBehaviour
     [SerializeField] private float currentMass;
     [SerializeField] private float targetMass;
 
-    [Header("Digital readout (2026-07-27)")]
+    [Header("Digital readout")]
     [Tooltip("Characters revealed per second when a new reading types in.")]
     [SerializeField] private float typeSpeed = 26f;
     [Tooltip("Grams of wobble while the load is still settling.")]
@@ -63,9 +63,6 @@ public class WeighingScaleController : MonoBehaviour
         if (Mathf.Abs(newTarget - targetMass) > 0.005f) { _typeT = 0f; targetEventSent = false; }
         targetMass = newTarget;
     }
-
-    public void AddMass(float delta) => SetTargetMass(targetMass + delta);
-    public void RemoveMass(float delta) => SetTargetMass(targetMass - delta);
 
     /// Pure (suite): the settling reading. While the pan is still converging the
     /// last digit hunts around the true value — deterministic (a sine of the clock,

@@ -13,7 +13,7 @@ public class Matchstick : MonoBehaviour
     public const float IgniteTempC = 80f;
     public const float StrikeMinSpeed = 0.35f;
     [SerializeField] private float burnSeconds = 25f;
-    [Tooltip("The phosphorus head is at the NEGATIVE end of the match's longest axis (user 2026-07-14: flame was on the butt). Flip if the flame lights the wrong end.")]
+    [Tooltip("The phosphorus head is at the NEGATIVE end of the match's longest axis. Flip if the flame lights the wrong end.")]
     [SerializeField] private bool headAtPositiveEnd = false;
 
     private bool _lit, _spent;

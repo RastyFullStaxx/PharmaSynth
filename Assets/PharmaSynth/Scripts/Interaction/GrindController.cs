@@ -61,8 +61,6 @@ public class GrindController : MonoBehaviour
         Register();
     }
 
-    public void SetPestle(Transform pestle) => _pestle = pestle;
-
     /// Hand the grind its runner at runtime — _runner isn't serialized, so after a
     /// domain reload it's null and Register() would no-op (the task never completes).
     /// The Methane rig calls this when it aims the mortar at "prepare-mixture"
@@ -137,14 +135,6 @@ public class GrindController : MonoBehaviour
         if (_pestle == null) return to + Vector3.up;
         if (!BoundsUtil.TryUnion(_pestleRends.Of(_pestle), out var b)) return _pestle.position;
         return b.ClosestPoint(to);
-    }
-
-    /// True while any part of the pestle is inside the (generous) bowl radius.
-    public bool PestleInBowl()
-    {
-        if (_pestle == null) return false;
-        Vector3 bowl = BowlCenter();
-        return Vector3.Distance(PestleTip(bowl), bowl) <= GrindReach;
     }
 
     /// Last-resort pestle lookup so the grind still works if nothing bound one.

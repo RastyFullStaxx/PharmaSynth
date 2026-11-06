@@ -40,9 +40,6 @@ public class CrystallizationController : MonoBehaviour
         }
     }
 
-    /// TaskGraph auto-check predicate.
-    public bool Crystallized01(float fraction) => Progress >= Mathf.Clamp01(fraction);
-
     private void UpdateVisual(float p)
     {
         if (crystalRenderer != null)

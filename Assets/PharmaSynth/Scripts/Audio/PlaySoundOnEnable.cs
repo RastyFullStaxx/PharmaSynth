@@ -7,8 +7,6 @@ public class PlaySoundOnEnable : MonoBehaviour
     [SerializeField] private string key = "";
     [SerializeField] private bool playOnStart = true;
 
-    public void SetKey(string k) => key = k;
-
     private void Start() { if (playOnStart) Play(); }
 
     public void Play()

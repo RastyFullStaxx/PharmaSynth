@@ -31,8 +31,6 @@ public class HudRigController : MonoBehaviour
     public Mode CurrentMode { get => mode; set => mode = value; }
     public HudFollowSolver.Params Follow { get => follow; set => follow = value; }
 
-    public void SetCamera(Camera c) => cameraOverride = c;
-
     private Camera Cam => cameraOverride != null ? cameraOverride : Camera.main;
 
     /// Place the HUD directly on its anchor (scene start, after teleports).

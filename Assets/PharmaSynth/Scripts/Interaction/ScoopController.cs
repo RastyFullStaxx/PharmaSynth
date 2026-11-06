@@ -56,9 +56,9 @@ public class ScoopController : MonoBehaviour
     [SerializeField] private float actionCooldown = 0.5f;
     [Tooltip("Grams per dip. ScoopMath.GramsPerScoop (2 g) for the scoopula; ScoopMath.GramsPerSpatula (0.1 g) for the porcelain spatula, which is the only tool that can express Exp 2's 0.1 g / 0.5 g weighings.")]
     [SerializeField] private float gramsPerDip = ScoopMath.GramsPerScoop;
-    [Tooltip("The scooping BLADE/BOWL is at the NEGATIVE end of the tool's longest axis (user 2026-07-14: the heap was riding the handle butt). Flip if the heap rides the handle.")]
+    [Tooltip("The scooping BLADE/BOWL is at the NEGATIVE end of the tool's longest axis. Flip if the heap rides the handle.")]
     [SerializeField] private bool bladeAtPositiveEnd = false;
-    [Tooltip("Shape of the carried heap on the blade/bowl (local scale). The SCOOPULA gets a rounded bowl-pile (default); the porcelain SPATULA a flat elongated smear (set by Apply Verb Data). The two tools shouldn't look the same (user 2026-07-18).")]
+    [Tooltip("Shape of the carried heap on the blade/bowl (local scale). The SCOOPULA gets a rounded bowl-pile (default); the porcelain SPATULA a flat elongated smear (set by Apply Verb Data). The two tools shouldn't look the same.")]
     [SerializeField] private Vector3 heapScale = new Vector3(0.026f, 0.018f, 0.026f);   // rounded bowl-pile (scoopula)
 
     private XRGrab _grab;

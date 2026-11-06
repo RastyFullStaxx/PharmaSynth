@@ -82,8 +82,6 @@ public class DropRespawn : MonoBehaviour
     /// a mid-stack GoHome would teleport a piece out of the formation.
     public bool Suspended { get; set; }
 
-    public void SetKillZ(float y) => killZ = y;
-
     void Update()
     {
         if (Suspended || !_hasHome) return;

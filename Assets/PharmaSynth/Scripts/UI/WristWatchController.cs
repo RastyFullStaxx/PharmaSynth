@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -50,14 +49,6 @@ public class WristWatchController : MonoBehaviour
     private static float _npcPokeSuppressedUntil = -1f;
     public static bool SuppressNpcPokes => Application.isPlaying && Time.time < _npcPokeSuppressedUntil;
 
-    public void BindHolo(GameObject panel, TMP_Text title, TMP_Text body)
-    { holoPanel = panel; holoTitle = title; holoBody = body; }
-
-    public void BindHolo(GameObject panel, TMP_Text title, TMP_Text summary, TMP_Text body, TMP_Text reaction)
-    { holoPanel = panel; holoTitle = title; holoSummary = summary; holoBody = body; holoReaction = reaction; }
-
-    public void SetReaction(string reaction) => balancedReaction = reaction;
-
     private void OnEnable()
     {
         if (toggleAction != null && toggleAction.action != null)
@@ -89,8 +80,6 @@ public class WristWatchController : MonoBehaviour
     /// panel, no second layout and no second text builder that could drift from it.
     public void ShowProcedurePreview(float seconds = PreviewSeconds)
         => _forcedUntil = Time.time + Mathf.Max(1f, seconds);
-
-    public void CancelPreview() => _forcedUntil = -1f;
 
     private void Update()
     {
@@ -172,54 +161,6 @@ public class WristWatchController : MonoBehaviour
     {
         if (!tutorial || string.IsNullOrEmpty(hint)) return label;
         return label + "\n<size=70%>" + hint + "</size>";
-    }
-
-    public static string BuildSummary(ExperimentRunner runner)
-    {
-        if (runner == null || runner.Graph == null) return "";
-        string current = "—", hint = null;
-        foreach (var t in runner.Graph.AvailableTasks())
-        {
-            current = GlyphSafe.Sanitize(t.label);
-            hint = GlyphSafe.Sanitize(t.hint);
-            break;
-        }
-        bool tutorial = TutorialSession.Active;
-        string s = "Step: " + StepText(current, hint, tutorial)
-                 + RackBreakdown(runner)
-                 + "\nProgress " + ExperimentHudController.FormatPercent(runner.Progress01);
-        // Mastery is a GRADED number. A practice run never computes or saves one, so
-        // printing "Mastery 0%" all the way through would read as constant failure.
-        if (!tutorial) s += "\nMastery " + Mathf.RoundToInt(runner.OverallMastery * 100f) + "%";
-        return s;
-    }
-
-    /// Per-tube lines for a step a whole SET of tubes has to satisfy, so the player can
-    /// see which tube is still outstanding. Empty for an ordinary step, so the panel only
-    /// grows where the detail is needed.
-    private static string RackBreakdown(ExperimentRunner runner)
-    {
-        string guided = null;
-        foreach (var t in runner.Graph.AvailableTasks()) { guided = t.taskId; break; }
-        if (string.IsNullOrEmpty(guided)) return "";
-
-        foreach (var g in Object.FindObjectsByType<RackTaskGroup>())
-        {
-            if (g == null || g.TaskId != guided || g.Members == null) continue;
-            var tags = new List<string>();
-            var served = new HashSet<string>();
-            foreach (var m in g.Members)
-            {
-                if (m == null) continue;
-                if (tags.Count == 0) tags = m.RoleTagsFor(guided);
-                if (!m.ReadyFor(guided)) continue;
-                string tag = m.ClaimedRoleTagFor(guided);
-                if (!string.IsNullOrEmpty(tag)) served.Add(tag);
-            }
-            return "\n" + RackMath.RolesLine(tags, served,
-                RackMath.CountReady(g.Members, guided), g.Required);
-        }
-        return "";
     }
 
     /// True when the head is looking roughly toward the wrist.

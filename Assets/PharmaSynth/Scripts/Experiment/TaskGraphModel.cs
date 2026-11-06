@@ -75,10 +75,10 @@ public class ExperimentTask
     [TextArea(1, 3), Tooltip("Shown by Pharmee / tablet when the player is stuck on this step.")]
     public string hint = "";
 
-    [Tooltip("WRAP-UP step: auto-completes (via Graph.Tick) once every other task is done. For closing beats like 'record your observations' that have no physical verb of their own — without this the checklist can never finish (SimulatedRun caught Exp 2 deadlocked here, 2026-07-17).")]
+    [Tooltip("WRAP-UP step: auto-completes (via Graph.Tick) once every other task is done. For closing beats like 'record your observations' that have no physical verb of their own — without this the checklist can never finish (SimulatedRun caught Exp 2 deadlocked here).")]
     public bool autoCompleteWhenOthersDone = false;
 
-    [Tooltip("LONG PROCESS (user 2026-07-17): a step whose real duration is impractical in VR (a week's fermentation, an overnight dry). On completion TimeSkipController plays a corner-camera timelapse (black hold without the cinema rig) and returns with a 'time has passed' success message. Set the message; empty falls back to a generic one. Reusable across every experiment with a lengthy wait.")]
+    [Tooltip("LONG PROCESS: a step whose real duration is impractical in VR (a week's fermentation, an overnight dry). On completion TimeSkipController plays a corner-camera timelapse (black hold without the cinema rig) and returns with a 'time has passed' success message. Set the message; empty falls back to a generic one. Reusable across every experiment with a lengthy wait.")]
     public bool longProcess = false;
     [TextArea(1, 2)]
     public string longProcessMessage = "";

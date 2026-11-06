@@ -14,7 +14,7 @@ public class ExperimentModuleDefinition : ScriptableObject
     public List<string> intendedLearningOutcomes = new List<string>();
 
     [Header("Materials guide (watch panel header — NOT part of the checklist)")]
-    [Tooltip("Display-ready lines shown at the top of the holo board so the player can gather everything BEFORE starting (user 2026-07-17). Reagents are GENERATED from the layout's bindings (Tools ▸ PharmaSynth ▸ Generate Materials Guides) so they can never drift from what the experiment actually consumes; apparatus is authored from the PROCEDURE (the manuscript's apparatus lists are defective).")]
+    [Tooltip("Display-ready lines shown at the top of the holo board so the player can gather everything BEFORE starting. Reagents are GENERATED from the layout's bindings (Tools ▸ PharmaSynth ▸ Generate Materials Guides) so they can never drift from what the experiment actually consumes; apparatus is authored from the PROCEDURE (the manuscript's apparatus lists are defective).")]
     public List<string> materialReagents = new List<string>();
     public List<string> materialApparatus = new List<string>();
 

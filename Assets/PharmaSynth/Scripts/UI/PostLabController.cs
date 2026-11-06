@@ -30,7 +30,7 @@ public class PostLabController : MonoBehaviour
     [Tooltip("Open automatically when ChemicalTests completes. The gatekeeper's review flow sets this false and opens the quiz itself after Jimenez's briefing.")]
     [SerializeField] private bool autoOpen = true;
 
-    [Header("Review navigation (user 2026-07-15)")]
+    [Header("Review navigation")]
     [Tooltip("Step back/forward through the questions to review answers before submitting.")]
     [SerializeField] private Button prevButton;
     [SerializeField] private Button nextButton;
@@ -56,8 +56,6 @@ public class PostLabController : MonoBehaviour
 
     private void OnEnable()  { if (runner != null) runner.PhaseCompleted += OnPhaseCompleted; }
     private void OnDisable() { if (runner != null) runner.PhaseCompleted -= OnPhaseCompleted; }
-
-    public void SetAutoOpen(bool on) => autoOpen = on;
 
     private void OnPhaseCompleted(TaskPhase phase)
     {
@@ -187,15 +185,6 @@ public class PostLabController : MonoBehaviour
     /// Pure (suite): the score line shown to the player — "Quiz: 2 / 3 (67%)".
     public static string ScoreLine(int correct, int total)
         => total <= 0 ? "" : $"Quiz: {correct} / {total} ({Mathf.RoundToInt(100f * correct / total)}%)";
-
-    /// Wipe every answer and return to question 1 — a clean retry, in place.
-    public void ResetAnswers()
-    {
-        if (_answers != null)
-            for (int i = 0; i < _answers.Length; i++) _answers[i] = -1;
-        _current = 0;
-        Render();
-    }
 
     /// Submit button. NEVER score-gated (client rule): any score submits and is
     /// shown plainly on the grade screen, where the player chooses Retry (to

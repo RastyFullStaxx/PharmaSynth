@@ -33,9 +33,6 @@ public class StirController : MonoBehaviour
         Register();
     }
 
-    /// The rod prop can respawn — rebindable.
-    public void SetRod(Transform rod) => _rod = rod;
-
     /// Teardown seam (ClearBenchBindings) — bench vessels survive rebuilds, and
     /// edit-mode DestroyImmediate skips OnDisable (ghost subscriptions).
     public void Detach()

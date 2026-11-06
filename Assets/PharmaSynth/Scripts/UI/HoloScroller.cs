@@ -40,9 +40,4 @@ public class HoloScroller : MonoBehaviour
         return Mathf.Clamp01(view * 0.85f / (content - view));
     }
 
-    /// Fresh summon starts at the top of the checklist.
-    public void SnapToTop()
-    {
-        if (scrollRect != null) scrollRect.verticalNormalizedPosition = 1f;
-    }
 }

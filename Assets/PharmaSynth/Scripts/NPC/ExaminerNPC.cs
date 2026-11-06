@@ -15,7 +15,7 @@ public class ExaminerNPC : MonoBehaviour
     [SerializeField] private ExperimentRunner runner;
     [SerializeField] private MonoBehaviour faceOrAnimatorHook; // optional visual, wired in art pass
 
-    [Header("Proctor voice (2026-07-10)")]
+    [Header("Proctor voice")]
     [SerializeField] private Animator animator;                 // drives "Talking"
     [SerializeField] private NPCNarrationController narration;  // optional subtitle channel
     [SerializeField] private string talkBool = "Talking";

@@ -19,13 +19,8 @@ public class PharmeeAttitude : MonoBehaviour
     [SerializeField] private float maxLeanDeg = 14f;
     [SerializeField] private float leanPerMps = 22f;             // degrees per m/s
     [SerializeField] private float leanSharpness = 5f;
-    // ⛔ UNUSED. A pure SCALE pulse on a flat horizontal ring reads as a sideways shimmy,
-    // not a thruster (a ~10 Hz blur at 30x). Kept only so the serialized scene values
-    // still deserialize; the rings now FLOW (see below).
-    [SerializeField, HideInInspector] private float wavePulse = 0.12f;
-    [SerializeField, HideInInspector] private float waveSpeedMultiplier = 30f;
 
-    [Header("Thrusters (W5.47) — the rings flow DOWN like exhaust")]
+    [Header("Thrusters — the rings flow DOWN like exhaust")]
     [Tooltip("Cycles per second for the exhaust stream.")]
     [SerializeField] private float flowSpeed = PharmeeThrusterMath.DefaultFlowSpeed;
     [Tooltip("How far a ring falls before it fades out, in local units.")]
@@ -33,13 +28,13 @@ public class PharmeeAttitude : MonoBehaviour
     [Tooltip("How much wider a ring gets by the end of its fall.")]
     [SerializeField] private float flowSpread = PharmeeThrusterMath.DefaultSpread;
 
-    [Header("Talk motion (W5.38)")]
+    [Header("Talk motion")]
     // These were HARDCODED at 2.5 and 1.8 degrees against a 14-degree lean cap, i.e. not
     // actually visible. Serialized now because the readable amplitude is a headset call.
     [SerializeField] private float talkPitchDegrees = 6.5f;
     [SerializeField] private float talkRollDegrees = 3.5f;
 
-    [Header("Gestures (W5.38)")]
+    [Header("Gestures")]
     [SerializeField] private Transform handLeft;                 // model node "Hand origin"
     [SerializeField] private Transform handRight;                // model node "Hand origin.002"
     [Tooltip("Degrees the hand pivots swing up at full raise.")]

@@ -15,12 +15,6 @@ public class DoorOpener : MonoBehaviour
     public bool IsOpen => _isOpen;
     public Transform Door => door;
 
-    public void SetDoor(Transform d, float yaw)
-    {
-        door = d; openYaw = yaw; _cached = false;
-        Cache();
-    }
-
     private void Awake() => Cache();
 
     private void Cache()

@@ -64,11 +64,6 @@ public class PPEController : MonoBehaviour
         PPEWornChanged?.Invoke();
     }
 
-    // UnityEvent-friendly per-piece entry points.
-    public void DonCoat() => Don(PPEPiece.Coat);
-    public void DonGoggles() => Don(PPEPiece.Goggles);
-    public void DonGloves() => Don(PPEPiece.Gloves);
-
     /// Don EVERYTHING at once (legacy host click / dev bypass). Idempotent.
     public void DonPPE()
     {

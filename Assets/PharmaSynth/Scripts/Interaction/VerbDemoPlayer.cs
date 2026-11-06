@@ -31,7 +31,6 @@ public class VerbDemoPlayer : MonoBehaviour
 
     /// Edit-mode / builder seam (AddComponent fires no Awake in edit mode).
     public void Bind(ExperimentRunner r, Material ghost) { runner = r; ghostMaterial = ghost; }
-    public void SetGhostMaterial(Material m) => ghostMaterial = m;
 
     private void Awake() { if (runner == null) runner = FindAnyObjectByType<ExperimentRunner>(); }
 
@@ -102,13 +101,6 @@ public class VerbDemoPlayer : MonoBehaviour
         BuildGhost(mover);
         if (_ghosts.Count == 0) return;              // nothing solid to copy
         _startedAt = Time.time;
-    }
-
-    /// Demonstrate whatever step is available right now.
-    public void ShowCurrent()
-    {
-        if (runner == null || runner.Graph == null || !runner.IsRunning) return;
-        foreach (var t in runner.Graph.AvailableTasks()) { Show(t.taskId); return; }
     }
 
     /// A stir/grind demo turns as many times as the real verb demands, read off the

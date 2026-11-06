@@ -68,10 +68,6 @@ public static class JimenezRigMath
     public static bool IsBetterSegmentEnd(float candidateDistance, float bestSoFar)
         => candidateDistance > bestSoFar;
 
-    /// Bones the freed weight may be handed to, best first.
-    public static bool IsTorsoBone(string boneName)
-        => boneName == "Spine02" || boneName == "Spine01" || boneName == "Waist";
-
     /// Is this arm weight bleed rather than sleeve?
     public static bool IsBleed(float distanceToBone, float sleeveRadius)
         => distanceToBone > sleeveRadius;

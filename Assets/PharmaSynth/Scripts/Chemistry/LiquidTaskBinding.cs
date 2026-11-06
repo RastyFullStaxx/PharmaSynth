@@ -16,7 +16,7 @@ public class LiquidTaskBinding : MonoBehaviour
         public string taskId;
         [Tooltip("Minimum ml poured in before the step completes. 0 = any amount (legacy).")]
         public float requiredMl;
-        [Tooltip("False = the pour is EXPECTED (no wrong-reagent mistake) and accumulates, but completion belongs to another verb (e.g. the weigh station). (W5.8)")]
+        [Tooltip("False = the pour is EXPECTED (no wrong-reagent mistake) and accumulates, but completion belongs to another verb (e.g. the weigh station).")]
         public bool completesTask = true;
     }
 
@@ -619,30 +619,12 @@ public class LiquidTaskBinding : MonoBehaviour
         return 0f;
     }
 
-    /// Reagents this task still expects in this vessel (watch-panel / debug).
-    public int StepsRemaining(string taskId)
-    {
-        int n = 0;
-        for (int i = 0; i < expectedReagents.Count; i++)
-        {
-            var s = expectedReagents[i];
-            if (s != null && s.taskId == taskId && !_satisfied.Contains(s)) n++;
-        }
-        return n;
-    }
-
     public ReagentStep StepForReagent(ChemicalData chem)
     {
         for (int i = 0; i < expectedReagents.Count; i++)
             if (expectedReagents[i] != null && expectedReagents[i].reagent == chem)
                 return expectedReagents[i];
         return null;
-    }
-
-    public string TaskForReagent(ChemicalData chem)
-    {
-        var s = StepForReagent(chem);
-        return s != null ? s.taskId : null;
     }
 
     /// The incoming chemical is one this vessel's OWN procedure names. The wrong-mix

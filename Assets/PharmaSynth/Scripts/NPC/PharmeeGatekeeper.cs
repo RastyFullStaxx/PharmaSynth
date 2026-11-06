@@ -77,7 +77,7 @@ public class PharmeeGatekeeper : MonoBehaviour
     [SerializeField] private HudRigController hudRig;     // snapped after teleports
     [SerializeField] private ReagentSupplyMonitor supplyMonitor;   // insufficiency detector
 
-    [Header("Review corner (post-experiment quiz flow, 2026-07-11)")]
+    [Header("Review corner (post-experiment quiz flow)")]
     [SerializeField] private PostLabController postLab;   // the quiz tablet (autoOpen off in-scene)
     [SerializeField] private Transform reviewCornerSpawn; // lands the player facing Jimenez + tablet
     [Tooltip("Pharmee's physical body (the robot). Leave empty when this component IS on the robot.")]
@@ -997,9 +997,4 @@ public class PharmeeGatekeeper : MonoBehaviour
         frontDoorSpawn = frontDoor; playerRig = rig; cameraOverride = cam; hudRig = hud;
     }
 
-    /// Edit-mode/test binding for the review-corner quiz flow refs.
-    public void BindQuiz(PostLabController quiz, Transform reviewSpawn, ExaminerNPC ex)
-    {
-        postLab = quiz; reviewCornerSpawn = reviewSpawn; examiner = ex;
-    }
 }

@@ -28,7 +28,6 @@ public class ExperimentLauncher : MonoBehaviour
     public LaunchMode StartupMode => startupMode;
     public void SetLibrary(ExperimentLibrary l) => library = l;
     public void SetRunner(ExperimentRunner r) => runner = r;
-    public void SetStartupMode(LaunchMode m) => startupMode = m;
 
     private void Start()
     {
