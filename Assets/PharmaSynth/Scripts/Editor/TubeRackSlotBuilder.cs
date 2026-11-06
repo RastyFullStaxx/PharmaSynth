@@ -98,7 +98,7 @@ public static class TubeRackSlotBuilder
         int slots = 0, purged = PurgeStorageSlots();
         foreach (var h in holders)
         {
-            var b = WorldBounds(h.gameObject);
+            var b = BoundsUtil.OfRenderers(h.gameObject);
             for (int i = 0; i < SlotsPerHolder; i++)
             {
                 var slot = h.transform.Find("Slot_" + i);
@@ -167,13 +167,5 @@ public static class TubeRackSlotBuilder
         => Object.FindObjectsByType<LabItem>(FindObjectsInactive.Include, FindObjectsSortMode.None)
                  .Where(li => li != null && li.itemId == id).ToList();
 
-    static Bounds WorldBounds(GameObject go)
-    {
-        var rs = go.GetComponentsInChildren<Renderer>();
-        if (rs.Length == 0) return new Bounds(go.transform.position, Vector3.one * 0.1f);
-        var b = rs[0].bounds;
-        for (int i = 1; i < rs.Length; i++) b.Encapsulate(rs[i].bounds);
-        return b;
-    }
 }
 #endif

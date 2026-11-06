@@ -27,7 +27,7 @@ public static class DemoModeBuilder
     public static void BuildMenuButton()
     {
         if (Application.isPlaying) { Debug.LogWarning("[DemoModeBuilder] exit Play mode first."); return; }
-        var lab = FindInScene("LaboratoryButton");
+        var lab = SceneFind.InActiveScene("LaboratoryButton");
         var controller = Object.FindAnyObjectByType<MainMenuController>();
         if (lab == null || controller == null)
         {
@@ -84,8 +84,8 @@ public static class DemoModeBuilder
     public static void BuildDemoHud()
     {
         if (Application.isPlaying) { Debug.LogWarning("[DemoModeBuilder] exit Play mode first."); return; }
-        var topRight = FindInScene("TopRight");
-        var hudRig = FindInScene("HudRig");
+        var topRight = SceneFind.InActiveScene("TopRight");
+        var hudRig = SceneFind.InActiveScene("HudRig");
         if (topRight == null || hudRig == null)
         {
             Debug.LogError("[DemoModeBuilder] HudRig/TopRight not found — open SampleScene.unity first.");
@@ -198,29 +198,6 @@ public static class DemoModeBuilder
     }
 
     // ---- helpers -------------------------------------------------------------
-
-    static GameObject FindInScene(string name)
-    {
-        foreach (var root in EditorSceneManager.GetActiveScene().GetRootGameObjects())
-        {
-            if (root.name == name) return root;
-            var t = FindDeep(root.transform, name);
-            if (t != null) return t.gameObject;
-        }
-        return null;
-    }
-
-    static Transform FindDeep(Transform t, string name)
-    {
-        for (int i = 0; i < t.childCount; i++)
-        {
-            var c = t.GetChild(i);
-            if (c.name == name) return c;
-            var deep = FindDeep(c, name);
-            if (deep != null) return deep;
-        }
-        return null;
-    }
 
     static T FirstIncludingInactive<T>() where T : Component
     {

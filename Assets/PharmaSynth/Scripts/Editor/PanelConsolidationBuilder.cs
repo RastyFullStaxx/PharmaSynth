@@ -30,7 +30,7 @@ public static class PanelConsolidationBuilder
 
         // 1. Retire the entrance LabTablet, harvesting its reaction string first.
         string reaction = "";
-        var tablet = FindInScene("LabTablet");
+        var tablet = SceneFind.InActiveScene("LabTablet");
         if (tablet != null)
         {
             var tc = tablet.GetComponent<TabletChecklistController>();
@@ -246,29 +246,6 @@ public static class PanelConsolidationBuilder
     {
         var all = Object.FindObjectsByType<T>(FindObjectsInactive.Include);
         return all.Length > 0 ? all[0] : null;
-    }
-
-    static GameObject FindInScene(string name)
-    {
-        foreach (var root in EditorSceneManager.GetActiveScene().GetRootGameObjects())
-        {
-            if (root.name == name) return root;
-            var t = FindDeep(root.transform, name);
-            if (t != null) return t.gameObject;
-        }
-        return null;
-    }
-
-    static Transform FindDeep(Transform t, string name)
-    {
-        for (int i = 0; i < t.childCount; i++)
-        {
-            var c = t.GetChild(i);
-            if (c.name == name) return c;
-            var deep = FindDeep(c, name);
-            if (deep != null) return deep;
-        }
-        return null;
     }
 
     /// Load-or-create a TMP child on the holo board, styled after the body text.

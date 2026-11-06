@@ -192,18 +192,18 @@ public static class PhysicsAudit
                 tested++;
                 var inst = Object.Instantiate(prefab);
                 inst.transform.localScale = Vector3.one;
-                var size0 = WorldBounds(inst).size;
+                var size0 = BoundsUtil.OfRenderers(inst, 0.05f).size;
                 if (RealSizes.TryGet(prefab.name, out float target))
                     inst.transform.localScale = Vector3.one * RealSizes.UniformScaleFactor(size0, target);
                 PhysicsProfiles.TryGet(prefab.name, out var prof);
-                inst.transform.rotation = PhysicsProfiles.RestRotation(prof.pose, WorldBounds(inst).size);
+                inst.transform.rotation = PhysicsProfiles.RestRotation(prof.pose, BoundsUtil.OfRenderers(inst, 0.05f).size);
                 var rb = PhysicsProfiles.EnsurePhysics(inst, prefab.name);
                 rb.isKinematic = false;                             // the drop under test
-                inst.transform.position = new Vector3(0f, BASE_Y + 0.15f - (WorldBounds(inst).min.y - inst.transform.position.y), 0f);
+                inst.transform.position = new Vector3(0f, BASE_Y + 0.15f - (BoundsUtil.OfRenderers(inst, 0.05f).min.y - inst.transform.position.y), 0f);
 
                 for (int step = 0; step < 180; step++) Physics.Simulate(1f / 60f);
 
-                var b = WorldBounds(inst);
+                var b = BoundsUtil.OfRenderers(inst, 0.05f);
                 if (b.min.y < BASE_Y - 0.05f) { log.Add($"FAIL {prefab.name}: tunnelled through the floor (minY {b.min.y - BASE_Y:F3})"); fails++; }
                 else if (new Vector2(b.center.x, b.center.z).magnitude > 0.5f) { log.Add($"FAIL {prefab.name}: rolled {new Vector2(b.center.x, b.center.z).magnitude:F2} m away"); fails++; }
                 else if (!PhysicsProfiles.IsRestingPlausible(prof.pose, b.size)) { log.Add($"FAIL {prefab.name}: implausible resting pose ({prof.pose}, size {b.size})"); fails++; }
@@ -221,14 +221,6 @@ public static class PhysicsAudit
     }
 
     // ---- helpers ------------------------------------------------------------
-
-    static Bounds WorldBounds(GameObject g)
-    {
-        var rs = g.GetComponentsInChildren<Renderer>();
-        Bounds b = rs.Length > 0 ? rs[0].bounds : new Bounds(g.transform.position, Vector3.one * 0.05f);
-        for (int i = 1; i < rs.Length; i++) b.Encapsulate(rs[i].bounds);
-        return b;
-    }
 
     /// Apparatus instances in the open scene: children of the known prop groups
     /// plus anything carrying a LabItem or LiquidPhysics.

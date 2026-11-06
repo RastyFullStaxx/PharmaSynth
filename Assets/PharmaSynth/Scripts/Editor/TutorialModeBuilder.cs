@@ -24,7 +24,7 @@ public static class TutorialModeBuilder
     public static void BuildMenuButton()
     {
         if (Application.isPlaying) { Debug.LogWarning("[TutorialModeBuilder] exit Play mode first."); return; }
-        var lab = FindInScene("LaboratoryButton");
+        var lab = SceneFind.InActiveScene("LaboratoryButton");
         var controller = Object.FindAnyObjectByType<MainMenuController>();
         if (lab == null || controller == null)
         {
@@ -119,7 +119,7 @@ public static class TutorialModeBuilder
     public static void FixMenuLayout()
     {
         if (Application.isPlaying) { Debug.LogWarning("[TutorialModeBuilder] exit Play mode first."); return; }
-        var lab = FindInScene("LaboratoryButton");
+        var lab = SceneFind.InActiveScene("LaboratoryButton");
         if (lab == null)
         {
             Debug.LogError("[TutorialModeBuilder] LaboratoryButton not found — open MainMenu.unity first.");
@@ -192,7 +192,7 @@ public static class TutorialModeBuilder
     public static void BuildRoomFx()
     {
         if (Application.isPlaying) { Debug.LogWarning("[TutorialModeBuilder] exit Play mode first."); return; }
-        var canvasGo = FindInScene("MenuCanvas");
+        var canvasGo = SceneFind.InActiveScene("MenuCanvas");
         if (canvasGo == null)
         {
             Debug.LogError("[TutorialModeBuilder] MenuCanvas not found — open MainMenu.unity first.");
@@ -631,27 +631,5 @@ public static class TutorialModeBuilder
 
     // ---- helpers -------------------------------------------------------------
 
-    static GameObject FindInScene(string name)
-    {
-        foreach (var root in EditorSceneManager.GetActiveScene().GetRootGameObjects())
-        {
-            if (root.name == name) return root;
-            var t = FindDeep(root.transform, name);
-            if (t != null) return t.gameObject;
-        }
-        return null;
-    }
-
-    static Transform FindDeep(Transform t, string name)
-    {
-        for (int i = 0; i < t.childCount; i++)
-        {
-            var c = t.GetChild(i);
-            if (c.name == name) return c;
-            var deep = FindDeep(c, name);
-            if (deep != null) return deep;
-        }
-        return null;
-    }
 }
 #endif

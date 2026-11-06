@@ -15,8 +15,8 @@ public static class ReviewCornerBuilder
     {
         if (Application.isPlaying) { Debug.LogWarning("[ReviewCorner] exit Play mode first."); return; }
 
-        var tablet = FindInScene("PostLabTablet");
-        var jimenez = FindInScene("DrJimenez");
+        var tablet = SceneFind.InActiveScene("PostLabTablet");
+        var jimenez = SceneFind.InActiveScene("DrJimenez");
         var gatekeeper = FirstIncludingInactive<PharmeeGatekeeper>();
         var postLab = FirstIncludingInactive<PostLabController>();
         var examiner = FirstIncludingInactive<ExaminerNPC>();
@@ -59,29 +59,6 @@ public static class ReviewCornerBuilder
         EditorSceneManager.SaveOpenScenes();
         Debug.Log("[ReviewCorner] spawn at " + pos.ToString("F2") + ", gatekeeper wired (postLab/examiner"
                   + (examiner == null ? " — NO ExaminerNPC found!" : "") + "), quiz autoOpen=false.");
-    }
-
-    static GameObject FindInScene(string name)
-    {
-        foreach (var root in EditorSceneManager.GetActiveScene().GetRootGameObjects())
-        {
-            if (root.name == name) return root;
-            var t = FindDeep(root.transform, name);
-            if (t != null) return t.gameObject;
-        }
-        return null;
-    }
-
-    static Transform FindDeep(Transform t, string name)
-    {
-        for (int i = 0; i < t.childCount; i++)
-        {
-            var c = t.GetChild(i);
-            if (c.name == name) return c;
-            var deep = FindDeep(c, name);
-            if (deep != null) return deep;
-        }
-        return null;
     }
 
     static T FirstIncludingInactive<T>() where T : Component

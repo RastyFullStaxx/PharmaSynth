@@ -32,7 +32,7 @@ public static class HandVisualsBuilder
 
         // The wrist watch may live under a previous HandVisual — rescue it onto
         // the controller before the wipe so a rebuild never destroys it.
-        var watch = Find("WristWatch");
+        var watch = SceneFind.AnyByName("WristWatch");
         var leftCtrlPre = FindDeep(xr, "Left Controller");
         if (watch != null && leftCtrlPre != null && watch.transform.parent != leftCtrlPre)
             watch.transform.SetParent(leftCtrlPre, true);
@@ -49,8 +49,8 @@ public static class HandVisualsBuilder
         var ppe = Object.FindFirstObjectByType<PPEController>(FindObjectsInactive.Include);
         if (ppe != null)
         {
-            var coat = Find("WornCoat"); var gog = Find("WornGoggles");
-            var gL = Find("WornGlove_L"); var gR = Find("WornGlove_R");
+            var coat = SceneFind.AnyByName("WornCoat"); var gog = SceneFind.AnyByName("WornGoggles");
+            var gL = SceneFind.AnyByName("WornGlove_L"); var gR = SceneFind.AnyByName("WornGlove_R");
             ppe.BindVisuals(
                 coat != null ? new[] { coat } : new GameObject[0],
                 gog != null ? new[] { gog } : new GameObject[0],
@@ -242,13 +242,6 @@ public static class HandVisualsBuilder
         AssetDatabase.CreateAsset(mat, path);
         AssetDatabase.SaveAssets();
         return mat;
-    }
-
-    static GameObject Find(string name)
-    {
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            if (t != null && t.name == name) return t.gameObject;
-        return null;
     }
 
     static Transform FindDeep(GameObject root, string exact)

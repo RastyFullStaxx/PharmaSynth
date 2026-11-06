@@ -205,12 +205,12 @@ public static class WorkspaceKitsBuilder
     static void PlaceItem(GameObject g, string prefabName, Vector3 slotTop, float slotWidth)
     {
         PhysicsProfiles.TryGet(prefabName, out var prof);
-        g.transform.rotation = PhysicsProfiles.RestRotation(prof.pose, WorldBounds(g).size);
-        var b = WorldBounds(g);
+        g.transform.rotation = PhysicsProfiles.RestRotation(prof.pose, BoundsUtil.OfRenderers(g, 0.05f).size);
+        var b = BoundsUtil.OfRenderers(g, 0.05f);
         if (b.size.x > slotWidth + 0.02f)   // long tools lie front-to-back instead
         {
             g.transform.rotation = Quaternion.Euler(0f, 90f, 0f) * g.transform.rotation;
-            b = WorldBounds(g);
+            b = BoundsUtil.OfRenderers(g, 0.05f);
         }
         float lift = g.transform.position.y - b.min.y;
         g.transform.position = new Vector3(slotTop.x, slotTop.y + lift + 0.002f, slotTop.z);
@@ -294,7 +294,7 @@ public static class WorkspaceKitsBuilder
         var rdr = rack.GetComponent<DropRespawn>();
         if (rdr != null) Object.DestroyImmediate(rdr);   // the rack never wanders home
 
-        var b = WorldBounds(rack);
+        var b = BoundsUtil.OfRenderers(rack, 0.05f);
         var holes = new Transform[count];
         var tubes = new GameObject[count];
         for (int i = 0; i < count; i++)
@@ -308,7 +308,7 @@ public static class WorkspaceKitsBuilder
             tube.name = "Kit_" + tubeLabel.Replace(" ", "") + "_" + i;
             NormaliseTo(tube, tubePrefab);
             tube.transform.rotation = Quaternion.identity;   // tubes stand upright in the rack
-            var tb = WorldBounds(tube);
+            var tb = BoundsUtil.OfRenderers(tube, 0.05f);
             tube.transform.position = new Vector3(pos.x, pos.y + (tube.transform.position.y - tb.min.y), pos.z);
             if (hardGlass) ApplyHardGlassTint(tube);
             WireKitItem(tube, tubePrefab, tubeLabel, runner, registry);   // home = this hole
@@ -378,16 +378,9 @@ public static class WorkspaceKitsBuilder
     static void NormaliseTo(GameObject g, string prefabName)
     {
         if (!RealSizes.TryGet(prefabName, out float target)) return;
-        var b = WorldBounds(g);
+        var b = BoundsUtil.OfRenderers(g, 0.05f);
         g.transform.localScale *= RealSizes.UniformScaleFactor(b.size, target);
     }
 
-    static Bounds WorldBounds(GameObject g)
-    {
-        var rs = g.GetComponentsInChildren<Renderer>();
-        Bounds b = rs.Length > 0 ? rs[0].bounds : new Bounds(g.transform.position, Vector3.one * 0.05f);
-        for (int i = 1; i < rs.Length; i++) b.Encapsulate(rs[i].bounds);
-        return b;
-    }
 }
 #endif

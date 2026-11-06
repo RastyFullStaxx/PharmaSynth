@@ -19,9 +19,9 @@ public static class RevealMethaneAndWaypoint
         var sb = new StringBuilder();
 
         // 1) Methane stage + its stations (the loose props are already visible).
-        var stage = Find("MethaneStage");
+        var stage = SceneFind.AnyByName("MethaneStage");
         if (stage != null && !stage.activeSelf) { stage.SetActive(true); sb.Append("MethaneStage shown; "); }
-        var stations = Find("MethaneStations");
+        var stations = SceneFind.AnyByName("MethaneStations");
         if (stations != null)
         {
             Selection.activeGameObject = stations;
@@ -29,7 +29,7 @@ public static class RevealMethaneAndWaypoint
         }
 
         // 2) Waypoint marker: reveal it + drop the yellow ground glow (arrow only).
-        var marker = Find("WaypointMarker");
+        var marker = SceneFind.AnyByName("WaypointMarker");
         if (marker != null)
         {
             if (!marker.activeSelf) marker.SetActive(true);
@@ -45,11 +45,5 @@ public static class RevealMethaneAndWaypoint
         Debug.Log("<color=#4CD07D>[Reveal] " + sb + "</color>");
     }
 
-    static GameObject Find(string name)
-    {
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            if (t.name == name) return t.gameObject;
-        return null;
-    }
 }
 #endif

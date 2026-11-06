@@ -188,10 +188,10 @@ public static class ManualLayoutAdopter
         var inst = (GameObject)Object.Instantiate(prefab);
         inst.name = "DistillingFlask";
         // Real size + rest pose + seat next to the anchor.
-        var b = WorldBounds(inst);
+        var b = BoundsUtil.OfRenderers(inst);
         if (RealSizes.TryGet("DistillingFlask", out float target))
             inst.transform.localScale *= RealSizes.UniformScaleFactor(b.size, target);
-        b = WorldBounds(inst);
+        b = BoundsUtil.OfRenderers(inst);
         Vector3 pos = anchor != null
             ? anchor.position + new Vector3(0.14f, 0f, 0f)
             : new Vector3(0f, 1.0f, -3.0f);
@@ -239,12 +239,5 @@ public static class ManualLayoutAdopter
         return b.min.y;
     }
 
-    static Bounds WorldBounds(GameObject g)
-    {
-        var rs = g.GetComponentsInChildren<Renderer>();
-        Bounds b = rs.Length > 0 ? rs[0].bounds : new Bounds(g.transform.position, Vector3.one * 0.1f);
-        for (int i = 1; i < rs.Length; i++) b.Encapsulate(rs[i].bounds);
-        return b;
-    }
 }
 #endif

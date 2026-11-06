@@ -700,6 +700,16 @@ void Bind(Style s, Vector3 hazeSize)
 void Build()
 ```
 
+### `BoundsUtil` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/BoundsUtil.cs`</sub>
+
+The plain "how big is this object" measure: the union of the renderer bounds of an object and its children. Builders use it to place and size furniture and kits. Not for task vessels at runtime: `ExperimentSceneBuilder.SolidWorldBounds` skips the effect children (pour streams, fill layers, name labels) that drag a vessel's bounds toward the floor.
+
+```csharp
+static Bounds OfRenderers(GameObject g, float fallbackSize
+static Bounds OfRenderers(Renderer[] rs)
+```
+
 ### `BreakableGlassware` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/BreakableGlassware.cs`</sub>
 
@@ -4766,6 +4776,18 @@ static void Apply()
 static void Remove()
 ```
 
+### `SceneFind` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/SceneFind.cs`</sub>
+
+Find scene objects by exact name from editor builders. Two lookups because they answer different questions: - `AnyByName`: any loaded object, active or not. The order is whatever Unity returns, so use it only for names that are unique in the scene. - `InActiveScene`: the active scene only, roots first then depth-first. Deterministic, so the first of several same-named objects is always the same one.
+
+```csharp
+static GameObject AnyByName(string name)
+static Transform AnyTransform(string name)
+static GameObject InActiveScene(string name)
+static Transform Deep(Transform t, string name)
+```
+
 ### `SceneRepairs` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SceneRepairs.cs`</sub>
 
@@ -4779,7 +4801,6 @@ static readonly string[] FixedRacks
 static void FixRacksAnchored()
 static readonly string[] YieldWidgets
 static void FixYieldGone()
-static GameObject FindAnyByName(string n)
 static void FixGrabbable()
 static void FixWashBottle()
 static void FixFlorenceFlask()

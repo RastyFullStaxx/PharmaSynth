@@ -30,7 +30,7 @@ public static class AlignExperimentStages
         int moved = 0;
         foreach (var name in new[] { "DynamicStage", "MethaneStage" })
         {
-            var stage = Find(name);
+            var stage = SceneFind.AnyByName(name);
             if (stage == null) continue;
             stage.transform.position = delta;   // absolute → idempotent
             moved++;
@@ -43,11 +43,5 @@ public static class AlignExperimentStages
                   + "If it's off, tell me the table's target spot and I'll adjust the reference.");
     }
 
-    static GameObject Find(string name)
-    {
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            if (t.name == name) return t.gameObject;
-        return null;
-    }
 }
 #endif

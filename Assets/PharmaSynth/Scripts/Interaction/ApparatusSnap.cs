@@ -147,7 +147,7 @@ public class ApparatusSnap : MonoBehaviour
     private ApparatusSnap FindHost(out SnapAnchor anchor)
     {
         anchor = SnapAnchor.TopCenter;
-        var myB = WorldBounds(gameObject);
+        var myB = BoundsUtil.OfRenderers(gameObject, 0.05f);
         var cols = Physics.OverlapSphere(myB.center, AssemblyMath.SnapRadius, ~0, QueryTriggerInteraction.Ignore);
         ApparatusSnap best = null;
         float bestDist = float.MaxValue;
@@ -166,14 +166,14 @@ public class ApparatusSnap : MonoBehaviour
 
     public void Attach(ApparatusSnap host, SnapAnchor anchor)
     {
-        var hostB = WorldBounds(host.gameObject);
-        var partB = WorldBounds(gameObject);
+        var hostB = BoundsUtil.OfRenderers(host.gameObject, 0.05f);
+        var partB = BoundsUtil.OfRenderers(gameObject, 0.05f);
 
         _preAttachParent = transform.parent;
         transform.SetParent(host.transform, true);
         // Upright, aligned with the host's yaw, seated per the anchor rule.
         transform.rotation = Quaternion.Euler(0f, host.transform.eulerAngles.y, 0f);
-        var seated = WorldBounds(gameObject);
+        var seated = BoundsUtil.OfRenderers(gameObject, 0.05f);
         Vector3 target = AssemblyMath.SeatCenter(anchor, hostB, seated);
         transform.position += target - seated.center;
 
@@ -272,11 +272,4 @@ public class ApparatusSnap : MonoBehaviour
         manager.RegisterInteractable(_grab as UnityEngine.XR.Interaction.Toolkit.Interactables.IXRInteractable);
     }
 
-    static Bounds WorldBounds(GameObject g)
-    {
-        var rs = g.GetComponentsInChildren<Renderer>();
-        Bounds b = rs.Length > 0 ? rs[0].bounds : new Bounds(g.transform.position, Vector3.one * 0.05f);
-        for (int i = 1; i < rs.Length; i++) b.Encapsulate(rs[i].bounds);
-        return b;
-    }
 }

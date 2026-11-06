@@ -70,7 +70,7 @@ public static class CenterTableBuilder
         // The pivot is the island DECK's own centre (not the layout footprint's) —
         // pivoting on the footprint shears everything that sat near the deck ends
         // (wash-table-zone positions) off the rotated deck.
-        Bounds leftDeck = RendererBoundsOf(leftIsland);
+        Bounds leftDeck = BoundsUtil.OfRenderers(leftIsland.gameObject, 1f, true);
         Vector3 oldPivot = new Vector3(leftDeck.center.x, oldCenter.y, leftDeck.center.z);
         Vector3 newCenter = new Vector3(NewCenterXZ.x, oldCenter.y, NewCenterXZ.z);
         // Membership: the deck itself plus a skirt for the sinks at its ends.
@@ -79,7 +79,7 @@ public static class CenterTableBuilder
         // The hand-built MethaneStage lives on the RIGHT island — measure that
         // deck too, so the tutorial stage rides onto the merged table (the two
         // stages never show simultaneously, so they may share the deck space).
-        Bounds rightDeck = rightIsland != null ? RendererBoundsOf(rightIsland) : new Bounds();
+        Bounds rightDeck = rightIsland != null ? BoundsUtil.OfRenderers(rightIsland.gameObject, 1f, true) : new Bounds();
         Vector3 rightPivot = rightIsland != null
             ? new Vector3(rightDeck.center.x, oldCenter.y, rightDeck.center.z)
             : oldPivot;
@@ -127,7 +127,7 @@ public static class CenterTableBuilder
         // Any straggler (odd geometry at the old deck ends) is CLAMPED onto the
         // moved deck so no station/prop can ever spawn floating.
         Physics.SyncTransforms();
-        Bounds newDeck = RendererBoundsOf(leftIsland);
+        Bounds newDeck = BoundsUtil.OfRenderers(leftIsland.gameObject, 1f, true);
         int ok = 0, clamped = 0;
         foreach (var lay in layouts)
         {
@@ -164,15 +164,6 @@ public static class CenterTableBuilder
         return false;
     }
 
-    /// Combined world renderer bounds of a subtree.
-    static Bounds RendererBoundsOf(Transform t)
-    {
-        var rends = t.GetComponentsInChildren<Renderer>(true);
-        if (rends.Length == 0) return new Bounds(t.position, Vector3.one);
-        var b = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
-        return b;
-    }
 
     static void CollectPositions(ExperimentLayout lay, List<Vector3> into)
     {

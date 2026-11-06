@@ -131,22 +131,12 @@ public static class SceneRepairs
         int removed = 0;
         foreach (string n in YieldWidgets)
         {
-            var go = FindAnyByName(n);
+            var go = SceneFind.AnyByName(n);
             if (go == null) continue;
             Undo.DestroyObjectImmediate(go);
             removed++;
         }
         return removed;
-    }
-
-    /// GameObject.Find only sees ACTIVE objects, and the data sheet / quiz panel is
-    /// disabled until the review, so a plain Find silently reports "nothing to
-    /// do" for every widget on it. Search inactive too.
-    public static GameObject FindAnyByName(string n)
-    {
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            if (t != null && t.name == n) return t.gameObject;
-        return null;
     }
 
     // ---- 1. ungrabbable apparatus -------------------------------------------

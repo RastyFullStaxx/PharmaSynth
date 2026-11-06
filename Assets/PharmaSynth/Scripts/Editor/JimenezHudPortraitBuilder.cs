@@ -73,7 +73,7 @@ public static class JimenezHudPortraitBuilder
             if (head != null) focus = head.position + Vector3.up * 0.06f;
             else
             {
-                var b = Bounds(inst);
+                var b = BoundsUtil.OfRenderers(inst, 1f);
                 focus = new Vector3(b.center.x, b.max.y - b.size.y * 0.12f, b.center.z);
             }
 
@@ -175,15 +175,6 @@ public static class JimenezHudPortraitBuilder
         ti.mipmapEnabled = false;
         ti.maxTextureSize = 2048;
         ti.SaveAndReimport();
-    }
-
-    static Bounds Bounds(GameObject go)
-    {
-        var rends = go.GetComponentsInChildren<Renderer>();
-        if (rends.Length == 0) return new Bounds(go.transform.position, Vector3.one);
-        var b = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
-        return b;
     }
 
     static void SetLayer(GameObject go, int layer)

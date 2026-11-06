@@ -4017,7 +4017,7 @@ public static class PharmaSelfTests
             var stillGrabbable = new List<string>();
             foreach (string rn in SceneRepairs.FixedRacks)
             {
-                var go = SceneRepairs.FindAnyByName(rn);
+                var go = SceneFind.AnyByName(rn);
                 if (go == null) continue;                       // not in this scene — fine
                 if (go.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>() != null)
                     stillGrabbable.Add(rn);
@@ -4034,7 +4034,7 @@ public static class PharmaSelfTests
         {
             var ghosts = new List<string>();
             foreach (string yn in SceneRepairs.YieldWidgets)
-                if (SceneRepairs.FindAnyByName(yn) != null) ghosts.Add(yn);
+                if (SceneFind.AnyByName(yn) != null) ghosts.Add(yn);
             A("postlab: the yield stepper is gone ("
               + (ghosts.Count == 0 ? "clean" : string.Join(",", ghosts) + " still present") + ")",
               ghosts.Count == 0);
@@ -6695,6 +6695,22 @@ public static class PharmaSelfTests
     // an early pour recovers by itself, and shelf stock can never be contaminated.
     static void ForgivenessSuite()
     {
+        // Shared measure for builders: renderer union, or a fallback cube when nothing renders.
+        {
+            var parent = new GameObject("bounds_parent");
+            var a = GameObject.CreatePrimitive(PrimitiveType.Cube); a.transform.SetParent(parent.transform); a.transform.position = Vector3.zero;
+            var b = GameObject.CreatePrimitive(PrimitiveType.Cube); b.transform.SetParent(parent.transform); b.transform.position = new Vector3(2f, 0f, 0f);
+            var empty = new GameObject("bounds_empty"); empty.transform.position = new Vector3(5f, 0f, 0f);
+            try
+            {
+                var u = BoundsUtil.OfRenderers(parent);
+                var f = BoundsUtil.OfRenderers(empty, 0.05f);
+                A("util: bounds are the union of every child renderer", Near(u.min.x, -0.5f) && Near(u.max.x, 2.5f));
+                A("util: no renderer gives a fallback cube at the object", Near(f.size.x, 0.05f) && Near(f.center.x, 5f));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(parent); UnityEngine.Object.DestroyImmediate(empty); }
+        }
+
         A("forgive: a held bottle with nothing under it only trickles; a knocked-over one spills fully",
             Near(PourMath.SpillAmount(10f, true, false), 1.5f) && Near(PourMath.SpillAmount(10f, true, true), 10f)
             && Near(PourMath.SpillAmount(10f, false, false), 10f));

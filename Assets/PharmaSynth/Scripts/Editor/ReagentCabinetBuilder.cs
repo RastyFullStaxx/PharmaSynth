@@ -169,8 +169,8 @@ public static class ReagentCabinetBuilder
     /// re-arrangement is never snapped back by a re-run.
     static void RelocatePrinter()
     {
-        var printer = FindDeepByName("Printe");
-        if (printer == null) printer = FindDeepByName("Printer");
+        var printer = SceneFind.AnyTransform("Printe");
+        if (printer == null) printer = SceneFind.AnyTransform("Printer");
         if (printer == null) { Debug.LogWarning("[ReagentCabinets] no printer found to relocate."); return; }
 
         bool inCabinetZone = printer.position.x > 3.6f && printer.position.z > -2.3f;
@@ -203,13 +203,6 @@ public static class ReagentCabinetBuilder
         if (label == null) label = go.AddComponent<ProximityLabel>();
         label.SetLabel("Printer", 1.4f);
         Debug.Log("[ReagentCabinets] printer relocated to the side table + grabbable.");
-    }
-
-    static Transform FindDeepByName(string name)
-    {
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))
-            if (t.name == name) return t;
-        return null;
     }
 
     /// ⛔ NEVER re-stock these: the ice bucket and the paper/stick consumable boxes
@@ -347,7 +340,7 @@ public static class ReagentCabinetBuilder
         var rends = inst.GetComponentsInChildren<Renderer>(true);
         if (rends.Length > 0)
         {
-            var b = CombinedBounds(rends);
+            var b = BoundsUtil.OfRenderers(rends);
             if (b.size.y > 0.001f) inst.transform.localScale *= targetH / b.size.y;
             // ⛔ Put the MESH on the pivot, never the pivot wherever the model's baked offset
             // leaves it. A Tripo export can carry its geometry metres from its own
@@ -357,7 +350,7 @@ public static class ReagentCabinetBuilder
             // children shift so the mesh's bottom-centre sits on it (base on the pivot, like
             // every hand-modelled beaker), 5 mm proud of the shelf.
             inst.transform.position = pos;
-            b = CombinedBounds(inst.GetComponentsInChildren<Renderer>(true));
+            b = BoundsUtil.OfRenderers(inst.GetComponentsInChildren<Renderer>(true));
             Vector3 shift = pos - new Vector3(b.center.x, b.min.y, b.center.z);
             foreach (Transform child in inst.transform) child.position += shift;
             inst.transform.position = new Vector3(pos.x, pos.y + 0.005f, pos.z);
@@ -368,7 +361,7 @@ public static class ReagentCabinetBuilder
             // Size the grab box from the mesh it now wraps. A fixed targetH box gives the
             // matchstick a 1 mm collider and leaves the ice bucket's box 1.9 m from the bucket.
             var col = inst.AddComponent<BoxCollider>();
-            var bb = CombinedBounds(inst.GetComponentsInChildren<Renderer>(true));
+            var bb = BoundsUtil.OfRenderers(inst.GetComponentsInChildren<Renderer>(true));
             var ls = inst.transform.lossyScale;
             if (bb.size.sqrMagnitude > 0f)
             {
@@ -449,7 +442,7 @@ public static class ReagentCabinetBuilder
     static void AttachDispenser(GameObject box, Transform parent, string chem, Vector3 pos)
     {
         var rends = box.GetComponentsInChildren<Renderer>(true);
-        float topY = rends.Length > 0 ? CombinedBounds(rends).max.y + 0.008f : pos.y + 0.07f;
+        float topY = rends.Length > 0 ? BoundsUtil.OfRenderers(rends).max.y + 0.008f : pos.y + 0.07f;
         Vector3 restPos = new Vector3(pos.x, topY, pos.z);
 
         var anchor = new GameObject("SingleRest");
@@ -481,11 +474,11 @@ public static class ReagentCabinetBuilder
             var rends = bucket.GetComponentsInChildren<Renderer>(true);
             if (rends.Length > 0)
             {
-                var b = CombinedBounds(rends);
+                var b = BoundsUtil.OfRenderers(rends);
                 if (b.size.y > 0.001f) bucket.transform.localScale *= 0.16f / b.size.y;
                 // Tripo pivots at the model centre — seat the mesh base on the shelf.
                 bucket.transform.position = pos;
-                b = CombinedBounds(bucket.GetComponentsInChildren<Renderer>(true));
+                b = BoundsUtil.OfRenderers(bucket.GetComponentsInChildren<Renderer>(true));
                 bucket.transform.position = new Vector3(pos.x, pos.y + (pos.y - b.min.y) + 0.005f, pos.z);
             }
             else bucket.transform.position = pos + new Vector3(0f, 0.08f, 0f);
@@ -676,7 +669,7 @@ public static class ReagentCabinetBuilder
             var col = go.AddComponent<BoxCollider>();
             if (rends.Length > 0)
             {
-                var b = CombinedBounds(rends);
+                var b = BoundsUtil.OfRenderers(rends);
                 col.center = go.transform.InverseTransformPoint(b.center);
                 Vector3 ls = go.transform.lossyScale;
                 col.size = new Vector3(b.size.x / Mathf.Max(1e-4f, Mathf.Abs(ls.x)),
@@ -731,11 +724,5 @@ public static class ReagentCabinetBuilder
         return m;
     }
 
-    static Bounds CombinedBounds(Renderer[] rends)
-    {
-        var b = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
-        return b;
-    }
 }
 #endif

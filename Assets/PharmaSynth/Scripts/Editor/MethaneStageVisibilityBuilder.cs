@@ -15,7 +15,7 @@ public static class MethaneStageVisibilityBuilder
     {
         if (Application.isPlaying) { Debug.LogWarning("[MethaneVis] exit Play mode first."); return; }
 
-        GameObject stage = FindInactive("MethaneStage");
+        GameObject stage = SceneFind.AnyByName("MethaneStage");
         var runner = Object.FindAnyObjectByType<ExperimentRunner>(FindObjectsInactive.Include);
         var tour = Object.FindAnyObjectByType<LabTourGuide>(FindObjectsInactive.Include);
         if (stage == null || runner == null)
@@ -37,11 +37,5 @@ public static class MethaneStageVisibilityBuilder
                   + (tour == null ? " (⚠ no LabTourGuide found — tour case inactive)" : "") + ".</color>");
     }
 
-    static GameObject FindInactive(string name)
-    {
-        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            if (t.name == name) return t.gameObject;
-        return null;
-    }
 }
 #endif
