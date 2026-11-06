@@ -63,14 +63,14 @@ namespace** (no `namespace` declarations — inherited convention, kept).
 Assets/PharmaSynth/Scripts/
   Experiment/    the run itself: TaskGraph, module defs, runner, mistakes, quizzes
   Chemistry/     liquids, pouring, reactions, temperature, gas/crystallise/filter
-  Interaction/   the physical lab: verbs, grabbing, breakage, stage building, feedback
+  Interaction/   the physical lab: verbs, grabbing, breakage, stage building, feedback,
+                 tutorial guidance (TutorialCoach lives in UI/)
   Scoring/       BKT mastery, rubric, the two-part gate
   Progression/   save file, catalog, unlock chain, demo mode, results
   NPC/           Pharmee, Dr. Jimenez, dialogue pools, cutscenes, tour guide
   UI/            HUD, wrist watch, quiz tablet, grade screen, fader, settings
   Safety/        PPE, fume hood, hazard zones
   Audio/         AudioService, SoundBank, voice
-  Tutorial/      ungraded guided practice mode
   Editor/        the self-test suite + 100+ builder menus (editor-only assembly)
 ```
 

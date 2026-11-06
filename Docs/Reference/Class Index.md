@@ -357,6 +357,21 @@ void Flow(Color tint)
 ```
 
 ### `LiquidPhysics` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Chemistry/LiquidPhysics.Visuals.cs`</sub>
+
+Drawing the contents: fill level, colour, powder mound, boil and wobble.
+
+```csharp
+static bool ShouldAdoptHostRenderer(Material hostMaterial)
+static float DisplayFill01(float ml, float maxVolume)
+static bool ShowsAsDryPowder(PhysicalState state, bool wetted)
+static bool DrawsLiquidColumn(float ml, bool dryPowder, bool hasMound)
+float BoilAmount()
+static float BoilFor(float volumeMl, float tempC, float boilingPointC)
+void UpdateAllVisuals()
+```
+
+### `LiquidPhysics` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/LiquidPhysics.cs`</sub>
 
 ```csharp
@@ -958,6 +973,28 @@ List<Vessel> vessels
 ```
 
 ### `ExperimentSceneBuilder` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/ExperimentSceneBuilder.Fitting.cs`</sub>
+
+Fitting liquids, labels and colliders to a vessel's mesh, plus shared helpers.
+
+```csharp
+static Bounds LocalMeshBounds(Transform root, params string[] skipNames)
+static int LongestAxis(Vector3 size)
+static int VesselAxis(Vector3 size)
+static Quaternion AxisAlign(int axis)
+static float BoreOf(Vector3 size, int axis)
+static void EnsurePowderVisual(GameObject inst, ChemicalData chem, float fill01
+static bool IsEffectChild(string childName)
+static bool IsSolidMesh(MeshFilter mf)
+static Bounds SolidWorldBounds(GameObject g)
+```
+
+### `ExperimentSceneBuilder` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Interaction/ExperimentSceneBuilder.Spawning.cs`</sub>
+
+Spawning and wiring each kind of stage object: vessels, stations, sensors and bench bindings.
+
+### `ExperimentSceneBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/ExperimentSceneBuilder.cs`</sub>
 
 Spawns an experiment's physical setup (stations, grabbable props, reagent vessels) from its ExperimentLayout when a module loads — so all 9 experiments live in one lab scene. The hand-built Methane objects stay as a grouped stage that is simply toggled; every other experiment is built into a DynamicStage that is cleared and rebuilt on each module change.
@@ -973,10 +1010,6 @@ int Build(string moduleId)
 <sub>`Assets/PharmaSynth/Scripts/Interaction/ExperimentSceneBuilder.cs`</sub>
 
 One family's interchangeable glassware: the module's roles for that kind, in role order, and every bench object that may play one of them.
-
-```csharp
-static float BenchMaxVolumeFor(string prefabName, float current)
-```
 
 ### `ExperimentStarter` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/ExperimentStarter.cs`</sub>
@@ -2896,6 +2929,38 @@ void SetExpression(PharmeeFaceExpression e)
 ```
 
 ### `PharmeeGatekeeper` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeGatekeeper.ReturnLoop.cs`</sub>
+
+After the grade: pass and fail exits, the lab reset and the trip home.
+
+```csharp
+void OnContinueAfterPass()
+void OnAbandonAfterFail()
+void SpeakWelcome()
+void ResetToEntrance()
+void OnRetryRequested()
+void Bind(NPCNarrationController n, ChoicePanelController p, PPEController ppeCtrl,
+```
+
+### `PharmeeGatekeeper` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeGatekeeper.Review.cs`</sub>
+
+The post-experiment review corner: briefing, quiz tablet and grade screen.
+
+```csharp
+static bool ShouldEnterReview()
+```
+
+### `PharmeeGatekeeper` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeGatekeeper.States.cs`</sub>
+
+Applying each gate state to the scene (door, dialogue, panel, fades) and the lab tour.
+
+```csharp
+void OnSupplyExhausted(List<string> starvedTaskIds)
+```
+
+### `PharmeeGatekeeper` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/PharmeeGatekeeper.cs`</sub>
 
 Thin scene driver for the GatekeeperModel: applies each state to the world — door blocker on/off, Pharmee lines, the door choice panel, stage loading with fades, and the walk-in run start. All heavy logic lives in the pure model.
@@ -2910,12 +2975,12 @@ GatekeeperModel Model
 static readonly ExperimentPeriod[] EpisodeRows
 void SetSubtitlePace(float speed)
 static void ResetSessionState()
-static bool ShouldEnterReview()
 void OnApproachTriggerEntered()
 void OnPharmeeTalk()
 void OnThresholdTriggerEntered()
 void OnPPEWorn()
 void OnPanelOption(int index)
+static bool ReviewFlowActive
 ```
 
 ### `PharmeeGesture` <sub>enum</sub>

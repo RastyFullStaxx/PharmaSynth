@@ -17,6 +17,7 @@ the thing it described, so there is exactly one place a fact may live.
 | If you are… | Read |
 |---|---|
 | New to the project | This page, then [[Architecture MOC]] |
+| New to the code | [[DEVELOPER]] |
 | Working on an experiment's chemistry or steps | [[experiments-reference]] |
 | Working on a mechanic (liquids, verbs, NPCs, UI) | [[systems-reference]] via [[Systems MOC]] |
 | Working on flow, grading, or the door gate | [[gameplay-flow]] |
