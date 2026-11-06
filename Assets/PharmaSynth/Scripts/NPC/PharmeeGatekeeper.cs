@@ -126,6 +126,18 @@ public class PharmeeGatekeeper : MonoBehaviour
 
     private void OnDisable() => Unsubscribe();
 
+    // Statics survive a scene load. Quitting to the menu mid-review would otherwise
+    // leave the review flag up and the target registry pointing at destroyed objects
+    // when the lab is entered again.
+    private void OnDestroy() => ResetSessionState();
+
+    /// Clears the lab-session statics this gatekeeper owns.
+    public static void ResetSessionState()
+    {
+        ReviewFlowActive = false;
+        TaskTargetRegistry.Clear();
+    }
+
     /// Greet the player the moment they teleport into the lab (from the cube spawn
     /// room), just after the screen fade-in settles.
     private void Start()

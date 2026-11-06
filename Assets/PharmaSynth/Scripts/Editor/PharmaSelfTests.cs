@@ -4229,6 +4229,10 @@ public static class PharmaSelfTests
                     TaskTargetRegistry.Targets("t-a").Count == 1);
                 A("tutorial: unknown task resolves to nothing",
                     TaskTargetRegistry.Targets("t-none").Count == 0);
+                PharmeeGatekeeper.ResetSessionState();
+                A("lifecycle: the gatekeeper's teardown drops the review flag and every registered target",
+                    !PharmeeGatekeeper.ReviewFlowActive && TaskTargetRegistry.TaskCount == 0);
+                TaskTargetRegistry.Register("t-a", probe.transform, TargetRole.Source, false);
 
                 // The audit must flag a step with no target, but exempt a wrap-up step
                 // — autoCompleteWhenOthersDone tasks have no physical verb by design.
