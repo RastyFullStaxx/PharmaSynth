@@ -9,7 +9,7 @@ using UnityEngine;
 /// removed per-experiment). Undoes any accidental deactivation. Idempotent.
 public static class RestoreBenchItems
 {
-    [MenuItem("Tools/PharmaSynth/Restore All Bench Items")]
+    [MenuItem(SceneRepairs.MenuRoot + "Restore All Bench Items")]
     public static void Run()
     {
         if (Application.isPlaying) { Debug.LogWarning("[Restore] exit Play mode first."); return; }

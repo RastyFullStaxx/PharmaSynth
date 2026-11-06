@@ -119,7 +119,7 @@ public static class FumeHoodSwap
             // Rebuild the shell from the refit volume.
             var oldShell = ht.Find("HoodShell");
             if (oldShell != null) Object.DestroyImmediate(oldShell.gameObject);
-            Debug.Log("[HoodSwap] WorkVolume refit into the chamber; HoodShell cleared — run Apply W5.8 Verb Data to rebuild it.");
+            Debug.Log("[HoodSwap] WorkVolume refit into the chamber; HoodShell cleared — run Apply Verb Data to rebuild it.");
         }
         else Debug.LogWarning("[HoodSwap] no FumeHoodZone/BoxCollider found to refit.");
 

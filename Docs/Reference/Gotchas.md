@@ -123,7 +123,7 @@ that area; add to it when you lose a day to something new.
 >
 > **Pure math cannot see a missing component. Pin the actual scene objects.**
 >
-> Recovery: `Apply W5.8 Verb Data` → `Add Placement Anchors` →
+> Recovery: `Apply Verb Data` → `Add Placement Anchors` →
 > **`Re-Home Scene Items (Adopt Current)`**. Adopt the CURRENT hand-placement; never
 > re-apply a transform from git (a HEAD *local* position against a different parent
 > left the ice bucket floating at y = 2.05).
@@ -134,7 +134,7 @@ that area; add to it when you lose a day to something new.
 - `ShelfY`'s lowest entry (0.11) is the **Base panel's top face**. `BuildUnit` always
   made that surface and nothing stocked it, so every unit wasted a whole bottom row —
   that is why "overflow" was a phantom.
-- **Verb wiring is a step.** `Apply W5.8 Verb Data` wires droppers, the 0.1 g
+- **Verb wiring is a step.** `Apply Verb Data` wires droppers, the 0.1 g
   spatula, the water bath, the ice bath and time-skip. `Name Tubes + Build Rack Slots`
   wires holder snapping. Both are suite-pinned (`wired:`).
 

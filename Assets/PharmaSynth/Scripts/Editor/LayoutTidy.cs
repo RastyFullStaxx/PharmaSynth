@@ -8,7 +8,7 @@ using UnityEngine;
 /// reagents right, tools left; the front strip stays free for the rack and
 /// spares). Deterministic + idempotent; also structurally removes the two
 /// clamped overlaps at (1.38, −3.88) in Acetone and Benzamide.
-/// Run AFTER `Apply W5.8 Verb Data` so new stations/props get slots too.
+/// Run AFTER `Apply Verb Data` so new stations/props get slots too.
 public static class LayoutTidy
 {
     [MenuItem("Tools/PharmaSynth/Tidy Experiment Layouts")]

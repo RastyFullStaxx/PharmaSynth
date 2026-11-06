@@ -12,7 +12,7 @@ using UnityEngine.UI;
 /// picked, so a failed attempt is never a Retry-only loop. Idempotent.
 public static class GradeBackButtonBuilder
 {
-    [MenuItem("Tools/PharmaSynth/Wire Grade Back Button (W5.9)")]
+    [MenuItem("Tools/PharmaSynth/Wire Grade Back Button")]
     public static void Wire()
     {
         if (Application.isPlaying) { Debug.LogWarning("[GradeBack] exit Play mode first."); return; }

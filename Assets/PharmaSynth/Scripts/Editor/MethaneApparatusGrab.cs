@@ -15,7 +15,7 @@ public static class MethaneApparatusGrab
     static readonly HashSet<string> Ids = new HashSet<string>
     { "glass-tube", "collection-tube", "delivery-tube", "burner" };
 
-    [MenuItem("Tools/PharmaSynth/Fix Methane Apparatus Grab")]
+    [MenuItem(SceneRepairs.MenuRoot + "Fix Methane Apparatus Grab")]
     public static void Run()
     {
         if (Application.isPlaying) { Debug.LogWarning("[ApparatusGrab] exit Play mode first."); return; }

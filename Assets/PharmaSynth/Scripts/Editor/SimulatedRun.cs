@@ -322,7 +322,7 @@ public static class SimulatedRun
             foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 if ((t.name.StartsWith("Eq_Funnel") || t.name.StartsWith("Funnel_"))
                     && t.GetComponent<LiquidPassthrough>() == null)
-                    res.bugs.Add(t.name + " has NO LiquidPassthrough — a pour through it is wasted (run Apply W5.8 Verb Data)");
+                    res.bugs.Add(t.name + " has NO LiquidPassthrough — a pour through it is wasted (run Apply Verb Data)");
 
             // Index the mechanisms the build produced.
             var bindings = Object.FindObjectsByType<LiquidTaskBinding>(FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -627,7 +627,7 @@ public static class SimulatedRun
         var bath = Object.FindAnyObjectByType<WaterBathController>();
         if (bath == null)
         {
-            res.bugs.Add("no WaterBathController in the scene — heated steps are unplayable (run Apply W5.8 Verb Data)");
+            res.bugs.Add("no WaterBathController in the scene — heated steps are unplayable (run Apply Verb Data)");
             return null;
         }
         if (!bath.HasWater)
@@ -754,7 +754,7 @@ public static class SimulatedRun
             if (flame == null || fburner == null)
             {
                 res.bugs.Add(id + ": needs " + heat.RequiredC.ToString("0")
-                             + " C (open flame) but no burner carries NakedFlameHeat (run Apply W5.8 Verb Data)");
+                             + " C (open flame) but no burner carries NakedFlameHeat (run Apply Verb Data)");
                 ForcePast(runner, id);
                 return true;
             }
@@ -815,7 +815,7 @@ public static class SimulatedRun
         var ice = Object.FindAnyObjectByType<IceBathController>();
         if (ice == null)
         {
-            res.bugs.Add(id + ": no IceBathController in the scene — chill steps are unplayable (run Apply W5.8 Verb Data)");
+            res.bugs.Add(id + ": no IceBathController in the scene — chill steps are unplayable (run Apply Verb Data)");
             ForcePast(runner, id);
             return true;
         }
@@ -1263,7 +1263,7 @@ public static class SimulatedRun
         var station = Object.FindAnyObjectByType<WeighStation>(FindObjectsInactive.Include);
         if (station == null)
         {
-            res.bugs.Add(id + ": no WeighStation on the bench balance — weigh steps are unplayable (run Apply W5.8 Verb Data)");
+            res.bugs.Add(id + ": no WeighStation on the bench balance — weigh steps are unplayable (run Apply Verb Data)");
             ForcePast(runner, id);
             return true;
         }

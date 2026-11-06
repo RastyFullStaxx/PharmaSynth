@@ -15,7 +15,7 @@ using XRGrabInteractable = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGr
 /// Idempotent.
 public static class MethanePlaytestFix
 {
-    [MenuItem("Tools/PharmaSynth/Fix Methane Verbs (burner/match/reagent)")]
+    [MenuItem(SceneRepairs.MenuRoot + "Fix Methane Verbs (burner/match/reagent)")]
     public static void Run()
     {
         if (Application.isPlaying) { Debug.LogWarning("[MethaneFix] exit Play mode first."); return; }

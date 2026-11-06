@@ -20,14 +20,14 @@ using UnityEngine;
 ///   M5a Chemical Compounding quiz Q3 uses the manuscript's KMnO4 oxidation
 ///       (a bromine unsaturation question does not fit an all-saturated module).
 /// Run AFTER: nothing. Run BEFORE: Tidy Experiment Layouts (new props → slots).
-public static class W59ManuscriptDataApplier
+public static class ManuscriptDataApplier
 {
     const string LayoutDir = "Assets/PharmaSynth/ScriptableObjects/Layouts/";
     const string ChemDir = "Assets/PharmaSynth/ScriptableObjects/Chemicals/";
     const string RxDir = "Assets/PharmaSynth/ScriptableObjects/Reactions/";
     const string ExpDir = "Assets/PharmaSynth/ScriptableObjects/Experiments/";
 
-    [MenuItem("Tools/PharmaSynth/Apply W5.9 Manuscript Data")]
+    [MenuItem("Tools/PharmaSynth/Apply Manuscript Data")]
     public static void Apply()
     {
         if (Application.isPlaying) { Debug.LogWarning("[W59] exit Play mode first."); return; }

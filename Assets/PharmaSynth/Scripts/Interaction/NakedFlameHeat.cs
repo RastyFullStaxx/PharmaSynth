@@ -19,7 +19,7 @@ public static class FlameMath
         => Mathf.Min(MaxC, current + RatePerSecond * Mathf.Max(0f, dt));
 }
 
-/// Zone-free open-flame heat on every Bunsen burner (wired by the Apply W5.8 Verb Data menu):
+/// Zone-free open-flame heat on every Bunsen burner (wired by the Apply Verb Data menu):
 /// while LIT, any vessel within reach of the flame anchor heats toward 400 °C.
 /// This is what the hard-glass tubes exist for — the water bath owns every
 /// gentler step.

@@ -121,7 +121,7 @@ public class WeighStation : MonoBehaviour
     }
 
     /// The permanent bench balance is wired ONCE at edit time
-    /// (`W533Fixes.FixBalanceCore` → `Bind(null,…,scale)`), but `_scale` is a plain
+    /// (`SceneRepairs.FixBalanceCore` → `Bind(null,…,scale)`), but `_scale` is a plain
     /// private field — NOT serialized — so it comes back NULL after every domain
     /// reload and the readout silently stops updating for the rest of the
     /// session. Same class as the

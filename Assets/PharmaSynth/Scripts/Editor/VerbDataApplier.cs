@@ -11,11 +11,11 @@ using UnityEngine;
 ///   • Scene: Methane's Eq_Motar/Eq_Pestle get a GrindController completing
 ///     `prepare-mixture` (dual-path with the legacy zone-touch), and the
 ///     matches dispenser box becomes a MatchStrikerSurface.
-public static class W58VerbDataApplier
+public static class VerbDataApplier
 {
     const string Dir = "Assets/PharmaSynth/ScriptableObjects/Layouts/";
 
-    [MenuItem("Tools/PharmaSynth/Apply W5.8 Verb Data")]
+    [MenuItem("Tools/PharmaSynth/Apply Verb Data")]
     public static void Apply()
     {
         if (Application.isPlaying) { Debug.LogWarning("[W58VerbData] exit Play mode first."); return; }

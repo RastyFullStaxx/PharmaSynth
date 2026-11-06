@@ -30,7 +30,7 @@ public static class ManualLayoutAdopter
     /// True when the hand layout owns the scene (builders must not clobber it).
     public static bool LayoutIsManual() => GameObject.Find(MarkerName) != null;
 
-    [MenuItem("Tools/PharmaSynth/Adopt Manual Layout (W5.12)")]
+    [MenuItem("Tools/PharmaSynth/Adopt Manual Layout")]
     public static void Adopt()
     {
         if (Application.isPlaying) { Debug.LogWarning("[AdoptLayout] exit Play mode first."); return; }

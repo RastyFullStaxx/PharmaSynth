@@ -4015,9 +4015,9 @@ public static class PharmaSelfTests
         // (pure math cannot see a re-added component).
         {
             var stillGrabbable = new List<string>();
-            foreach (string rn in W533Fixes.FixedRacks)
+            foreach (string rn in SceneRepairs.FixedRacks)
             {
-                var go = W533Fixes.FindAnyByName(rn);
+                var go = SceneRepairs.FindAnyByName(rn);
                 if (go == null) continue;                       // not in this scene — fine
                 if (go.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>() != null)
                     stillGrabbable.Add(rn);
@@ -4033,8 +4033,8 @@ public static class PharmaSelfTests
         // panel rebuild, so pin them absent.
         {
             var ghosts = new List<string>();
-            foreach (string yn in W533Fixes.YieldWidgets)
-                if (W533Fixes.FindAnyByName(yn) != null) ghosts.Add(yn);
+            foreach (string yn in SceneRepairs.YieldWidgets)
+                if (SceneRepairs.FindAnyByName(yn) != null) ghosts.Add(yn);
             A("postlab: the yield stepper is gone ("
               + (ghosts.Count == 0 ? "clean" : string.Join(",", ghosts) + " still present") + ")",
               ghosts.Count == 0);

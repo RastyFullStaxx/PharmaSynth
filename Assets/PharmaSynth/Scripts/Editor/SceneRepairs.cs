@@ -14,9 +14,9 @@ using XRGrab = UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractab
 /// objects: three apparatus sit in the scene as RAW model prefabs with no
 /// wiring (no collider, no rigidbody, no XRGrabInteractable, so ungrabbable),
 /// the wash bottle has no contents, and the balance is pure set dressing.
-public static class W533Fixes
+public static class SceneRepairs
 {
-    const string MenuRoot = "Tools/PharmaSynth/Playtest Fixes (W5.33)/";
+    public const string MenuRoot = "Tools/PharmaSynth/Scene Repairs/";
     const string RegistryPath = "Assets/PharmaSynth/ScriptableObjects/Reactions/MasterReactionRegistry.asset";
     const string GlassOuterGuid = "5fa2d54e0de4b1844bd36402333542fe";
     const string GlassInnerGuid = "ff04f2be4ce6d934a8624dfa3c34aa4b";
@@ -39,7 +39,7 @@ public static class W533Fixes
         "Assets/PharmaSynth/Art/Generated/Refs/FlorenceFlask.prefab",
     };
 
-    [MenuItem(MenuRoot + "Fix Everything (W5.33)")]
+    [MenuItem(MenuRoot + "Repair Everything")]
     public static void FixEverything()
     {
         if (!EditorGuard()) return;
@@ -54,11 +54,11 @@ public static class W533Fixes
         int tags = FixVesselTagsCore();
         LabelForge.Run();
         Save();
-        Debug.Log($"<color=#4CD07D>[W5.33] {racks} tube rack(s) anchored, {yieldGone} yield widget(s) removed, {grab} apparatus made grabbable, wash bottle {(bottle > 0 ? "stocked" : "already stocked")}, "
+        Debug.Log($"<color=#4CD07D>[SceneRepairs] {racks} tube rack(s) anchored, {yieldGone} yield widget(s) removed, {grab} apparatus made grabbable, wash bottle {(bottle > 0 ? "stocked" : "already stocked")}, "
                   + $"{glass} Florence-flask renderer(s) glassed + round-bottom fill, {funnels} funnel(s) wired to drip from the stem, "
                   + $"balance {(scale > 0 ? "made live" : "already live")}, {panel} result-panel element(s) re-laid out, "
                   + $"{tags} vessel(s) given a live contents tag, reagent labels re-mounted. "
-                  + "Run 'Apply W5.8 Verb Data' next if the water bath still reports unbound.</color>");
+                  + "Run 'Apply Verb Data' next if the water bath still reports unbound.</color>");
     }
 
     // ---- 0. FIXED FURNITURE: racks must never be pickable --------------------
@@ -76,7 +76,7 @@ public static class W533Fixes
 
     [MenuItem(MenuRoot + "Anchor Tube Racks (not grabbable)")]
     public static void FixRacksAnchored()
-    { if (!EditorGuard()) return; int n = FixRacksAnchoredCore(); Save(); Debug.Log($"[W5.33] {n} rack(s) anchored."); }
+    { if (!EditorGuard()) return; int n = FixRacksAnchoredCore(); Save(); Debug.Log($"[SceneRepairs] {n} rack(s) anchored."); }
 
     /// Strip the grab, pin the body. Colliders are KEPT — the tubes still rest on
     /// the rack and the player still cannot walk through it. The Rigidbody is made
@@ -124,7 +124,7 @@ public static class W533Fixes
 
     [MenuItem(MenuRoot + "Remove Yield Stepper")]
     public static void FixYieldGone()
-    { if (!EditorGuard()) return; int n = FixYieldGoneCore(); Save(); Debug.Log($"[W5.33] {n} yield widget(s) removed."); }
+    { if (!EditorGuard()) return; int n = FixYieldGoneCore(); Save(); Debug.Log($"[SceneRepairs] {n} yield widget(s) removed."); }
 
     static int FixYieldGoneCore()
     {
@@ -152,7 +152,7 @@ public static class W533Fixes
     // ---- 1. ungrabbable apparatus -------------------------------------------
 
     [MenuItem(MenuRoot + "Make Apparatus Grabbable")]
-    public static void FixGrabbable() { if (!EditorGuard()) return; int n = FixGrabbableCore(); Save(); Debug.Log($"[W5.33] {n} apparatus wired for grabbing."); }
+    public static void FixGrabbable() { if (!EditorGuard()) return; int n = FixGrabbableCore(); Save(); Debug.Log($"[SceneRepairs] {n} apparatus wired for grabbing."); }
 
     static int FixGrabbableCore()
     {
@@ -270,7 +270,7 @@ public static class W533Fixes
     // ---- 2. the empty wash bottle -------------------------------------------
 
     [MenuItem(MenuRoot + "Stock the Wash Bottle")]
-    public static void FixWashBottle() { if (!EditorGuard()) return; int n = FixWashBottleCore(); Save(); Debug.Log($"[W5.33] wash bottle: {n} change(s)."); }
+    public static void FixWashBottle() { if (!EditorGuard()) return; int n = FixWashBottleCore(); Save(); Debug.Log($"[SceneRepairs] wash bottle: {n} change(s)."); }
 
     /// A wash bottle with no LiquidPhysics at all is why "nothing comes out when I
     /// pour it". It is the lab's distilled-water dispenser, so it
@@ -278,7 +278,7 @@ public static class W533Fixes
     static int FixWashBottleCore()
     {
         var water = FindChemical("Distilled Water") ?? FindChemical("Water");
-        if (water == null) { Debug.LogWarning("[W5.33] no Distilled Water ChemicalData — wash bottle left empty."); return 0; }
+        if (water == null) { Debug.LogWarning("[SceneRepairs] no Distilled Water ChemicalData — wash bottle left empty."); return 0; }
         var registry = AssetDatabase.LoadAssetAtPath<ReactionRegistry>(RegistryPath);
         var runner = Object.FindAnyObjectByType<ExperimentRunner>(FindObjectsInactive.Include);
 
@@ -312,7 +312,7 @@ public static class W533Fixes
     // ---- 3. the Florence flask ----------------------------------------------
 
     [MenuItem(MenuRoot + "Glass the Florence Flask")]
-    public static void FixFlorenceFlask() { if (!EditorGuard()) return; int n = FixFlorenceFlaskCore(); Save(); Debug.Log($"[W5.33] Florence flask: {n} renderer(s)."); }
+    public static void FixFlorenceFlask() { if (!EditorGuard()) return; int n = FixFlorenceFlaskCore(); Save(); Debug.Log($"[SceneRepairs] Florence flask: {n} renderer(s)."); }
 
     /// A ROUND-BOTTOM flask must not render as solid white with a cylinder of liquid.
     /// Swap in the same borosilicate glass the beakers use, then
@@ -321,7 +321,7 @@ public static class W533Fixes
     static int FixFlorenceFlaskCore()
     {
         var outer = LoadMat(GlassOuterGuid);
-        if (outer == null) { Debug.LogWarning("[W5.33] GlassOuterMat missing — flask left as-is."); return 0; }
+        if (outer == null) { Debug.LogWarning("[SceneRepairs] GlassOuterMat missing — flask left as-is."); return 0; }
         var inner = LoadMat(GlassInnerGuid) ?? outer;
         var registry = AssetDatabase.LoadAssetAtPath<ReactionRegistry>(RegistryPath);
 
@@ -368,7 +368,7 @@ public static class W533Fixes
     // ---- 4. funnels ----------------------------------------------------------
 
     [MenuItem(MenuRoot + "Wire Funnel Flow-Through")]
-    public static void FixFunnels() { if (!EditorGuard()) return; int n = FixFunnelsCore(); Save(); Debug.Log($"[W5.33] {n} funnel(s) wired."); }
+    public static void FixFunnels() { if (!EditorGuard()) return; int n = FixFunnelsCore(); Save(); Debug.Log($"[SceneRepairs] {n} funnel(s) wired."); }
 
     static int FixFunnelsCore()
     {
@@ -387,7 +387,7 @@ public static class W533Fixes
     // ---- 5. the balance ------------------------------------------------------
 
     [MenuItem(MenuRoot + "Make the Balance Live")]
-    public static void FixBalance() { if (!EditorGuard()) return; int n = FixBalanceCore(); Save(); Debug.Log($"[W5.33] balance: {n} change(s)."); }
+    public static void FixBalance() { if (!EditorGuard()) return; int n = FixBalanceCore(); Save(); Debug.Log($"[SceneRepairs] balance: {n} change(s)."); }
 
     /// The balance's digital canvas has no controller and no pan sensor of its own,
     /// so the readout would never update whatever rests on it.
@@ -463,7 +463,7 @@ public static class W533Fixes
     // ---- 6. quiz + grade panels ---------------------------------------------
 
     [MenuItem(MenuRoot + "Fix Quiz + Result Panel Overlaps")]
-    public static void FixResultPanels() { if (!EditorGuard()) return; int n = FixResultPanelsCore(); Save(); Debug.Log($"[W5.33] {n} panel element(s) re-laid out."); }
+    public static void FixResultPanels() { if (!EditorGuard()) return; int n = FixResultPanelsCore(); Save(); Debug.Log($"[SceneRepairs] {n} panel element(s) re-laid out."); }
 
     /// Two separate overlaps:
     ///   • the quiz row (Back and Next 73 units ON TOP of Submit), handled by
@@ -508,7 +508,7 @@ public static class W533Fixes
     // ---- 7. live contents tags ----------------------------------------------
 
     [MenuItem(MenuRoot + "Give Every Vessel a Live Contents Tag")]
-    public static void FixVesselTags() { if (!EditorGuard()) return; int n = FixVesselTagsCore(); Save(); Debug.Log($"[W5.33] {n} vessel(s) given a live contents tag."); }
+    public static void FixVesselTags() { if (!EditorGuard()) return; int n = FixVesselTagsCore(); Save(); Debug.Log($"[SceneRepairs] {n} vessel(s) given a live contents tag."); }
 
     /// Gives every liquid container its ml readout.
     /// Only the vessels a module's builder stages get a VesselStatus, so the rest
@@ -546,7 +546,7 @@ public static class W533Fixes
 
     static bool EditorGuard()
     {
-        if (Application.isPlaying) { Debug.LogWarning("[W5.33] exit Play mode first."); return false; }
+        if (Application.isPlaying) { Debug.LogWarning("[SceneRepairs] exit Play mode first."); return false; }
         return true;
     }
 

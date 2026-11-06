@@ -45,7 +45,7 @@ them → [[Editor Menus]].
 > `FlameAnchor`s, which killed every burner in the game, and the pure tests still
 > passed. **Pin actual scene objects.** → [[Gotchas]]
 
-**Recovery order after a bad rebuild:** `Apply W5.8 Verb Data` (re-adds the striker)
+**Recovery order after a bad rebuild:** `Apply Verb Data` (re-adds the striker)
 → `Add Placement Anchors` (re-adds anchors) → **`Re-Home Scene Items (Adopt Current)`**.
 Adopt the *current* hand-placement; never re-apply a transform from git.
 

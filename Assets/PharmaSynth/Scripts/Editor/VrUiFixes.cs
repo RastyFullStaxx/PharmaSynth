@@ -18,7 +18,7 @@ public static class VrUiFixes
 {
     const float DialogueY = 1.8f;   // just above a standing NPC's head, at player reading height
 
-    [MenuItem("Tools/PharmaSynth/Fix VR UI Raycasters (quiz clickable)")]
+    [MenuItem(SceneRepairs.MenuRoot + "Fix VR UI Raycasters (quiz clickable)")]
     public static void FixRaycasters()
     {
         if (Application.isPlaying) { Debug.LogWarning("[VrUi] exit Play mode first."); return; }
@@ -44,7 +44,7 @@ public static class VrUiFixes
                   + (names.Count > 0 ? "\nFixed: " + string.Join(", ", names) : "  (all canvases already tracked.)"));
     }
 
-    [MenuItem("Tools/PharmaSynth/Fix NPC Dialogue Height")]
+    [MenuItem(SceneRepairs.MenuRoot + "Fix NPC Dialogue Height")]
     public static void FixDialogueHeight()
     {
         if (Application.isPlaying) { Debug.LogWarning("[VrUi] exit Play mode first."); return; }

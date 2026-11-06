@@ -1479,7 +1479,7 @@ static float NextTemp(float current, float dt)
 ### `NakedFlameHeat` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Interaction/NakedFlameHeat.cs`</sub>
 
-Zone-free open-flame heat on every Bunsen burner (wired by the Apply W5.8 Verb Data menu): while LIT, any vessel within reach of the flame anchor heats toward 400 °C. This is what the hard-glass tubes exist for — the water bath owns every gentler step.
+Zone-free open-flame heat on every Bunsen burner (wired by the Apply Verb Data menu): while LIT, any vessel within reach of the flame anchor heats toward 400 °C. This is what the hard-glass tubes exist for — the water bath owns every gentler step.
 
 ```csharp
 void Bind(BurnerController burner)
@@ -4163,27 +4163,6 @@ const string RequestPath
 static void Capture()
 ```
 
-### `DistillationApparatusWiring` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/DistillationApparatusWiring.cs`</sub>
-
-Wires the distillation-completion apparatus into the game: the 6 generated pieces (Condenser, RubberStopper, DeliveryTube, WaterBath, UtilityClamp, Aspirator) plus the 3 that exist only as raw models (Pipette, Thermometer, FlorenceFlask). Each is prefabbed if needed, registered in the SceneAssetLibrary, and one instance is spawned + fully wired + placed in a tidy row beside the distilling flask (the user then nudges + re-homes). Idempotent. Size/physics/breakage live in the code tables (RealSizes/PhysicsProfiles/Mishandling).
-
-### `Spec` <sub>struct</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/DistillationApparatusWiring.cs`</sub>
-
-```csharp
-static void Wire()
-```
-
-### `DistillingFlaskGlass` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/DistillingFlaskGlass.cs`</sub>
-
-The DistillingFlask model (glTFast .glb) imports with a bare grey metallic material, so it reads as a chrome flask instead of glass. This swaps every mesh on the scene flask (and its prefab) to the SAME borosilicate glass materials the ChemLab beakers use, so it matches the rest of the glassware. Idempotent; run from SampleScene edit mode.
-
-```csharp
-static void Upgrade()
-```
-
 ### `EndProductGateBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/EndProductGateBuilder.cs`</sub>
 
@@ -4209,15 +4188,6 @@ Seals the skybox seams at BOTH entrances (front corridor door + interior lab doo
 
 ```csharp
 static void Build()
-```
-
-### `FixTripodCollider` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/FixTripodCollider.cs`</sub>
-
-The tripod is a STAND: the burner goes underneath, wire gauze + flask on top. A single CONVEX hull collider (required for a dynamic/grabbable body) fills the open frame so nothing fits below. A tripod can't be both grabbable-dynamic AND hollow. This makes it a KINEMATIC stand with a NON-CONVEX mesh collider that matches the real open legs+ring, so the burner fits underneath and items rest on top. Still grabbable (moves while held), but it stays where you drop it instead of tumbling. Idempotent.
-
-```csharp
-static void Run()
 ```
 
 ### `FixtureTools` <sub>class</sub>
@@ -4461,7 +4431,7 @@ static void Run()
 ### `LayoutTidy` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/LayoutTidy.cs`</sub>
 
-Re-seats every experiment layout onto the LayoutTidyMath zoning grid (a clean center table — stations across the back, vessels center-front, reagents right, tools left; the front strip stays free for the rack and spares). Deterministic + idempotent; also structurally removes the two clamped overlaps at (1.38, −3.88) in Acetone and Benzamide. Run AFTER `Apply W5.8 Verb Data` so new stations/props get slots too.
+Re-seats every experiment layout onto the LayoutTidyMath zoning grid (a clean center table — stations across the back, vessels center-front, reagents right, tools left; the front strip stays free for the rack and spares). Deterministic + idempotent; also structurally removes the two clamped overlaps at (1.38, −3.88) in Acetone and Benzamide. Run AFTER `Apply Verb Data` so new stations/props get slots too.
 
 ```csharp
 static void Run()
@@ -4486,6 +4456,15 @@ Adopts the hand-placed workspace (kits, duplicates, reagent shelf, spawn point) 
 const string MarkerName
 static bool LayoutIsManual()
 static void Adopt()
+```
+
+### `ManuscriptDataApplier` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/ManuscriptDataApplier.cs`</sub>
+
+alone is chemically INERT) → propyl alcohol staged + bound, rule pointed at it (manuscript/test intent: ester with propyl). M2  Chloroform gets the manuscript's oxidation confirmatory test (K-dichromate + conc H2SO4, procedure L3419-21 + results sheet) → new task + reagent + reaction rule. M3  Wine Making ferments non-grape juice, per the manuscript's explicit grape exclusion (L3830-31) → Chem_GrapeJuice renamed "Mixed Fruit Juice" (GUID refs untouched; string lookups updated). M4  Reagent fidelity: Acetanilide prep-HCl 0.1N (not 6N); iodoform tests get their KI (Ethyl Alcohol + Acetone); ester/acid tests use the manuscript's DILUTED acids, with the matching RULE inputs re-pointed (rules match by asset; a layout-only swap would kill the reactions). M5a Chemical Compounding quiz Q3 uses the manuscript's KMnO4 oxidation (a bromine unsaturation question does not fit an all-saturated module)
+
+```csharp
+static void Apply()
 ```
 
 ### `MaterialsGuideGenerator` <sub>class</sub>
@@ -4533,46 +4512,10 @@ Guarantee the methane apparatus is pick-up-able ("I can't pick up the draw tubes
 static void Run()
 ```
 
-### `MethaneBeakerSwap` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/MethaneBeakerSwap.cs`</sub>
-
-Swap the sodium-acetate/soda-lime SOURCE from a sealed amber vial to an OPEN beaker. The charge is scooped, not poured, so it belongs in a wide-mouth vessel you can dip a scoop into. Preserves each jar's position + contents + wiring: instantiates Beaker_100mL in place, re-tags it "reagent-jar", refills it with the solid, rebuilds the powder mound (open top → the scoop reaches it), re-labels it, and destroys the old vial. Idempotent (skips jars that are already beakers).
-
-```csharp
-static void Run()
-```
-
-### `MethaneBenchPermanent` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/MethaneBenchPermanent.cs`</sub>
-
-Make the methane bench TOOLS (mortar, pestle, scoopula, spatula) permanent fixtures, usable in BOTH Lab Tour and Campaign at all times. Parented under MethaneStage they vanish in Play, because MethaneStageVisibility hides the stage at play-start. This lifts them OUT of the stage (world position preserved), makes sure they're active + rest kinematic (won't fall through the bench), and re-homes them so a Reset keeps them put. Idempotent.
-
-```csharp
-static void Run()
-```
-
-### `MethaneLocationFree` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/MethaneLocationFree.cs`</sub>
-
-Convert the Methane tutorial to LOCATION-FREE completion. Deletes the 5 fixed Station_* zone objects (no standing on a pad), and rewires the MethaneApparatusRig to own its TemperatureSim + GasCollection so heat/collect/splint fire by item PROXIMITY anywhere, and prepare-mixture completes by grinding a mortar. Run once. Idempotent.
-
-```csharp
-static void Run()
-```
-
 ### `MethanePlaytestFix` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/MethanePlaytestFix.cs`</sub>
 
 Wires the location-free Methane rig's missing pieces: a workspace burner needs a BurnerController to be lit, striking a match needs a MatchStrikerSurface, and the Methane reagent jar needs a LiquidPhysics to be scooped/poured. Without them the heat step is blocked. • every Bunsen/Alcohol burner gets BurnerController + MatchStrikerSurface (strike a match on the burner base to light it, then it lights the tube), • any matchbox-like object becomes a striker too, • the reagent jar becomes a scoopable solid (Sodium Acetate). Idempotent.
-
-```csharp
-static void Run()
-```
-
-### `MethaneRecover` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/MethaneRecover.cs`</sub>
-
-Diagnose + recover the methane bench items. An item moved AFTER the last Lock My Layout has a stale respawn home, so a Reset teleports it away (often below the floor). This reports every methane item's position + active state, reactivates + lifts anything that fell, and RE-HOMES them all at their current spot so the next Reset keeps them put.
 
 ```csharp
 static void Run()
@@ -4752,24 +4695,6 @@ static string PrefabFor(RawReagentCatalog.LabwareKind kind)
 static void Build()
 ```
 
-### `RemoveLitSplint` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/RemoveLitSplint.cs`</sub>
-
-Delete the wooden splint prop. "splint" appears NOWHERE in the client manuscript: every combustion/flame test is run with a "lighted matchstick" (Exp 3). The methane gas test already fires off a lit Matchstick (MethaneApparatusRig.SplintShouldFire checks Matchstick), so the splint prop is redundant. The method names keep the "splint" wording (suite-pinned); only the prop goes. Idempotent.
-
-```csharp
-static void Run()
-```
-
-### `RemovePipette` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/RemovePipette.cs`</sub>
-
-Drop the modern mechanical pipette — the Dropper (drops) + graduated cylinder (ml) already cover its manuscript role. Removes the scene instance, the SceneAssetLibrary registration, and the generated prefab. The raw MechanicalPipette model pack is left on disk (harmless). Idempotent; safe to run once.
-
-```csharp
-static void Run()
-```
-
 ### `RemoveVrInappropriateApparatus` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/RemoveVrInappropriateApparatus.cs`</sub>
 
@@ -4839,6 +4764,27 @@ Wires Pharmee's robot voice colouring onto HIS narration channel only Dr. Jimene
 ```csharp
 static void Apply()
 static void Remove()
+```
+
+### `SceneRepairs` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/SceneRepairs.cs`</sub>
+
+The SCENE half of a set of fixes whose code half lives in the runtime scripts. One idempotent menu per symptom so a single broken area can be re-run alone; "Fix Everything" runs them in order. These are separate from the existing builders because none of them own these objects: three apparatus sit in the scene as RAW model prefabs with no wiring (no collider, no rigidbody, no XRGrabInteractable, so ungrabbable), the wash bottle has no contents, and the balance is pure set dressing.
+
+```csharp
+const string MenuRoot
+static readonly string[] UngrabbableReport
+static void FixEverything()
+static readonly string[] FixedRacks
+static void FixRacksAnchored()
+static readonly string[] YieldWidgets
+static void FixYieldGone()
+static GameObject FindAnyByName(string n)
+static void FixGrabbable()
+static void FixWashBottle()
+static void FixFlorenceFlask()
+static void FixFunnels()
+static void FixBalance()
 ```
 
 ### `ScoopSoundWiring` <sub>class</sub>
@@ -4941,15 +4887,6 @@ static void Run()
 static int FitAll(out string names)
 ```
 
-### `SpatulaPorcelain` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/SpatulaPorcelain.cs`</sub>
-
-The manuscript specifies a PORCELAIN spatula, but the Spatula prefab uses the shared metal EquipmentMat and reads as steel. This finds every Spatula prefab instance in the scene (by SOURCE prefab, so it catches hand-placed/renamed copies like "Eq_Spatula" that carry no LabItem), applies the pack's white PorcelainMat, renames + labels it "Porcelain Spatula", gives it the full interaction wiring, and fixes the source prefab. Via the Mishandling table it clinks like ceramic instead of clattering like metal. Idempotent.
-
-```csharp
-static void Run()
-```
-
 ### `SpawnHeightWiring` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SpawnHeightWiring.cs`</sub>
 
@@ -5009,6 +4946,15 @@ const float Tolerance
 const float MeshOffsetLimit
 static void RunLegacy()
 static void Run()
+```
+
+### `VerbDataApplier` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/VerbDataApplier.cs`</sub>
+
+One-shot, idempotent data pass for the tool verbs: re-points the layouts whose tasks are TOOL verbs (weigh/stir/grind) and wires the scene-side pieces (Methane's hand-built mortar, the matches-box striker). • Acetone: `weigh-acetates` zone-touch → Weigh (scoopula on the pan). • Benzamide: `stand` ("Stir & stand") zone-touch → Stir (glass rod). • Scene: Methane's Eq_Motar/Eq_Pestle get a GrindController completing `prepare-mixture` (dual-path with the legacy zone-touch), and the matches dispenser box becomes a MatchStrikerSurface.
+
+```csharp
+static void Apply()
 ```
 
 ### `VisualSweep` <sub>class</sub>
@@ -5123,44 +5069,6 @@ Two VR-UI scene fixes. • Quiz answers clickable: a world-space Canvas needs a 
 ```csharp
 static void FixRaycasters()
 static void FixDialogueHeight()
-```
-
-### `W533Fixes` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/W533Fixes.cs`</sub>
-
-The SCENE half of a set of fixes whose code half lives in the runtime scripts. One idempotent menu per symptom so a single broken area can be re-run alone; "Fix Everything" runs them in order. These are separate from the existing builders because none of them own these objects: three apparatus sit in the scene as RAW model prefabs with no wiring (no collider, no rigidbody, no XRGrabInteractable, so ungrabbable), the wash bottle has no contents, and the balance is pure set dressing.
-
-```csharp
-static readonly string[] UngrabbableReport
-static void FixEverything()
-static readonly string[] FixedRacks
-static void FixRacksAnchored()
-static readonly string[] YieldWidgets
-static void FixYieldGone()
-static GameObject FindAnyByName(string n)
-static void FixGrabbable()
-static void FixWashBottle()
-static void FixFlorenceFlask()
-static void FixFunnels()
-static void FixBalance()
-```
-
-### `W58VerbDataApplier` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/W58VerbDataApplier.cs`</sub>
-
-One-shot, idempotent data pass for the tool verbs: re-points the layouts whose tasks are TOOL verbs (weigh/stir/grind) and wires the scene-side pieces (Methane's hand-built mortar, the matches-box striker). • Acetone: `weigh-acetates` zone-touch → Weigh (scoopula on the pan). • Benzamide: `stand` ("Stir & stand") zone-touch → Stir (glass rod). • Scene: Methane's Eq_Motar/Eq_Pestle get a GrindController completing `prepare-mixture` (dual-path with the legacy zone-touch), and the matches dispenser box becomes a MatchStrikerSurface.
-
-```csharp
-static void Apply()
-```
-
-### `W59ManuscriptDataApplier` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/W59ManuscriptDataApplier.cs`</sub>
-
-alone is chemically INERT) → propyl alcohol staged + bound, rule pointed at it (manuscript/test intent: ester with propyl). M2  Chloroform gets the manuscript's oxidation confirmatory test (K-dichromate + conc H2SO4, procedure L3419-21 + results sheet) → new task + reagent + reaction rule. M3  Wine Making ferments non-grape juice, per the manuscript's explicit grape exclusion (L3830-31) → Chem_GrapeJuice renamed "Mixed Fruit Juice" (GUID refs untouched; string lookups updated). M4  Reagent fidelity: Acetanilide prep-HCl 0.1N (not 6N); iodoform tests get their KI (Ethyl Alcohol + Acetone); ester/acid tests use the manuscript's DILUTED acids, with the matching RULE inputs re-pointed (rules match by asset; a layout-only swap would kill the reactions). M5a Chemical Compounding quiz Q3 uses the manuscript's KMnO4 oxidation (a bromine unsaturation question does not fit an all-saturated module)
-
-```csharp
-static void Apply()
 ```
 
 ### `WorkspaceKitsBuilder` <sub>class</sub>

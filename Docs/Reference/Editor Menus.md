@@ -22,7 +22,7 @@ Up: [[Home]] - [[Process MOC]] - [[Build and Test Loop]]
 
 Creates the draggable placement anchors the verbs read. Each match/burner gets a "FlameAnchor" child and each scoopula/spatula a "ScoopAnchor" child, dropped at a best-guess spot. SELECT it in the Hierarchy (orange gizmo in the Scene view), drag it onto the exact part (match head, burner mouth, scoop bowl), then run Lock My Layout to bake it. Idempotent: never moves an anchor you've already positioned.
 
-### `Tools/PharmaSynth/Adopt Manual Layout (W5.12)`
+### `Tools/PharmaSynth/Adopt Manual Layout`
 <sub>`Assets/PharmaSynth/Scripts/Editor/ManualLayoutAdopter.cs`</sub>
 
 Adopts the hand-placed workspace (kits, duplicates, reagent shelf, spawn point) as the canonical layout in ONE run: 1. renames editor duplicates ("Beaker_100mL (1)") to clean unique names + display names, and gives them the full interaction wiring; 2. re-points the teleport target (FrontDoorSpawn) at the rig's current pose; 3. re-homes every DropRespawn to its current transform; 4. creates + registers the DistillingFlask if missing (its model is an unimported .glb, so no prefab exists) and parks
@@ -37,15 +37,15 @@ Experiments spawn their stations/vessels/labels/ waypoints as children of Dynami
 
 Furniture is scenery, not equipment: the stools must not be grabbable. The six lab stools in the Environment prefab carry an `XRGrabInteractable` each, so a player could pick a stool up and carry it around the lab, or fling it across the bench mid-experiment. Nothing in the game asks them to move a stool, and every real interaction the lab needs is with glassware and tools. ⛔ The GRAB goes, the COLLIDER stays. The stool still stops the player walking through it and still holds anything resting o
 
-### `Tools/PharmaSynth/Apply W5.8 Verb Data`
-<sub>`Assets/PharmaSynth/Scripts/Editor/W58VerbDataApplier.cs`</sub>
-
-One-shot, idempotent data pass for the tool verbs: re-points the layouts whose tasks are TOOL verbs (weigh/stir/grind) and wires the scene-side pieces (Methane's hand-built mortar, the matches-box striker). • Acetone: `weigh-acetates` zone-touch → Weigh (scoopula on the pan). • Benzamide: `stand` ("Stir & stand") zone-touch → Stir (glass rod). • Scene: Methane's Eq_Motar/Eq_Pestle get a GrindController completing `prepare-mixture` (dual-path with the legacy zone-touch), and the matches dispenser
-
-### `Tools/PharmaSynth/Apply W5.9 Manuscript Data`
-<sub>`Assets/PharmaSynth/Scripts/Editor/W59ManuscriptDataApplier.cs`</sub>
+### `Tools/PharmaSynth/Apply Manuscript Data`
+<sub>`Assets/PharmaSynth/Scripts/Editor/ManuscriptDataApplier.cs`</sub>
 
 alone is chemically INERT) → propyl alcohol staged + bound, rule pointed at it (manuscript/test intent: ester with propyl). M2  Chloroform gets the manuscript's oxidation confirmatory test (K-dichromate + conc H2SO4, procedure L3419-21 + results sheet) → new task + reagent + reaction rule. M3  Wine Making ferments non-grape juice, per the manuscript's explicit grape exclusion (L3830-31) → Chem_GrapeJuice renamed "Mixed Fruit Juice" (GUID refs untouched; string lookups updated). M4  Reagent fidel
+
+### `Tools/PharmaSynth/Apply Verb Data`
+<sub>`Assets/PharmaSynth/Scripts/Editor/VerbDataApplier.cs`</sub>
+
+One-shot, idempotent data pass for the tool verbs: re-points the layouts whose tasks are TOOL verbs (weigh/stir/grind) and wires the scene-side pieces (Methane's hand-built mortar, the matches-box striker). • Acetone: `weigh-acetates` zone-touch → Weigh (scoopula on the pan). • Benzamide: `stand` ("Stir & stand") zone-touch → Stir (glass rod). • Scene: Methane's Eq_Motar/Eq_Pestle get a GrindController completing `prepare-mixture` (dual-path with the legacy zone-touch), and the matches dispenser
 
 ### `Tools/PharmaSynth/Audit Chemical Hazard Flags`
 <sub>`Assets/PharmaSynth/Scripts/Editor/ChemHazardFlagAudit.cs`</sub>
@@ -257,31 +257,6 @@ with the arm. ⛔ There is nothing to unparent. He is a Tripo auto-rig: ONE Skin
 
 1. The leaf inherits the Environment prefab's `m_StaticEditorFlags = 87`, which includes **Batching Static**. A static-batched renderer is merged into a combined mesh at load and then IGNORES its transform, so the leaf's collider swings open while the drawn door stays shut, and the player walks through what looks like a closed door. Contribute GI goes with it: a door that moves must not carry a lightmap baked in the closed position. 2. A null `doorBlocker` leaves nothing to hold the player back 
 
-### `Tools/PharmaSynth/Fix Methane Apparatus Grab`
-<sub>`Assets/PharmaSynth/Scripts/Editor/MethaneApparatusGrab.cs`</sub>
-
-Guarantee the methane apparatus is pick-up-able ("I can't pick up the draw tubes"). Normalises every common grab-blocker on the hard-glass tube, collection tube and burner: active, on the Default layer, with an XRGrabInteractable (velocity-tracked + two-handed), a Rigidbody, a live convex collider, and the shelf/respawn policy. Idempotent.
-
-### `Tools/PharmaSynth/Fix Methane Verbs (burner/match/reagent)`
-<sub>`Assets/PharmaSynth/Scripts/Editor/MethanePlaytestFix.cs`</sub>
-
-Wires the location-free Methane rig's missing pieces: a workspace burner needs a BurnerController to be lit, striking a match needs a MatchStrikerSurface, and the Methane reagent jar needs a LiquidPhysics to be scooped/poured. Without them the heat step is blocked. • every Bunsen/Alcohol burner gets BurnerController + MatchStrikerSurface (strike a match on the burner base to light it, then it lights the tube), • any matchbox-like object becomes a striker too, • the reagent jar becomes a scoopabl
-
-### `Tools/PharmaSynth/Fix NPC Dialogue Height`
-<sub>`Assets/PharmaSynth/Scripts/Editor/VrUiFixes.cs`</sub>
-
-Two VR-UI scene fixes. • Quiz answers clickable: a world-space Canvas needs a TrackedDeviceGraphicRaycaster for the XR ray to hit it; a plain GraphicRaycaster is mouse-only, so a panel without one ignores the controller ray. • Dr. Jimenez's subtitles sit just above his head (at local y=2.15 they float up by the ceiling, unreadable). Both idempotent.
-
-### `Tools/PharmaSynth/Fix Tripod Collider (open stand)`
-<sub>`Assets/PharmaSynth/Scripts/Editor/FixTripodCollider.cs`</sub>
-
-The tripod is a STAND: the burner goes underneath, wire gauze + flask on top. A single CONVEX hull collider (required for a dynamic/grabbable body) fills the open frame so nothing fits below. A tripod can't be both grabbable-dynamic AND hollow. This makes it a KINEMATIC stand with a NON-CONVEX mesh collider that matches the real open legs+ring, so the burner fits underneath and items rest on top. Still grabbable (moves while held), but it stays where you drop it instead of tumbling. Idempotent.
-
-### `Tools/PharmaSynth/Fix VR UI Raycasters (quiz clickable)`
-<sub>`Assets/PharmaSynth/Scripts/Editor/VrUiFixes.cs`</sub>
-
-Two VR-UI scene fixes. • Quiz answers clickable: a world-space Canvas needs a TrackedDeviceGraphicRaycaster for the XR ray to hit it; a plain GraphicRaycaster is mouse-only, so a panel without one ignores the controller ray. • Dr. Jimenez's subtitles sit just above his head (at local y=2.15 they float up by the ceiling, unreadable). Both idempotent.
-
 ### `Tools/PharmaSynth/Generate Lab Surface Textures`
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabSurfaceTextureForge.cs`</sub>
 
@@ -317,30 +292,10 @@ Injects each experiment's ILO beats into its Intro cutscene (Pharmee states the 
 
 One-click self-service layout lock: after moving or duplicating assets, one button does everything needed to make a hand-arranged workspace permanent — with NO rebuilding, so it can never reset placements: 1. Tidy duplicate names  — "Beaker (1)" → "Beaker_100mL_2", + full interaction wiring for any raw duplicate that was missing it. 2. Re-home every item     — current transform becomes its respawn home (moved originals AND duplicates), so nothing snaps back in Play. 3. Save the scene. Run this a
 
-### `Tools/PharmaSynth/Make Methane Bench Tools Permanent`
-<sub>`Assets/PharmaSynth/Scripts/Editor/MethaneBenchPermanent.cs`</sub>
-
-Make the methane bench TOOLS (mortar, pestle, scoopula, spatula) permanent fixtures, usable in BOTH Lab Tour and Campaign at all times. Parented under MethaneStage they vanish in Play, because MethaneStageVisibility hides the stage at play-start. This lifts them OUT of the stage (world position preserved), makes sure they're active + rest kinematic (won't fall through the bench), and re-homes them so a Reset keeps them put. Idempotent.
-
-### `Tools/PharmaSynth/Make Methane Location-Free`
-<sub>`Assets/PharmaSynth/Scripts/Editor/MethaneLocationFree.cs`</sub>
-
-Convert the Methane tutorial to LOCATION-FREE completion. Deletes the 5 fixed Station_* zone objects (no standing on a pad), and rewires the MethaneApparatusRig to own its TemperatureSim + GasCollection so heat/collect/splint fire by item PROXIMITY anywhere, and prepare-mixture completes by grinding a mortar. Run once. Idempotent.
-
-### `Tools/PharmaSynth/Make Spatula Porcelain`
-<sub>`Assets/PharmaSynth/Scripts/Editor/SpatulaPorcelain.cs`</sub>
-
-The manuscript specifies a PORCELAIN spatula, but the Spatula prefab uses the shared metal EquipmentMat and reads as steel. This finds every Spatula prefab instance in the scene (by SOURCE prefab, so it catches hand-placed/renamed copies like "Eq_Spatula" that carry no LabItem), applies the pack's white PorcelainMat, renames + labels it "Porcelain Spatula", gives it the full interaction wiring, and fixes the source prefab. Via the Mishandling table it clinks like ceramic instead of clattering li
-
 ### `Tools/PharmaSynth/Merge Center Tables`
 <sub>`Assets/PharmaSynth/Scripts/Editor/CenterTableBuilder.cs`</sub>
 
 Merge Center Tables: removes the second table and makes the remaining one a single wide table at the centre of the room, in landscape. The experiment layouts bake WORLD positions on the left island, so this is a one-time atomic migration: 1. discover both islands geometrically (raycast under the baked positions and at their x-mirror; climb to the Environment child), 2. deactivate the right island (+ its sink follows to the new short end), 3. rigid-remap the left island 90° to the lab centre (lan
-
-### `Tools/PharmaSynth/Methane: Find & Recover Bench Items`
-<sub>`Assets/PharmaSynth/Scripts/Editor/MethaneRecover.cs`</sub>
-
-Diagnose + recover the methane bench items. An item moved AFTER the last Lock My Layout has a stale respawn home, so a Reset teleports it away (often below the floor). This reports every methane item's position + active state, reactivates + lifts anything that fell, and RE-HOMES them all at their current spot so the next Reset keeps them put.
 
 ### `Tools/PharmaSynth/Name Tubes + Build Rack Slots`
 <sub>`Assets/PharmaSynth/Scripts/Editor/TubeRackSlotBuilder.cs`</sub>
@@ -387,25 +342,10 @@ Adopts every scene item's CURRENT transform as its DropRespawn home, so equipmen
 
 Compact VR HUD layout: the timer + title move OUT of the centre and merge into the Progress pill on the LEFT (small, stacked); the top cluster tucks to the top edge; the three Settings/Restart/Quit buttons collapse behind ONE hamburger icon that opens a vertical dropdown; and Pharmee's bottom dialogue bar is raised so it's fully in view. Idempotent — re-run after tuning the constants below. Operates on the open scene's HudRig (SampleScene only).
 
-### `Tools/PharmaSynth/Remove Lit Splint Prop`
-<sub>`Assets/PharmaSynth/Scripts/Editor/RemoveLitSplint.cs`</sub>
-
-Delete the wooden splint prop. "splint" appears NOWHERE in the client manuscript: every combustion/flame test is run with a "lighted matchstick" (Exp 3). The methane gas test already fires off a lit Matchstick (MethaneApparatusRig.SplintShouldFire checks Matchstick), so the splint prop is redundant. The method names keep the "splint" wording (suite-pinned); only the prop goes. Idempotent.
-
-### `Tools/PharmaSynth/Remove Pipette (W5.12)`
-<sub>`Assets/PharmaSynth/Scripts/Editor/RemovePipette.cs`</sub>
-
-Drop the modern mechanical pipette — the Dropper (drops) + graduated cylinder (ml) already cover its manuscript role. Removes the scene instance, the SceneAssetLibrary registration, and the generated prefab. The raw MechanicalPipette model pack is left on disk (harmless). Idempotent; safe to run once.
-
 ### `Tools/PharmaSynth/Remove VR-Inappropriate Apparatus`
 <sub>`Assets/PharmaSynth/Scripts/Editor/RemoveVrInappropriateApparatus.cs`</sub>
 
 Deletes the SCENE INSTANCES of apparatus that the manuscript lists but that carry no meaningful VR interaction: pure bench scaffolding and passive instruments the game already abstracts. The prefabs stay in their folders. ⛔ DELIBERATE, DOCUMENTED EXCEPTION to the "ALL tools always present" client rule. These six are NOT a decluttering of usable tools — each is either a support rig the zone-free heat model made unnecessary or an instrument whose reading the game shows on-screen. The PREFAB ASSETS
-
-### `Tools/PharmaSynth/Restore All Bench Items`
-<sub>`Assets/PharmaSynth/Scripts/Editor/RestoreBenchItems.cs`</sub>
-
-Re-activate every bench item that was hidden (client rule: ALL tools and reagents are present across ALL experiments — nothing is ever hidden or removed per-experiment). Undoes any accidental deactivation. Idempotent.
 
 ### `Tools/PharmaSynth/Reveal Methane + Waypoint (for editing)`
 <sub>`Assets/PharmaSynth/Scripts/Editor/RevealMethaneAndWaypoint.cs`</sub>
@@ -567,11 +507,6 @@ Acetanilide · Benzamide · Chloroform · Wine are named as a reagent by NO manu
 
 Restyles the grade screen into the client slides' "Mission Complete" card: a row of three white tiles (Time · Mistakes · Grade) with large blue figures, the verdict under them, the rubric breakdown below in a smaller type, buttons unchanged. Idempotent: tiles are found-or-created and every rect is SET, never nudged. The controller's text references are untouched (it still fills the same objects).
 
-### `Tools/PharmaSynth/Swap Acetate Vial → Open Beaker`
-<sub>`Assets/PharmaSynth/Scripts/Editor/MethaneBeakerSwap.cs`</sub>
-
-Swap the sodium-acetate/soda-lime SOURCE from a sealed amber vial to an OPEN beaker. The charge is scooped, not poured, so it belongs in a wide-mouth vessel you can dip a scoop into. Preserves each jar's position + contents + wiring: instantiates Beaker_100mL in place, re-tags it "reagent-jar", refills it with the solid, rebuilds the powder mound (open top → the scoop reaches it), re-labels it, and destroys the old vial. Idempotent (skips jars that are already beakers).
-
 ### `Tools/PharmaSynth/Swap In Open Fume Hood`
 <sub>`Assets/PharmaSynth/Scripts/Editor/FumeHoodSwap.cs`</sub>
 
@@ -580,7 +515,7 @@ Swaps the sealed Tripo fume-hood model (a sash, but not hollow inside) for the O
 ### `Tools/PharmaSynth/Tidy Experiment Layouts`
 <sub>`Assets/PharmaSynth/Scripts/Editor/LayoutTidy.cs`</sub>
 
-Re-seats every experiment layout onto the LayoutTidyMath zoning grid (a clean center table — stations across the back, vessels center-front, reagents right, tools left; the front strip stays free for the rack and spares). Deterministic + idempotent; also structurally removes the two clamped overlaps at (1.38, −3.88) in Acetone and Benzamide. Run AFTER `Apply W5.8 Verb Data` so new stations/props get slots too.
+Re-seats every experiment layout onto the LayoutTidyMath zoning grid (a clean center table — stations across the back, vessels center-front, reagents right, tools left; the front strip stays free for the rack and spares). Deterministic + idempotent; also structurally removes the two clamped overlaps at (1.38, −3.88) in Acetone and Benzamide. Run AFTER `Apply Verb Data` so new stations/props get slots too.
 
 ### `Tools/PharmaSynth/Tune Lab Surfaces`
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabSurfaceTuner.cs`</sub>
@@ -591,11 +526,6 @@ a sealed indoor lab reads as wet plastic. * The benchtops sit at 1.00. A lab ben
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabRenderTuner.cs`</sub>
 
 * MSAA 1 (off). On the Adreno tile GPU 4x resolves in tile memory and is close to free, and this scene is nothing but thin edges - tube rims, glass rods, rack rails. It is the largest per-pixel quality gain available. * HDR off, so emission above 1.0 just clamps: the 16 emissive ceiling panels can never read as LIGHTS, only as white paint, and tonemapping has no range to work with. * FLAT grey 0.45 ambient, identical from every direction, so nothing in the room has any vertical shading and the w
-
-### `Tools/PharmaSynth/Upgrade Distilling Flask Glass`
-<sub>`Assets/PharmaSynth/Scripts/Editor/DistillingFlaskGlass.cs`</sub>
-
-The DistillingFlask model (glTFast .glb) imports with a bare grey metallic material, so it reads as a chrome flask instead of glass. This swaps every mesh on the scene flask (and its prefab) to the SAME borosilicate glass materials the ChemLab beakers use, so it matches the rest of the glassware. Idempotent; run from SampleScene edit mode.
 
 ### `Tools/PharmaSynth/Voice/Export Voice Manifest`
 <sub>`Assets/PharmaSynth/Scripts/Editor/VoiceManifestExporter.cs`</sub>
@@ -627,11 +557,6 @@ The gate's dialogue is a [SerializeField], so the SCENE keeps its own copy of ev
 
 Adds UiButtonSounds (hover blip + click) to every UI Button in the OPEN scene. Run it once per scene — MainMenu (cube room) and SampleScene (HUD / choice panels / settings / grade / post-lab). Idempotent. Tools ▸ PharmaSynth ▸ Wire Button Sounds (edit mode).
 
-### `Tools/PharmaSynth/Wire Distillation Apparatus (W5.12)`
-<sub>`Assets/PharmaSynth/Scripts/Editor/DistillationApparatusWiring.cs`</sub>
-
-Wires the distillation-completion apparatus into the game: the 6 generated pieces (Condenser, RubberStopper, DeliveryTube, WaterBath, UtilityClamp, Aspirator) plus the 3 that exist only as raw models (Pipette, Thermometer, FlorenceFlask). Each is prefabbed if needed, registered in the SceneAssetLibrary, and one instance is spawned + fully wired + placed in a tidy row beside the distilling flask (the user then nudges + re-homes). Idempotent. Size/physics/breakage live in the code tables (RealSize
-
 ### `Tools/PharmaSynth/Wire End-Product Gate`
 <sub>`Assets/PharmaSynth/Scripts/Editor/EndProductGateBuilder.cs`</sub>
 
@@ -642,7 +567,7 @@ A ready-made GOAL destroys the experiment — attaches EndProductVisibility to b
 
 Applies the GrabTuning velocity-tracked profile to every grabbable so held items collide with the world (without it, props can be pushed through walls/floor). Covers the SceneAssetLibrary prefabs (persisted) AND every XRGrabInteractable in the open scene(s) (catches instance overrides, stools, shelf bottles). Idempotent — re-running reports 0 changes.
 
-### `Tools/PharmaSynth/Wire Grade Back Button (W5.9)`
+### `Tools/PharmaSynth/Wire Grade Back Button`
 <sub>`Assets/PharmaSynth/Scripts/Editor/GradeBackButtonBuilder.cs`</sub>
 
 Wires a "Complete Experiment" button onto the grade screen (shown only on FAIL, where Continue is hidden; they share the slot) that ends the attempt and returns the player to the entrance, where any unlocked experiment can be picked, so a failed attempt is never a Retry-only loop. Idempotent.
