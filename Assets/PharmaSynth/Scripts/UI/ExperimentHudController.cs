@@ -70,7 +70,7 @@ public class ExperimentHudController : MonoBehaviour
     private void OnStarted(ExperimentModuleDefinition m)
     {
         _graphProgress = 0f; _mistakes = 0; _lastTimerSecond = -1;
-        if (titleText != null) titleText.text = m != null ? m.moduleTitle : "Experiment";
+        if (titleText != null) titleText.text = GlyphSafe.Sanitize(m != null ? m.moduleTitle : "Experiment");
         if (timerText != null)
         {
             // HIDE the clock in practice mode rather than freezing it at 00:00 —
@@ -112,7 +112,7 @@ public class ExperimentHudController : MonoBehaviour
 
     private void ShowToast(string msg)
     {
-        if (toastText != null) toastText.text = msg;
+        if (toastText != null) toastText.text = GlyphSafe.Sanitize(msg);
         if (toastRoot != null) toastRoot.SetActive(true);
         _toastTimer = toastSeconds;
     }

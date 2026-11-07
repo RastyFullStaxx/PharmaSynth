@@ -45,7 +45,7 @@ public class TabletChecklistController : MonoBehaviour
     private void Rebuild()
     {
         if (checklistText == null || runner == null || runner.Graph == null) return;
-        checklistText.text = BuildChecklistText(runner.Graph);
+        checklistText.text = GlyphSafe.Sanitize(BuildChecklistText(runner.Graph));
     }
 
     /// Text checklist grouped by phase: ☑ done, ▶ current (available), ☐ pending.

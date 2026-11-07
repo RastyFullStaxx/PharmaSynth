@@ -34883,34 +34883,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
   m_PrefabInstance: {fileID: 1615704445}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &455369729
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 455369728}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49d3145cc4494954b9cc0572d7cf234c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VesselStatus
---- !u!114 &455369730
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 455369728}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b81ceaf34aa151e44b712e38d41b78f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProximityLabel
-  label: "Wash Bottle \u2014 Distilled Water"
-  showDistance: 1.4
-  heightOffset: 0.14
-  fontSize: 5.5
 --- !u!114 &455369731
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -86930,34 +86902,6 @@ MonoBehaviour:
   MaxWobble: 0.03
   WobbleSpeed: 1
   Recovery: 1
---- !u!114 &1220987168
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1220987163}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49d3145cc4494954b9cc0572d7cf234c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VesselStatus
---- !u!114 &1220987169
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1220987163}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b81ceaf34aa151e44b712e38d41b78f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProximityLabel
-  label: "tripo node bb98c671 2faa 4856 aec8 5801ff91a85a \u2014 empty"
-  showDistance: 1.4
-  heightOffset: 0.14
-  fontSize: 5.5
 --- !u!1 &1221532606
 GameObject:
   m_ObjectHideFlags: 0
@@ -114119,34 +114063,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
   m_PrefabInstance: {fileID: 1644954286}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1541966499
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1541966498}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49d3145cc4494954b9cc0572d7cf234c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VesselStatus
---- !u!114 &1541966500
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1541966498}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b81ceaf34aa151e44b712e38d41b78f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProximityLabel
-  label: "Wash Bottle \u2014 Distilled Water"
-  showDistance: 1.4
-  heightOffset: 0.14
-  fontSize: 5.5
 --- !u!114 &1541966501
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -123276,12 +123192,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
       insertIndex: -1
       addedObject: {fileID: 455369731}
-    - targetCorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 455369730}
-    - targetCorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 455369729}
   m_SourcePrefab: {fileID: 100100000, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
 --- !u!4 &1615704446 stripped
 Transform:
@@ -125497,12 +125407,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1541966501}
-    - targetCorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1541966500}
-    - targetCorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1541966499}
   m_SourcePrefab: {fileID: 100100000, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
 --- !u!4 &1644954287 stripped
 Transform:
@@ -126854,12 +126758,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6249382332831586099, guid: 1de64028364a68146ae7bdae9a6ae8d3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1220987167}
-    - targetCorrespondingSourceObject: {fileID: 6249382332831586099, guid: 1de64028364a68146ae7bdae9a6ae8d3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1220987169}
-    - targetCorrespondingSourceObject: {fileID: 6249382332831586099, guid: 1de64028364a68146ae7bdae9a6ae8d3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1220987168}
   m_SourcePrefab: {fileID: 100100000, guid: 1de64028364a68146ae7bdae9a6ae8d3, type: 3}
 --- !u!4 &1670011409 stripped
 Transform:
@@ -144803,34 +144701,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
   m_PrefabInstance: {fileID: 2091880688}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1799896631
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1799896630}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49d3145cc4494954b9cc0572d7cf234c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VesselStatus
---- !u!114 &1799896632
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1799896630}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b81ceaf34aa151e44b712e38d41b78f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProximityLabel
-  label: "Wash Bottle \u2014 Distilled Water"
-  showDistance: 1.4
-  heightOffset: 0.14
-  fontSize: 5.5
 --- !u!114 &1799896633
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -163758,12 +163628,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6622832333254013720, guid: e37701bef09a0e940b6679c5d3d7a8d7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2002881137}
-    - targetCorrespondingSourceObject: {fileID: 6622832333254013720, guid: e37701bef09a0e940b6679c5d3d7a8d7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2002881136}
-    - targetCorrespondingSourceObject: {fileID: 6622832333254013720, guid: e37701bef09a0e940b6679c5d3d7a8d7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2002881135}
   m_SourcePrefab: {fileID: 100100000, guid: e37701bef09a0e940b6679c5d3d7a8d7, type: 3}
 --- !u!4 &2002881130 stripped
 Transform:
@@ -163801,34 +163665,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6622832333254013720, guid: e37701bef09a0e940b6679c5d3d7a8d7, type: 3}
   m_PrefabInstance: {fileID: 2002881129}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2002881135
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2002881134}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49d3145cc4494954b9cc0572d7cf234c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VesselStatus
---- !u!114 &2002881136
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2002881134}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b81ceaf34aa151e44b712e38d41b78f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProximityLabel
-  label: "Wash Bottle \u2014 Distilled Water"
-  showDistance: 1.4
-  heightOffset: 0.14
-  fontSize: 5.5
 --- !u!114 &2002881137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -169362,12 +169198,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1799896633}
-    - targetCorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1799896632}
-    - targetCorrespondingSourceObject: {fileID: 7045940219855491807, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1799896631}
   m_SourcePrefab: {fileID: 100100000, guid: 0d9dd6e3a9fbb914393340419fa9c381, type: 3}
 --- !u!4 &2091880689 stripped
 Transform:

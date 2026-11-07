@@ -512,6 +512,9 @@ public static class SceneRepairs
         {
             if (lp == null) continue;
             var go = lp.gameObject;
+            // Liquid inside an item that already carries its own tag (the water bath's
+            // model mesh) is named by that item; a tag here would read the mesh's node name.
+            if (go.transform.parent != null && go.transform.parent.GetComponentInParent<ProximityLabel>() != null) continue;
             var pl = go.GetComponent<ProximityLabel>();
             if (pl == null)
             {

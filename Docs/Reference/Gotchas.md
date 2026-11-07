@@ -1372,6 +1372,18 @@ re-homing.
 > a time. Sampling every 0.1 s, or reading only material values, misses it entirely. The
 > camera's Stop NaNs switch would hide it, at the cost of a full-screen pass on Quest.
 
+## A layout pass that measures its own output never settles
+
+> [!warning] The name tags moved forever because the declutter read where it had put them
+> `LabelDeclutter` measured each tag's current screen position, which already included
+> the lift it had applied on the last poll. Lifted, the tags no longer overlapped, so the
+> next poll dropped them; dropped, they overlapped again and rose. Every 0.2 s, for good.
+> It also compared heights only, so every tag in view joined one vertical stack. Fixed by
+> solving from each tag's REST position, separating only tags that overlap sideways too,
+> showing identical tags on one spot once, and gliding the lift. Measured after: 47 tags
+> in view, none moved 2 mm in 4 s of standing still, no show/hide flips. Any solver that
+> feeds a correction back into its own input needs the uncorrected input.
+
 ## A save after a suite run bakes what the suite drained — and the suite drains scene data
 
 > [!danger] The methane tutorial starved for an afternoon, and five wash bottles went dry, from two saves

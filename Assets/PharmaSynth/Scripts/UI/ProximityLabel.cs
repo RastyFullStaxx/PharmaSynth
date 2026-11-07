@@ -26,6 +26,39 @@ public class ProximityLabel : MonoBehaviour
     private float _declutterLift;
     public void SetDeclutterLift(float metres) => _declutterLift = metres;
 
+    // The lift actually shown glides toward the solved one, so a re-solve after a head
+    // turn moves a tag smoothly instead of snapping it.
+    private float _liftShown, _liftVelocity;
+    public const float LiftGlideSeconds = 0.25f;
+
+    // Hidden by LabelDeclutter because an identical tag already says the same thing in the
+    // same spot (six "Test Tube, empty" tags on one rack). A guided item is never hidden.
+    private bool _duplicateHidden;
+    public void SetDuplicateHidden(bool hidden) => _duplicateHidden = hidden;
+
+    /// Would this tag show if no duplicate hid it? LabelDeclutter solves over these, so a
+    /// hidden duplicate keeps its place in the solve and cannot flicker back.
+    public bool WantsToShow { get; private set; }
+    public bool IsGuided => _guide != null && _guide.IsGuided;
+    public string Text => _tmp != null ? _tmp.text : label;
+
+    // Creation order, a stable tie-break for which duplicate stays visible.
+    private static int s_nextSerial;
+    public int Serial { get; } = ++s_nextSerial;
+
+    /// Where the tag sits without any declutter lift: what LabelDeclutter must measure.
+    public Vector3 RestPosition => _tag != null ? _tag.transform.position - Vector3.up * _liftShown : transform.position;
+
+    /// Half the tag's width in SCREEN pixels, for the sideways overlap test.
+    public float ScreenHalfWidth(Camera cam)
+    {
+        if (_tag == null || cam == null) return 0f;
+        float worldHalf = _tmp != null ? _tmp.bounds.extents.x * _tag.transform.lossyScale.x : 0.05f;
+        Vector3 c = cam.WorldToScreenPoint(_tag.transform.position);
+        Vector3 r = cam.WorldToScreenPoint(_tag.transform.position + cam.transform.right * Mathf.Max(worldHalf, 1e-4f));
+        return Mathf.Abs(r.x - c.x);
+    }
+
     /// Half the tag's height in SCREEN pixels — what the overlap test actually needs.
     /// Measured from the rendered text bounds, so a two-line contents readout correctly
     /// claims twice the room of a bare name.
@@ -45,7 +78,7 @@ public class ProximityLabel : MonoBehaviour
     public void SetLabel(string text, float dist = 1.4f)
     {
         label = text; showDistance = dist;
-        if (_tmp != null) _tmp.text = text;
+        if (_tmp != null) _tmp.text = GlyphSafe.Sanitize(text);
     }
 
     /// Practice mode reads labels from further out: a student who cannot tell two
@@ -91,7 +124,7 @@ public class ProximityLabel : MonoBehaviour
         _tag.transform.localScale = new Vector3(1f / Mathf.Max(ls.x, 1e-4f), 1f / Mathf.Max(ls.y, 1e-4f), 1f / Mathf.Max(ls.z, 1e-4f)) * 0.02f;
 
         _tmp = _tag.AddComponent<TextMeshPro>();
-        _tmp.text = label;
+        _tmp.text = GlyphSafe.Sanitize(label);
         _tmp.fontSize = fontSize;
         _tmp.alignment = TextAlignmentOptions.Center;
         _tmp.color = Color.white;
@@ -117,10 +150,11 @@ public class ProximityLabel : MonoBehaviour
         }
         float d = Vector3.Distance(_cam.position, transform.position);
         if (!_guideChecked) { _guide = GetComponent<HoverHighlight>(); _guideChecked = true; }
-        bool show = ShouldShow(d, showDistance, TutorialSession.Active,
-                               _guide != null && _guide.IsGuided);
+        bool guided = _guide != null && _guide.IsGuided;
+        WantsToShow = ShouldShow(d, showDistance, TutorialSession.Active, guided);
+        bool show = WantsToShow && (guided || !_duplicateHidden);
         if (_tag.activeSelf != show) _tag.SetActive(show);
-        if (show)
+        if (WantsToShow)   // placed even while hidden, so its rest position stays current
         {
             // Float the tag toward the player and above the item, then billboard it.
             var rends = _itemRends;   // cached item renderers (excludes the tag's own)
@@ -145,7 +179,8 @@ public class ProximityLabel : MonoBehaviour
             }
             Vector3 toCam = (_cam.position - transform.position); toCam.y = 0f;
             Vector3 fwd = toCam.sqrMagnitude > 1e-4f ? toCam.normalized : Vector3.forward;
-            _tag.transform.position = new Vector3(transform.position.x, tagY + _declutterLift, transform.position.z) + fwd * fwdDist;
+            _liftShown = Mathf.SmoothDamp(_liftShown, _declutterLift, ref _liftVelocity, LiftGlideSeconds);
+            _tag.transform.position = new Vector3(transform.position.x, tagY + _liftShown, transform.position.z) + fwd * fwdDist;
             _tag.transform.rotation = Quaternion.LookRotation(_tag.transform.position - _cam.position, Vector3.up);
         }
     }

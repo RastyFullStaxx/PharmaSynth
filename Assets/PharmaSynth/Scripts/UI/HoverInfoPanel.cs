@@ -55,7 +55,7 @@ public class HoverInfoPanel : MonoBehaviour
         if (e == null) { Hide(); return; }
         if (titleText != null) titleText.text = GlyphSafe.Sanitize(e.Title);
         if (bodyText != null) bodyText.text = GlyphSafe.Sanitize(e.Body);
-        if (catText != null) { catText.text = Tag(e.Category); catText.color = AccentFor(e.Category); }
+        if (catText != null) { catText.text = GlyphSafe.Sanitize(Tag(e.Category)); catText.color = AccentFor(e.Category); }
         if (accentBar != null) accentBar.color = AccentFor(e.Category);
         _anchor = worldAnchor;
         _showing = true;

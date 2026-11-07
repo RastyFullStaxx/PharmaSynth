@@ -19,7 +19,7 @@ public class ResultsHistoryController : MonoBehaviour
     {
         var svc = new ProgressionService();
         svc.Load();
-        if (bodyText != null) bodyText.text = BuildDisplayText(svc);
+        if (bodyText != null) bodyText.text = GlyphSafe.Sanitize(BuildDisplayText(svc));
     }
 
     /// Rich-text table of the transcript (pure — drives the screen and the tests).

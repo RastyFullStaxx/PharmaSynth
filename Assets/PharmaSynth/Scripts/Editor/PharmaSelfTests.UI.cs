@@ -214,6 +214,15 @@ public static partial class PharmaSelfTests
         A("glyph: box ▶ → »", GlyphSafe.Sanitize("▶ step") == "» step");
         A("glyph: plain text untouched", GlyphSafe.Sanitize("Prepare 0.1N HCl (250 mL)") == "Prepare 0.1N HCl (250 mL)");
         A("glyph: null/empty safe", GlyphSafe.Sanitize(null) == null && GlyphSafe.Sanitize("") == "");
+        // No em or en dashes on screen: a joining dash becomes a comma, a range or a lone
+        // placeholder a hyphen.
+        A("glyph: a label dash becomes a comma", GlyphSafe.Sanitize("Wash Bottle — 500 ml") == "Wash Bottle, 500 ml");
+        A("glyph: a sentence dash becomes a comma", GlyphSafe.Sanitize("Almost there — you're close.") == "Almost there, you're close.");
+        A("glyph: a number range becomes a hyphen", GlyphSafe.Sanitize("1–3 drops") == "1-3 drops");
+        A("glyph: a lone placeholder dash becomes a hyphen", GlyphSafe.Sanitize("—") == "-" && GlyphSafe.Sanitize("Time: —") == "Time: -");
+        A("glyph: rich-text tags count as word edges", GlyphSafe.Sanitize("<b>OBJECTIVES</b> — what") == "<b>OBJECTIVES</b>, what");
+        A("glyph: no em or en dash survives", GlyphSafe.Sanitize("a — b – c—d —").IndexOf('—') < 0
+            && GlyphSafe.Sanitize("a — b – c—d —").IndexOf('–') < 0);
     }
 
     // Fitted watch geometry (the solid Tripo watch cannot wrap a

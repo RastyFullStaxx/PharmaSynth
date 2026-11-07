@@ -318,7 +318,7 @@ public partial class ExperimentSceneBuilder
         go.transform.position = pos;
         go.transform.localScale = Vector3.one * scale;
         var tmp = go.AddComponent<TextMeshPro>();
-        tmp.text = text; tmp.fontSize = 6f; tmp.alignment = TextAlignmentOptions.Center;
+        tmp.text = GlyphSafe.Sanitize(text); tmp.fontSize = 6f; tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = Color.white; tmp.fontStyle = FontStyles.Bold;
         // outlineWidth instances the font material — play-mode only (the edit-mode
         // suite builds stages too, and .material instancing errors there).

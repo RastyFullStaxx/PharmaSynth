@@ -110,7 +110,7 @@ public class PostLabController : MonoBehaviour
         if (explanationText != null)
         {
             var q = _bank.questions[_current];
-            explanationText.text = q.explanation;
+            explanationText.text = GlyphSafe.Sanitize(q.explanation);
         }
         // First pass: auto-advance so answering flows. REVIEWING an already-answered
         // question: stay put so the choice can be compared/changed without the page
@@ -252,12 +252,12 @@ public class PostLabController : MonoBehaviour
 
         var q = _bank.questions[_current];
         if (questionCounterText != null) questionCounterText.text = "Question " + (_current + 1) + " / " + _bank.Count;
-        if (promptText != null) promptText.text = q.prompt;
+        if (promptText != null) promptText.text = GlyphSafe.Sanitize(q.prompt);
         for (int i = 0; i < optionButtons.Length; i++)
         {
             bool on = i < q.options.Count;
             if (optionButtons[i] != null) optionButtons[i].gameObject.SetActive(on);
-            if (i < optionLabels.Length && optionLabels[i] != null && on) optionLabels[i].text = q.options[i];
+            if (i < optionLabels.Length && optionLabels[i] != null && on) optionLabels[i].text = GlyphSafe.Sanitize(q.options[i]);
             // Show the answer already chosen for THIS question, so stepping back to
             // review makes your previous pick obvious. Unpicked
             // options go back to their AUTHORED colour, captured once.
@@ -274,7 +274,7 @@ public class PostLabController : MonoBehaviour
         }
         // Re-show the explanation of an answered question while reviewing it.
         if (explanationText != null)
-            explanationText.text = (_answers != null && _answers[_current] >= 0) ? q.explanation : "";
+            explanationText.text = GlyphSafe.Sanitize((_answers != null && _answers[_current] >= 0) ? q.explanation : "");
 
         if (prevButton != null) prevButton.interactable = CanGoBack(_current);
         if (nextButton != null) nextButton.interactable = CanGoNext(_current, _bank.Count);

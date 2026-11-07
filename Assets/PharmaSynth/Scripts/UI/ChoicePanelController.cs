@@ -30,7 +30,7 @@ public class ChoicePanelController : MonoBehaviour
     /// null = all enabled (locked rows pass false and render dimmed).
     public void Show(string title, IList<string> options, IList<bool> interactable = null)
     {
-        if (titleText != null) titleText.text = title ?? "";
+        if (titleText != null) titleText.text = GlyphSafe.Sanitize(title ?? "");
         int n = options != null ? options.Count : 0;
         for (int i = 0; i < optionButtons.Length; i++)
         {
@@ -41,7 +41,7 @@ public class ChoicePanelController : MonoBehaviour
                 optionButtons[i].interactable = !used || interactable == null || i >= interactable.Count || interactable[i];
             }
             if (used && i < optionLabels.Length && optionLabels[i] != null)
-                optionLabels[i].text = options[i];
+                optionLabels[i].text = GlyphSafe.Sanitize(options[i]);
         }
         bool wasHidden = root != null && !root.activeSelf;
         if (root != null) root.SetActive(true);

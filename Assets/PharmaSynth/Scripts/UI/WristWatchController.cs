@@ -134,12 +134,12 @@ public class WristWatchController : MonoBehaviour
         }
         if (show && runner != null)
         {
-            if (holoTitle != null) holoTitle.text = runner.Module != null ? runner.Module.moduleTitle : "Procedures";
-            if (holoSummary != null) holoSummary.text = ChecklistPager.BuildHeader(runner);
+            if (holoTitle != null) holoTitle.text = GlyphSafe.Sanitize(runner.Module != null ? runner.Module.moduleTitle : "Procedures");
+            if (holoSummary != null) holoSummary.text = GlyphSafe.Sanitize(ChecklistPager.BuildHeader(runner));
             if (holoBody != null && runner.Graph != null)
-                holoBody.text = ChecklistPager.BuildObjectivesHeader(runner.Module)
+                holoBody.text = GlyphSafe.Sanitize(ChecklistPager.BuildObjectivesHeader(runner.Module)
                               + ChecklistPager.BuildMaterialsHeader(runner.Module)
-                              + ChecklistPager.BuildFocusedText(runner.Graph, RackLine);
+                              + ChecklistPager.BuildFocusedText(runner.Graph, RackLine));
             if (holoReaction != null) holoReaction.text = GlyphSafe.Sanitize(balancedReaction);
         }
     }

@@ -80,7 +80,7 @@ public class GradeScreenController : MonoBehaviour
         if (mistakesText != null) mistakesText.text = r.mistakeCount.ToString();
         if (timeText != null) timeText.text = ExperimentHudController.FormatTime(r.elapsedSeconds);
         if (resultText != null) resultText.text = r.passed ? "PASSED" : "TRY AGAIN";
-        if (breakdownText != null) breakdownText.text = BuildBreakdown(r);
+        if (breakdownText != null) breakdownText.text = GlyphSafe.Sanitize(BuildBreakdown(r));
         if (passedVisuals != null) passedVisuals.SetActive(r.passed);
         if (failedVisuals != null) failedVisuals.SetActive(!r.passed);
         if (continueButton != null) continueButton.SetActive(r.passed); // gate: can't advance until passed
@@ -109,9 +109,9 @@ public class GradeScreenController : MonoBehaviour
         if (root != null) root.SetActive(true);
         if (gradeText != null) gradeText.text = stepsDone.ToString();
         if (mistakesText != null) mistakesText.text = corrections.ToString();
-        if (timeText != null) timeText.text = "—";              // practice runs are untimed
+        if (timeText != null) timeText.text = GlyphSafe.Sanitize("—");              // practice runs are untimed
         if (resultText != null) resultText.text = "PRACTICE COMPLETE";
-        if (breakdownText != null) breakdownText.text = TutorialCoach.SummaryText(stepsDone, corrections);
+        if (breakdownText != null) breakdownText.text = GlyphSafe.Sanitize(TutorialCoach.SummaryText(stepsDone, corrections));
         // No pass/fail theatre: nothing was judged, so celebrating or commiserating
         // would both be lying.
         if (passedVisuals != null) passedVisuals.SetActive(false);

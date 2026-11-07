@@ -85,7 +85,7 @@ public class HubSelectController : MonoBehaviour
             if (i < entryLabels.Length && entryLabels[i] != null)
             {
                 string tag = st == RowState.Passed ? "   (done)" : (st == RowState.Locked ? "   (locked)" : "");
-                entryLabels[i].text = row.title + tag;
+                entryLabels[i].text = GlyphSafe.Sanitize(row.title + tag);
                 entryLabels[i].color = st == RowState.Passed ? PassedC : (st == RowState.Locked ? LockedC : AvailC);
             }
             if (entryButtons[i] != null)

@@ -248,7 +248,7 @@ public class CinemaView : MonoBehaviour
         _rig = null;
     }
 
-    public void SetSubtitle(string text) { if (_subtitle != null) _subtitle.text = text ?? ""; }
+    public void SetSubtitle(string text) { if (_subtitle != null) _subtitle.text = GlyphSafe.Sanitize(text ?? ""); }
 
     /// Multiplies the picture (the timelapse's day/night). Exit resets it to white.
     public void SetTint(Color c)

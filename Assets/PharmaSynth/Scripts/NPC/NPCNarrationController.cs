@@ -175,7 +175,7 @@ public class NPCNarrationController : MonoBehaviour
         // RevealAndHold (a stale textInfo here would mis-measure any mirror).
         if (panelRoot != null) panelRoot.SetActive(true);
         if (skipButton != null) skipButton.SetActive(true);
-        if (subtitleText != null) { subtitleText.text = subtitle; subtitleText.maxVisibleCharacters = int.MaxValue; }
+        if (subtitleText != null) { subtitleText.text = GlyphSafe.Sanitize(subtitle); subtitleText.maxVisibleCharacters = int.MaxValue; }
         IsSpeaking = true;
         VisibleCount = int.MaxValue;      // instant path shows the whole line
         LineStarted?.Invoke(subtitle, seconds);
@@ -343,7 +343,7 @@ public class NPCNarrationController : MonoBehaviour
         if (skipButton != null) skipButton.SetActive(true);
         if (subtitleText != null)
         {
-            subtitleText.text = subtitle;
+            subtitleText.text = GlyphSafe.Sanitize(subtitle);
             subtitleText.maxVisibleCharacters = typewriter ? 0 : int.MaxValue;
             subtitleText.ForceMeshUpdate();
         }

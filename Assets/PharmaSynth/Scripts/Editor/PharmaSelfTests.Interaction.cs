@@ -874,6 +874,40 @@ public static partial class PharmaSelfTests
             A("label: the lift is capped in METRES, never chased arbitrarily far",
                 tight[1] <= LabelDeclutterMath.MaxLift + 1e-4f);
             A("label: nothing to solve is not an error", LabelDeclutterMath.Lifts(null, null, null).Length == 0);
+            // Only tags that overlap sideways too are separated: side-by-side tags at one
+            // height stay put (every tag in view used to stack, and move).
+            var mppOne = new List<float> { 0.001f, 0.001f };
+            var apart = LabelDeclutterMath.Lifts(new List<float> { 100f, 400f }, new List<float> { 50f, 50f },
+                new List<float> { 300f, 300f }, new List<float> { 10f, 10f }, mppOne);
+            A("label: tags side by side at one height do not move", apart[0] == 0f && apart[1] == 0f);
+            var stacked = LabelDeclutterMath.Lifts(new List<float> { 100f, 120f }, new List<float> { 50f, 50f },
+                new List<float> { 300f, 300f }, new List<float> { 10f, 10f }, mppOne);
+            A("label: tags that overlap both ways still separate", (stacked[0] == 0f) != (stacked[1] == 0f));
+            // Solving from REST positions is a fixed point: the same input every poll gives the
+            // same lift, so nothing oscillates (measuring the lifted tag broke exactly this).
+            var again = LabelDeclutterMath.Lifts(new List<float> { 100f, 120f }, new List<float> { 50f, 50f },
+                new List<float> { 300f, 300f }, new List<float> { 10f, 10f }, mppOne);
+            A("label: the same rest layout always solves the same way", Near(again[0], stacked[0], 1e-6f) && Near(again[1], stacked[1], 1e-6f));
+            // Identical tags piled on one spot collapse to one; a guided one is never hidden.
+            {
+                var tx = new List<string> { "Test Tube, empty", "Test Tube, empty", "Test Tube, empty", "Test Tube, empty", "Wash Bottle" };
+                var xs = new List<float> { 100f, 110f, 120f, 600f, 105f };
+                var ws = new List<float> { 40f, 40f, 40f, 40f, 40f };
+                var ys = new List<float> { 300f, 302f, 304f, 300f, 300f };
+                var hs = new List<float> { 8f, 8f, 8f, 8f, 8f };
+                var gd = new List<bool> { false, false, true, false, false };
+                var od = new List<int> { 1, 2, 3, 4, 5 };
+                var hid = LabelDeclutterMath.Duplicates(tx, xs, ws, ys, hs, gd, od);
+                A("label: three identical tags on one spot show once, the guided one", hid[0] && hid[1] && !hid[2]);
+                A("label: an identical tag elsewhere and a different tag in the same spot both stay", !hid[3] && !hid[4]);
+                gd[2] = false;
+                var hid2 = LabelDeclutterMath.Duplicates(tx, xs, ws, ys, hs, gd, od);
+                A("label: with no guide, the same duplicate survives every poll (lowest key)", !hid2[0] && hid2[1] && hid2[2]);
+                int nested = 0; string nestedName = "";
+                foreach (var pl in UnityEngine.Object.FindObjectsByType<ProximityLabel>(FindObjectsInactive.Include))
+                    if (pl.transform.parent != null && pl.transform.parent.GetComponentInParent<ProximityLabel>() != null) { nested++; nestedName = pl.name; }
+                A("label: no tag sits inside an item that already has one (it read the mesh's node name) " + nestedName, nested == 0);
+            }
         }
 
         // The vessel explains itself: what bounced, and that a free tube is free.

@@ -139,13 +139,13 @@ public class HudDialogueBar : MonoBehaviour
         bool typing = _active != null && _active.Typewriter;
         if (lineText != null)
         {
-            lineText.text = line;
+            lineText.text = GlyphSafe.Sanitize(line);
             lineText.maxVisibleCharacters = typing ? 0 : int.MaxValue;
         }
         // Set the name UNCONDITIONALLY: guarding on IsNullOrEmpty makes the scene's baked
         // "Pharmee" sticky, so a second speaker would show that name.
         if (speakerText != null && ch != null && !string.IsNullOrEmpty(ch.speakerName))
-            speakerText.text = ch.speakerName;
+            speakerText.text = GlyphSafe.Sanitize(ch.speakerName);
         if (portraitImage != null && ch != null && ch.portrait != null)
             portraitImage.sprite = ch.portrait;
         var g = Group();
