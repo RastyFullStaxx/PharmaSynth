@@ -53,7 +53,8 @@ public class ProximityLabel : MonoBehaviour
     public float ScreenHalfWidth(Camera cam)
     {
         if (_tag == null || cam == null) return 0f;
-        float worldHalf = _tmp != null ? _tmp.bounds.extents.x * _tag.transform.lossyScale.x : 0.05f;
+        float worldHalf = _panel != null ? Mathf.Max(_panel.bounds.extents.x, _panel.bounds.extents.z)
+                        : _tmp != null ? _tmp.bounds.extents.x * _tag.transform.lossyScale.x : 0.05f;
         Vector3 c = cam.WorldToScreenPoint(_tag.transform.position);
         Vector3 r = cam.WorldToScreenPoint(_tag.transform.position + cam.transform.right * Mathf.Max(worldHalf, 1e-4f));
         return Mathf.Abs(r.x - c.x);
@@ -65,7 +66,8 @@ public class ProximityLabel : MonoBehaviour
     public float ScreenHalfHeight(Camera cam)
     {
         if (_tag == null || cam == null) return 0f;
-        float worldHalf = _tmp != null ? _tmp.bounds.extents.y * _tag.transform.lossyScale.y : 0.02f;
+        float worldHalf = _panel != null ? _panel.bounds.extents.y
+                        : _tmp != null ? _tmp.bounds.extents.y * _tag.transform.lossyScale.y : 0.02f;
         Vector3 c = cam.WorldToScreenPoint(_tag.transform.position);
         Vector3 t = cam.WorldToScreenPoint(_tag.transform.position + Vector3.up * Mathf.Max(worldHalf, 1e-4f));
         return Mathf.Abs(t.y - c.y);
@@ -78,7 +80,7 @@ public class ProximityLabel : MonoBehaviour
     public void SetLabel(string text, float dist = 1.4f)
     {
         label = text; showDistance = dist;
-        if (_tmp != null) _tmp.text = GlyphSafe.Sanitize(text);
+        if (_tmp != null) _tmp.text = LabelStyle.TagText(text);
     }
 
     /// Practice mode reads labels from further out: a student who cannot tell two
@@ -124,7 +126,7 @@ public class ProximityLabel : MonoBehaviour
         _tag.transform.localScale = new Vector3(1f / Mathf.Max(ls.x, 1e-4f), 1f / Mathf.Max(ls.y, 1e-4f), 1f / Mathf.Max(ls.z, 1e-4f)) * 0.02f;
 
         _tmp = _tag.AddComponent<TextMeshPro>();
-        _tmp.text = GlyphSafe.Sanitize(label);
+        _tmp.text = LabelStyle.TagText(label);
         _tmp.fontSize = fontSize;
         _tmp.alignment = TextAlignmentOptions.Center;
         _tmp.color = Color.white;
@@ -138,7 +140,62 @@ public class ProximityLabel : MonoBehaviour
             mr.receiveShadows = false;
             mr.sortingOrder = 32760;                     // draw over glass/props
         }
+        // Dark glass panel behind the text, a pointer line down to the item and a dot
+        // where it lands. All sprite-drawn, ordered just under the text.
+        _panel = MakeSprite("TagPanel", LabelStyle.Panel, Color.white, 32759);
+        _panel.drawMode = SpriteDrawMode.Sliced;
+        _leader = MakeSprite("TagLeader", LabelStyle.Pixel, LabelStyle.Edge, 32758);
+        _dot = MakeSprite("TagDot", LabelStyle.Dot, LabelStyle.Edge, 32758);
         _tag.SetActive(false);
+    }
+
+    private SpriteRenderer _panel, _leader, _dot;
+    private string _panelFor;
+
+    private SpriteRenderer MakeSprite(string name, Sprite sprite, Color colour, int order)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(_tag.transform, false);
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = sprite; sr.color = colour; sr.sortingOrder = order;
+        sr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        sr.receiveShadows = false;
+        return sr;
+    }
+
+    /// Fit the panel to the text whenever the text changes.
+    private void FitPanel()
+    {
+        if (_panel == null || _tmp == null || _panelFor == _tmp.text) return;
+        _panelFor = _tmp.text;
+        _tmp.ForceMeshUpdate();
+        var tb = _tmp.textBounds;
+        _panel.size = new Vector2(tb.size.x + LabelStyle.Padding.x, tb.size.y + LabelStyle.Padding.y);
+        // A little behind the text (the tag faces away from the camera, so +z is behind).
+        _panel.transform.localPosition = new Vector3(tb.center.x, tb.center.y, 0.15f);
+    }
+
+    /// Point from the bottom of the panel down to the item, or hide the line when the
+    /// tag already sits on it.
+    private void PlaceLeader(Vector3 anchor)
+    {
+        if (_leader == null || _dot == null || _panel == null) return;
+        Vector3 from = _panel.transform.position - _tag.transform.up * _panel.bounds.extents.y;
+        Vector3 d = anchor - from;
+        float len = d.magnitude;
+        bool show = len >= LabelStyle.MinLeader;
+        if (_leader.gameObject.activeSelf != show) { _leader.gameObject.SetActive(show); _dot.gameObject.SetActive(show); }
+        if (!show) return;
+        float s = _tag.transform.lossyScale.x;
+        if (s <= 1e-6f) return;
+        Vector3 toCam = _cam.position - (from + anchor) * 0.5f;
+        Vector3 up = d / len;
+        Vector3 facing = Vector3.ProjectOnPlane(-toCam, up);
+        if (facing.sqrMagnitude < 1e-8f) facing = _tag.transform.forward;
+        _leader.transform.SetPositionAndRotation((from + anchor) * 0.5f, Quaternion.LookRotation(facing, up));
+        _leader.transform.localScale = new Vector3(LabelStyle.LeaderWidth / s, len / s, 1f);
+        _dot.transform.SetPositionAndRotation(anchor, _tag.transform.rotation);
+        _dot.transform.localScale = Vector3.one * (LabelStyle.DotSize / s);
     }
 
     private void Update()
@@ -182,6 +239,15 @@ public class ProximityLabel : MonoBehaviour
             _liftShown = Mathf.SmoothDamp(_liftShown, _declutterLift, ref _liftVelocity, LiftGlideSeconds);
             _tag.transform.position = new Vector3(transform.position.x, tagY + _liftShown, transform.position.z) + fwd * fwdDist;
             _tag.transform.rotation = Quaternion.LookRotation(_tag.transform.position - _cam.position, Vector3.up);
+            if (show)
+            {
+                FitPanel();
+                // The pointer lands on the top of the item; for a shelf-caged item, on its face.
+                Vector3 anchor = tagY == mid
+                    ? new Vector3(transform.position.x, mid, transform.position.z) + fwd * 0.03f
+                    : new Vector3(transform.position.x, top - heightOffset, transform.position.z);
+                PlaceLeader(anchor);
+            }
         }
     }
 }

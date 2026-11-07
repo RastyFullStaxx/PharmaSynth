@@ -99,7 +99,7 @@ public class VesselStatus : MonoBehaviour
 
         if (s == _last) return;
         _last = s;
-        _label.SetLabel(GlyphSafe.Sanitize(s), _showDist);
+        _label.SetLabel(s, _showDist);   // ProximityLabel splits the name from the contents, then sanitizes
     }
 
     const string NewLine = "\n";

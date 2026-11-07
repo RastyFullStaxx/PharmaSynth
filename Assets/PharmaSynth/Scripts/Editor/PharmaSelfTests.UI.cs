@@ -214,6 +214,23 @@ public static partial class PharmaSelfTests
         A("glyph: box ▶ → »", GlyphSafe.Sanitize("▶ step") == "» step");
         A("glyph: plain text untouched", GlyphSafe.Sanitize("Prepare 0.1N HCl (250 mL)") == "Prepare 0.1N HCl (250 mL)");
         A("glyph: null/empty safe", GlyphSafe.Sanitize(null) == null && GlyphSafe.Sanitize("") == "");
+        // Item tags: the name, then the contents on a softer second line; no dash shows.
+        A("tag: a status splits into name and a cyan detail line",
+            LabelStyle.TagText("Beaker — 40 ml Ethanol") == "Beaker\n<size=82%><color=" + LabelStyle.DetailColour + ">40 ml Ethanol</color></size>");
+        A("tag: a plain name stays one line", LabelStyle.TagText("Test-Tube Brush") == "Test-Tube Brush");
+        A("tag: a multi-line status keeps its extra lines in the detail",
+            LabelStyle.TagText("Tube — 2 ml Ethanol\nneed 5 ml").Contains("2 ml Ethanol\nneed 5 ml"));
+        A("tag: no dash reaches the tag", LabelStyle.TagText("Water Bath — pour in water — then heat").IndexOf('—') < 0);
+        {
+            var corner = LabelStyle.PanelPixel(0, 0);
+            var centre = LabelStyle.PanelPixel(LabelStyle.PanelSize / 2, LabelStyle.PanelSize / 2);
+            var rim = LabelStyle.PanelPixel(LabelStyle.PanelSize / 2, 0);
+            A("tag: the panel has rounded corners, a dark glass middle and a cyan edge",
+                corner.a == 0 && centre.a == LabelStyle.PanelFill.a && centre.r == LabelStyle.PanelFill.r
+                && rim.b > 200 && rim.g > 150);
+            A("tag: the pointer is thin and only drawn when the tag has moved off its item",
+                LabelStyle.LeaderWidth < 0.003f && LabelStyle.MinLeader > 0.01f);
+        }
         // No em or en dashes on screen: a joining dash becomes a comma, a range or a lone
         // placeholder a hyphen.
         A("glyph: a label dash becomes a comma", GlyphSafe.Sanitize("Wash Bottle — 500 ml") == "Wash Bottle, 500 ml");

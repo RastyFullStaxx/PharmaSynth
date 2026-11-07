@@ -17786,7 +17786,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LabelDeclutter
   pollSeconds: 0.2
-  maxLift: 0.12
+  maxLift: 0.22
 --- !u!1 &192420906
 GameObject:
   m_ObjectHideFlags: 0

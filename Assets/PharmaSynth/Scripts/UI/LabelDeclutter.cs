@@ -15,10 +15,14 @@ using UnityEngine;
 /// applied as a small WORLD-space lift, so a tag never leaves the item it names.
 public static class LabelDeclutterMath
 {
-    /// Nothing is nudged further than this, in metres. A tag that has to travel further to
-    /// find room has stopped labelling its own object, and a wrong-looking label is worse
-    /// than an overlapping one.
-    public const float MaxLift = 0.12f;
+    /// Nothing is nudged further than this, in metres. The tag's pointer line keeps a lifted
+    /// tag tied to its item, so it can travel further than bare text could (0.12 m before
+    /// the pointer, which left panelled tags overlapping); past this a tag still reads as
+    /// belonging somewhere else, and an overlapping tag is better than a misleading one.
+    public const float MaxLift = 0.22f;
+
+    /// Air left around each tag, in screen pixels, so neighbouring panels do not touch.
+    public const float GapPixels = 3f;
 
     /// Vertical lift for each label so no two overlap, given their screen-space centres and
     /// half-heights (pixels) and the metres-per-pixel scale at each label's depth.
@@ -182,9 +186,10 @@ public class LabelDeclutter : MonoBehaviour
             if (sp.z <= 0.05f) continue;                       // behind the camera
             _visible.Add(label);
             _x.Add(sp.x);
-            _halfW.Add(Mathf.Max(1f, label.ScreenHalfWidth(_cam)));
+            // A few pixels of air around each panel, so neighbours sit apart, not edge to edge.
+            _halfW.Add(Mathf.Max(1f, label.ScreenHalfWidth(_cam)) + LabelDeclutterMath.GapPixels);
             _y.Add(sp.y);
-            _half.Add(Mathf.Max(1f, label.ScreenHalfHeight(_cam)));
+            _half.Add(Mathf.Max(1f, label.ScreenHalfHeight(_cam)) + LabelDeclutterMath.GapPixels);
             // Metres per pixel at this depth, so the pixel solve converts back to a lift.
             Vector3 up = _cam.WorldToScreenPoint(rest + Vector3.up * 0.1f);
             float dy = Mathf.Abs(up.y - sp.y);
