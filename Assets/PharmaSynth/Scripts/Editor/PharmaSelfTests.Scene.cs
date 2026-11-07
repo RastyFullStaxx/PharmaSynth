@@ -15,6 +15,8 @@ public static partial class PharmaSelfTests
     // same reason the matchbox striker is pinned on the scene, not only in math.
     static void SurfaceSuite()
     {
+        A("render: the autopilot counts NaN and infinite pixels, and only those",
+            PlaytestAutopilot.InvalidPixelCount(new[] { Color.white, new Color(float.NaN, 0f, 0f), new Color(0f, float.PositiveInfinity, 0f), new Color(2f, 3f, 4f) }) == 2);
         foreach (var surf in LabSurfaceTuner.Surfaces)
         {
             var mat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(surf.path);

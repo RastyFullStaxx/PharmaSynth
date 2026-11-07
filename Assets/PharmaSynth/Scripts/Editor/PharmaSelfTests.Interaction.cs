@@ -1352,6 +1352,25 @@ public static partial class PharmaSelfTests
             && VesselStatusMath.ComposeMixed("Test Tube 3", "") == "Test Tube 3 — empty");
 
         // Hover live line.
+        // A person's hover card sits beside them, never over their face.
+        {
+            Vector3 an = HoverInspector.PersonCardAnchor(new Vector3(1f, 1.6f, 2f), Vector3.zero, new Vector3(0f, 0.3f, 1f));
+            A("hover: a person's card sits beside them, level, to the viewer's right",
+                Near(an.z - 2f, HoverInspector.PersonCardSide) && Near(an.y, 1.6f) && Near(an.x, 1f));
+            Collider pharmeeCol = null, jimCol = null, benchCol = null;
+            foreach (var col in UnityEngine.Object.FindObjectsByType<Collider>(FindObjectsInactive.Exclude))
+            {
+                if (pharmeeCol == null && col.GetComponentInParent<PharmeeGatekeeper>() != null) pharmeeCol = col;
+                else if (jimCol == null && col.GetComponentInParent<ExaminerNPC>() != null) jimCol = col;
+                else if (benchCol == null && col.GetComponentInParent<LabItem>() != null) benchCol = col;
+            }
+            A("hover: Pharmee and Dr. Jimenez are recognised as people, a bench item is not",
+                pharmeeCol != null && jimCol != null && benchCol != null
+                && HoverInspector.NpcRoot(pharmeeCol) != null && HoverInspector.NpcRoot(jimCol) != null
+                && HoverInspector.NpcRoot(benchCol) == null);
+            A("hover: silent NPCs are not speaking, so their card can show",
+                pharmeeCol != null && !HoverInspector.IsSpeaking(HoverInspector.NpcRoot(pharmeeCol)));
+        }
         A("hover: empty line", VesselStatusMath.HoverLine(null, 0f, "", 0) == "Now: empty");
         A("hover: contents line", VesselStatusMath.HoverLine("Ethanol", 120f, "", 1) == "Now: 120 ml Ethanol");
         A("hover: mixed story appended", VesselStatusMath.HoverLine("Ethanol", 170f, "Ethanol 120 ml + NaOH 50 ml", 2)

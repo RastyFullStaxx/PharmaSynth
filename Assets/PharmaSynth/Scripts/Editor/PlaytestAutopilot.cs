@@ -192,6 +192,7 @@ public static class PlaytestAutopilot
         s_findings.Clear(); s_errors.Clear(); s_errorBeat.Clear(); s_trace.Clear();
         s_grabChecked.Clear(); s_shots.Clear();
         s_grabsOk = s_grabsTested = s_uiOk = s_uiTested = 0;
+        s_nanChecked = s_nanFrames = 0; s_nanBeats.Clear();
         s_uiCheckedThisRun = false; s_noInteractorReported = false;
         s_nextActAt = 0; s_lastAction = ""; s_lastActionAt = 0; s_repeats = 0; s_traceFull = false;
         s_reachedLab = s_reachedRunning = s_reachedQuiz = s_reachedGrade = false;
@@ -320,6 +321,7 @@ public static class PlaytestAutopilot
         // act on the last input.
         if (now < s_nextActAt) return;
         s_nextActAt = now + ActEverySeconds;
+        CheckInvalidPixels();
 
         // VISUAL: the step performed on the previous tick has had ~0.75 s of frames (the
         // colour lerp is 0.5 s; smoke lives 2.4 s; a popup 2.5 s) — photograph it now.
@@ -1098,6 +1100,58 @@ public static class PlaytestAutopilot
 
     static readonly HashSet<string> s_shots = new HashSet<string>();
 
+    // ---- invalid pixels ------------------------------------------------------------
+    // A NaN or infinite pixel draws black, and bloom spreads it into a white blast over
+    // the whole view: Pharmee's lit eye meshes did exactly that, one frame at a time.
+    // Sampled every tick from the player's camera with post-processing off, because
+    // post would already have smeared or clamped it.
+    static int s_nanChecked, s_nanFrames;
+    static readonly HashSet<string> s_nanBeats = new HashSet<string>();
+    static RenderTexture s_nanRt;
+    static Texture2D s_nanTex;
+
+    /// Number of NaN or infinite colours in `px` (suite-pinned).
+    public static int InvalidPixelCount(Color[] px)
+    {
+        int n = 0;
+        for (int i = 0; i < px.Length; i++)
+        {
+            float sum = px[i].r + px[i].g + px[i].b;
+            if (float.IsNaN(sum) || float.IsInfinity(sum)) n++;
+        }
+        return n;
+    }
+
+    static void CheckInvalidPixels()
+    {
+        var cam = Camera.main;
+        if (cam == null || !cam.isActiveAndEnabled) return;
+        var data = cam.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+        if (s_nanRt == null)
+        {
+            s_nanRt = new RenderTexture(192, 108, 24, RenderTextureFormat.ARGBFloat) { name = "AutopilotNanProbe" };
+            s_nanTex = new Texture2D(192, 108, TextureFormat.RGBAFloat, false);
+        }
+        bool post = data != null && data.renderPostProcessing;
+        if (data != null) data.renderPostProcessing = false;
+        var target = cam.targetTexture;
+        cam.targetTexture = s_nanRt;
+        try { cam.Render(); }
+        finally { cam.targetTexture = target; if (data != null) data.renderPostProcessing = post; }
+        var active = RenderTexture.active;
+        RenderTexture.active = s_nanRt;
+        s_nanTex.ReadPixels(new Rect(0, 0, 192, 108), 0, 0);
+        s_nanTex.Apply();
+        RenderTexture.active = active;
+        s_nanChecked++;
+        int bad = InvalidPixelCount(s_nanTex.GetPixels());
+        if (bad == 0) return;
+        s_nanFrames++;
+        if (s_nanBeats.Add(s_beat))
+            Finding("INVALID PIXELS at beat '" + s_beat + "': " + bad + " NaN/Inf pixels in the player's view "
+                    + "(each becomes a white bloom flash; find the mesh by hiding renderers, see Gotchas)");
+    }
+
     static void Shot(string label)
     {
         // Namespaced per module, or module 2's beats silently reuse module 1's images.
@@ -1132,6 +1186,7 @@ public static class PlaytestAutopilot
         sb.AppendLine("  distinct errors  : " + s_errors.Count);
         sb.AppendLine("  grabs            : " + s_grabsOk + "/" + s_grabsTested + " objects CAN be picked up (capability, not feel)");
         sb.AppendLine("  buttons          : " + s_uiOk + "/" + s_uiTested + " are actually clickable");
+        sb.AppendLine("  invalid pixels   : " + s_nanFrames + "/" + s_nanChecked + " sampled frames had NaN/Inf (bloom turns one into a white flash)");
         sb.AppendLine("  screenshots      : " + ShotDir + "/");
         sb.AppendLine();
 

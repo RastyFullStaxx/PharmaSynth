@@ -551,5 +551,5 @@ Ten items from one headset session, diagnosed by reading the live run rather tha
 - [ ] ⬜ **Headset**: pour the five alcohols into any five tubes and watch the checklist tick them off; rinse a spoiled tube and reuse it; walk to the locker and door on the arrows; check the door swings and blocks; read two adjacent tube labels.
 
 ## §37 Quest performance backlog (checked 2026-11-07)
-- [ ] **Texture import sizes**: 60 environment textures import at 2048 with no crunch compression. Right-size them per use and compress for Quest, after the headset pass measures the frame budget.
-- [ ] **Occlusion culling is not baked** (no `OcclusionCullingData` in `Assets/Scenes`). Bake it if profiling on the device shows the lab is draw-call bound.
+- [x] **Texture compression is already right**: all 314 textures use the automatic format, which an Android build compresses to ASTC; at 2048 px that is roughly 150 MB together, within a Quest 3's budget. Resize only what device profiling shows is memory-bound; blind downsizing just blurs surfaces.
+- [x] **Occlusion culling: not worth baking** for one open room where nearly everything is in view; it costs CPU every frame. Revisit only if a device profile shows the lab draw-call bound.

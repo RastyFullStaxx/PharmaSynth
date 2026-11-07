@@ -78,12 +78,19 @@ public class HoverInspector : MonoBehaviour
             && !IsHeld(hit.collider))   // don't card an item that's already in hand — it blocks using it
         {
             var entry = Resolve(hit.collider, out _);
+            var npc = NpcRoot(hit.collider);
+            // A speaking NPC gets no card: the speech bubble already names them, and the
+            // card would sit over their face and the bubble.
+            if (entry != null && npc != null && IsSpeaking(npc)) entry = null;
             if (entry != null)
             {
                 // Anchor at the exact surface point the ray struck (nudged up a touch),
                 // so the card can be placed just IN FRONT of it — never buried inside a
-                // close, wide target like Pharmee's body.
-                panel.Show(entry, hit.point + Vector3.up * 0.05f);
+                // close, wide target. A person's card goes beside them instead, so it
+                // never covers their face.
+                Vector3 anchor = hit.point + Vector3.up * 0.05f;
+                if (npc != null && head != null) anchor = PersonCardAnchor(anchor, head.position, head.right);
+                panel.Show(entry, anchor);
                 _lostTimer = 0f;
                 return;
             }
@@ -92,6 +99,36 @@ public class HoverInspector : MonoBehaviour
         // Nothing informative under the pointer — hold briefly, then fade out.
         _lostTimer += Time.unscaledDeltaTime;
         if (_lostTimer >= lingerSeconds) panel.Hide();
+    }
+
+    /// Sideways offset of a person's card, in metres: enough to clear Pharmee's head.
+    public const float PersonCardSide = 0.45f;
+
+    /// Where a person's card is anchored: beside the struck point, to the viewer's right.
+    public static Vector3 PersonCardAnchor(Vector3 struck, Vector3 headPos, Vector3 headRight)
+    {
+        Vector3 r = new Vector3(headRight.x, 0f, headRight.z);
+        if (r.sqrMagnitude < 1e-4f) return struck;
+        return struck + r.normalized * PersonCardSide;
+    }
+
+    /// The NPC a collider belongs to (Pharmee or Dr. Jimenez), or null.
+    public static Transform NpcRoot(Collider col)
+    {
+        if (col == null) return null;
+        Component c = col.GetComponentInParent<PharmeeBrain>();
+        if (c == null) c = col.GetComponentInParent<PharmeeGatekeeper>();
+        if (c == null) c = col.GetComponentInParent<ExaminerNPC>();
+        if (c == null) c = col.GetComponentInParent<ProctorRoamer>();
+        return c != null ? c.transform : null;
+    }
+
+    /// True while this NPC's narration is speaking (its controller may sit on a child).
+    public static bool IsSpeaking(Transform npc)
+    {
+        if (npc == null) return false;
+        var n = npc.GetComponentInChildren<NPCNarrationController>();
+        return n != null && n.IsSpeaking;
     }
 
     /// Map a hit collider to an info entry (+ a world anchor near its top).

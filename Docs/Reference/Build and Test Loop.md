@@ -86,7 +86,9 @@ Unity states that mode "is not part of the deprecation. It remains fully support
 No removal date has been announced. The bridge works today — verified end to end on
 2026-08-27.
 
-**Not migrating before the 2026-08-31 turnover.** The Unity CLI is flagged
+**Status 2026-11-07:** the CLI is now installed (`%LOCALAPPDATA%/Unity/bin/unity`, version 1.0.0-beta.13, still beta); the in-Editor bridge still works. Migrating would add the Pipeline package to the project and rewrite the Claude MCP config, so it waits for a non-beta CLI and the owner's go-ahead.
+
+~~**Not migrating before the 2026-08-31 turnover.**~~ (superseded by the status line above) The Unity CLI is flagged
 *experimental* ("features and documentation might change"), it is not installed on
 this machine, and `unity pipeline install` mutates the project. Swapping a verified
 toolchain for an experimental one days before a hard contract deadline is the wrong
