@@ -631,6 +631,27 @@ public static partial class PharmaSelfTests
     // camera films the lab onto a screen in a dark room; the XR camera is never moved.
     static void CinemaSuite()
     {
+        // The screen stays in front of the viewer.
+        {
+            Vector3 head = Vector3.zero, fwd = Vector3.forward;
+            CinemaView.ScreenPose(head, fwd, ScreenMath.DefaultDistance, out var scrP, out var scrR);
+            Vector3 scrF = scrR * Vector3.forward;
+            A("cine: a freshly placed screen needs no re-centre",
+                !ScreenMath.NeedsRecentre(head, fwd, scrP, scrF, ScreenMath.DefaultDistance));
+            A("cine: a viewer behind the screen gets it back in front (no mirrored caption)",
+                ScreenMath.NeedsRecentre(scrP + scrF * 1f, fwd, scrP, scrF, ScreenMath.DefaultDistance));
+            A("cine: a viewer teleported far away gets it back",
+                ScreenMath.NeedsRecentre(new Vector3(0f, 0f, -6f), fwd, scrP, scrF, ScreenMath.DefaultDistance));
+            A("cine: a screen left off to the side is re-centred",
+                ScreenMath.NeedsRecentre(head, Vector3.right, scrP, scrF, ScreenMath.DefaultDistance));
+            A("cine: a small head turn keeps the screen where it is",
+                !ScreenMath.NeedsRecentre(head, Quaternion.Euler(0f, 30f, 0f) * fwd, scrP, scrF, ScreenMath.DefaultDistance));
+            float spanDeg = 2f * Mathf.Atan(1.7f / ScreenMath.DefaultDistance) * Mathf.Rad2Deg;
+            A("cine: the 3.4 m screen spans 70-90 degrees from its distance", spanDeg > 70f && spanDeg < 90f);
+            var cv = UnityEngine.Object.FindAnyObjectByType<CinemaView>(FindObjectsInactive.Include);
+            A("cine: the scene's screen sits at the close distance",
+                cv != null && Mathf.Abs(cv.ScreenDistance - ScreenMath.DefaultDistance) < 0.01f);
+        }
         A("cine: ease runs 0 → 1, symmetric", Near(ShotMath.Ease(0f), 0f) && Near(ShotMath.Ease(1f), 1f)
             && Near(ShotMath.Ease(0.5f), 0.5f) && Near(ShotMath.Ease(2f), 1f));
 
@@ -785,6 +806,8 @@ public static partial class PharmaSelfTests
             && Vector4.Distance(TimelapseMath.Tint(0.5f / 7f, 168f), TimelapseMath.Night) < 0.01f
             && TimelapseMath.IsNight(0.5f / 7f, 168f) && !TimelapseMath.IsNight(0f, 168f));
         A("timelapse: a 15-minute wait never goes dark", TimelapseMath.Tint(0.5f, 0.25f) == Color.white);
+        A("timelapse: game time visibly speeds up during the shot", TimelapseMath.DefaultSpeed >= 4f);
+        A("timelapse: nothing else in the game changes the time scale", Mathf.Approximately(Time.timeScale, 1f));
         A("timelapse: the counter reads days, minutes, or no number at all",
             TimelapseMath.Counter(0f, 168f).StartsWith("DAY 1 OF 7") && TimelapseMath.Counter(0.99f, 168f).StartsWith("DAY 7 OF 7")
             && TimelapseMath.Counter(1f, 0.25f).StartsWith("0:15 OF 0:15") && TimelapseMath.Counter(0.5f, 0f) == ">> FAST FORWARD");
@@ -1016,12 +1039,31 @@ public static partial class PharmaSelfTests
             PharmeeGlowMath.IsGlowPart("Wave_Blue_Light_0") && PharmeeGlowMath.IsGlowPart("Wave.003_Blue_Light_0"));
         A("glow: the eyes and mouth belong to the face, not the glow",
             !PharmeeGlowMath.IsGlowPart("Eyes_Blue_Light_0") && !PharmeeGlowMath.IsGlowPart("Mouth_Blue_Light_0"));
-        var e = PharmeeGlowMath.Emission(new Color(0.06f, 0.35f, 1f), PharmeeGlowMath.DefaultIntensity);
+        var e = PharmeeGlowMath.Emission(PharmeeGlowMath.CyanHue, PharmeeGlowMath.DefaultIntensity);
         // ⛔ UNDER the scene's Bloom threshold (1.0). At 1.45 she still feeds bloom and reads
         // as a glowing ball; this is the property that removes the halo.
         A("glow: the default emissive cannot feed bloom",
             !PharmeeGlowMath.Blooms(e) && e.maxColorComponent > 0.5f && Near(e.a, 1f));
         A("glow: an 8x emissive would bloom", PharmeeGlowMath.Blooms(PharmeeGlowMath.Emission(Color.white, 8f)));
+        // The talk pulse breathes visibly and never reaches bloom at its peak.
+        {
+            float lo = float.MaxValue, hi = 0f, peakEm = 0f;
+            for (int i = 0; i <= 200; i++)
+            {
+                float t = i / (200f * PharmeeGlowMath.TalkPulseHz);
+                float v = PharmeeGlowMath.TalkIntensity(PharmeeGlowMath.DefaultIntensity, t, 1f);
+                lo = Mathf.Min(lo, v); hi = Mathf.Max(hi, v);
+                peakEm = Mathf.Max(peakEm, PharmeeGlowMath.Emission(PharmeeGlowMath.CyanHue, v).maxColorComponent);
+            }
+            A("glow: the talk pulse peaks below bloom", peakEm < 1f);
+            A("glow: the talk pulse is visible (swings at least 0.3 of base)",
+                hi - lo >= 0.3f * PharmeeGlowMath.DefaultIntensity);
+            A("glow: silent, the light holds steady",
+                Near(PharmeeGlowMath.TalkIntensity(0.7f, 0.37f, 0f), 0.7f, 1e-4f));
+            A("glow: the hue is cyan blue (green and blue lead, red low)",
+                PharmeeGlowMath.CyanHue.g > 0.6f && PharmeeGlowMath.CyanHue.b >= PharmeeGlowMath.CyanHue.g
+                && PharmeeGlowMath.CyanHue.r < 0.3f);
+        }
         // Her white shell has NO emission and blooms anyway: albedo 0.91 under the nearby
         // 1.1 fill plus the 1.4 directional clears 1.0 on lighting alone.
         A("glow: the shell albedo is pulled under the clipping point",
@@ -1034,6 +1076,15 @@ public static partial class PharmaSelfTests
         var glow = robot != null ? robot.GetComponentInChildren<PharmeeGlow>(true) : null;
         A("glow: Pharmee carries the dimmer bound to her 5 light parts (run Wire NPC Polish)",
             glow != null && glow.Renderers != null && glow.Renderers.Length == 5);
+        A("glow: the scene's panel and rings are cyan (run Wire NPC Polish)",
+            glow != null && Vector4.Distance(glow.Hue, PharmeeGlowMath.CyanHue) < 0.01f);
+        {
+            var faceCmp = robot != null ? robot.GetComponentInChildren<PharmeeFace>(true) : null;
+            Color faceHappy = Color.black;
+            if (faceCmp != null) faceHappy = new UnityEditor.SerializedObject(faceCmp).FindProperty("happy").colorValue;
+            A("glow: the scene face is cyan too, under the face ceiling",
+                faceCmp != null && faceHappy.g > 3f * faceHappy.r && faceHappy.maxColorComponent <= PharmeeGlowMath.FaceCeiling + 1e-3f);
+        }
         A("glow: the SCENE emissive cannot feed bloom either",
             glow != null && !PharmeeGlowMath.Blooms(PharmeeGlowMath.Emission(glow.Hue, glow.Intensity)));
         A("glow: the scene shell is tamed too (3 White_Glossy parts)",

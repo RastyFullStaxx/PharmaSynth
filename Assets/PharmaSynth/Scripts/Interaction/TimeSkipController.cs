@@ -6,6 +6,11 @@ public static class TimelapseMath
 {
     public static readonly Color Night = new Color(0.22f, 0.28f, 0.55f);
 
+    /// Game-time speed during the timelapse shot. Everything that runs on scaled time
+    /// (Pharmee, Dr. Jimenez's walk, physics, liquids) visibly hurries; the lab clock is
+    /// paused for the shot, so grading never sees it.
+    public const float DefaultSpeed = 6f;
+
     /// Cycles of day and night the picture runs through: one per day, capped so a
     /// month-long wait doesn't strobe. Under a day: none (a 15-minute wait stays lit).
     public static int Cycles(float hours) => hours >= 24f ? Mathf.Clamp(Mathf.RoundToInt(hours / 24f), 1, 7) : 0;
@@ -70,6 +75,9 @@ public class TimeSkipController : MonoBehaviour
     [SerializeField] private float timelapseSeconds = 6f;
     [Tooltip("How far the timelapse camera creeps toward the bench over the clip (0-1).")]
     [SerializeField] private float timelapsePush = 0.12f;
+    [Tooltip("Game-time speed while the timelapse plays. 1 = no speed-up.")]
+    [SerializeField] private float timelapseSpeed = TimelapseMath.DefaultSpeed;
+    private float _savedTimeScale = -1f;
     private bool _subscribed;
     private Coroutine _timelapse;
     private CinemaView _cinema;
@@ -86,7 +94,20 @@ public class TimeSkipController : MonoBehaviour
 
     private void Awake() { if (runner == null) runner = FindAnyObjectByType<ExperimentRunner>(); Subscribe(); }
     private void OnEnable() => Subscribe();
-    private void OnDisable() => Unsubscribe();
+    private void OnDisable() { RestoreTimeScale(); Unsubscribe(); }
+
+    private void SpeedUp()
+    {
+        if (_savedTimeScale < 0f) _savedTimeScale = Time.timeScale;
+        Time.timeScale = Mathf.Max(1f, timelapseSpeed);
+    }
+
+    private void RestoreTimeScale()
+    {
+        if (_savedTimeScale < 0f) return;
+        Time.timeScale = _savedTimeScale;
+        _savedTimeScale = -1f;
+    }
 
     /// Builder/test seam.
     public void Bind(ExperimentRunner r) { Unsubscribe(); runner = r; Subscribe(); }
@@ -168,7 +189,9 @@ public class TimeSkipController : MonoBehaviour
         _cinema.SetSubtitle(GlyphSafe.Sanitize(TimelapseMath.Counter(0f, t.timelapseHours)));
         yield return Fade(0f);
 
-        for (float s = 0f; s < timelapseSeconds; s += Time.deltaTime)
+        // Real seconds, so the shot lasts timelapseSeconds however fast the lab runs.
+        SpeedUp();
+        for (float s = 0f; s < timelapseSeconds; s += Time.unscaledDeltaTime)
         {
             float k = s / timelapseSeconds;
             _cinema.SetPose(ShotMath.Evaluate(start, end, false, look, k), 55f);
@@ -176,6 +199,7 @@ public class TimeSkipController : MonoBehaviour
             _cinema.SetSubtitle(GlyphSafe.Sanitize(TimelapseMath.Counter(k, t.timelapseHours)));
             yield return null;
         }
+        RestoreTimeScale();
         _cinema.SetTint(Color.white);
         _cinema.SetSubtitle(GlyphSafe.Sanitize(TimelapseMath.Counter(1f, t.timelapseHours)));
 
@@ -195,6 +219,7 @@ public class TimeSkipController : MonoBehaviour
     private void EndTimelapse()
     {
         if (_timelapse != null) { StopCoroutine(_timelapse); _timelapse = null; }
+        RestoreTimeScale();
         if (_cinema != null && _cinema.Active) _cinema.Exit();
         if (IsSkipping && runner != null) runner.PauseClock(false);
         IsSkipping = false;

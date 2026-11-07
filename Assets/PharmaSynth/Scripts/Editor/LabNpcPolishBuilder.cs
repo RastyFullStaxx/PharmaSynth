@@ -91,7 +91,7 @@ public static class LabNpcPolishBuilder
         // starts and PharmeeMood resets to Happy as it ends, so any difference between the two
         // becomes a step change on every sentence, which reads as flashing.
         // Warning stays amber: it fires only on a real mistake and is meant to be noticed.
-        var faceBlue = PharmeeGlowMath.CapBrightness(new Color(0.3f, 0.72f, 1f), PharmeeGlowMath.FaceCeiling);
+        var faceBlue = PharmeeGlowMath.CapBrightness(PharmeeGlowMath.CyanHue, PharmeeGlowMath.FaceCeiling);
         face.SetPalette(faceBlue, faceBlue,
             PharmeeGlowMath.CapBrightness(new Color(1f, 0.6f, 0.15f), PharmeeGlowMath.FaceCeiling));
         int retinted = GreenToBlue(robot);
@@ -116,6 +116,8 @@ public static class LabNpcPolishBuilder
         // authored in the SCENE, so a changed C# default never reaches the saved instance).
         var soGlow = new SerializedObject(glow);
         SetFloat(soGlow, "intensity", PharmeeGlowMath.DefaultIntensity);
+        var hueProp = soGlow.FindProperty("hue");
+        if (hueProp != null) hueProp.colorValue = PharmeeGlowMath.CyanHue;
         SetFloat(soGlow, "shellAlbedo", PharmeeGlowMath.DefaultShellAlbedo);
         soGlow.ApplyModifiedProperties();
         glow.Apply();

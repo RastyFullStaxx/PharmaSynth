@@ -25,6 +25,23 @@ public static class PharmeeGlowMath
     /// Below the body glow, so the face reads as part of her rather than as a headlight.
     public const float FaceCeiling = 0.55f;
 
+    /// Her light colour: a cyan blue for the body panel, the hover rings and (capped at
+    /// FaceCeiling) the face.
+    public static readonly Color CyanHue = new Color(0.12f, 0.78f, 1f);
+
+    /// While she speaks, the panel and rings breathe: a slow sine around the base
+    /// intensity, eased in and out so neither start nor end of a line steps.
+    public const float TalkPulseHz = 1.1f;
+    public const float TalkPulseDepth = 0.25f;
+    public const float TalkEaseSeconds = 0.35f;
+
+    /// Intensity at time `t` with the talk weight `speak` (0 silent .. 1 speaking).
+    public static float TalkIntensity(float baseIntensity, float t, float speak)
+    {
+        float wave = Mathf.Sin(2f * Mathf.PI * TalkPulseHz * t);
+        return baseIntensity * (1f + Mathf.Clamp01(speak) * TalkPulseDepth * wave);
+    }
+
     /// Scale a colour so its brightest channel sits at `ceiling`, keeping the hue.
     /// Colours already below it are left alone \u2014 this is a cap, not a normalisation.
     public static Color CapBrightness(Color c, float ceiling)
@@ -77,7 +94,7 @@ public class PharmeeGlow : MonoBehaviour
     [Header("Emissive panels + hover rings")]
     [SerializeField] private Renderer[] glowRenderers = new Renderer[0];
     [Tooltip("The panel/ring hue. Emission = hue x intensity.")]
-    [SerializeField] private Color hue = new Color(0.06f, 0.35f, 1f);
+    [SerializeField] private Color hue = PharmeeGlowMath.CyanHue;
     [Tooltip("HDR intensity. Keep under the scene's Bloom threshold (1.0) or she halos.")]
     [SerializeField] private float intensity = PharmeeGlowMath.DefaultIntensity;
 
@@ -87,6 +104,8 @@ public class PharmeeGlow : MonoBehaviour
     [SerializeField] private float shellAlbedo = PharmeeGlowMath.DefaultShellAlbedo;
 
     private MaterialPropertyBlock _mpb;
+    private NPCNarrationController _narration;
+    private float _speak;
 
     public Renderer[] Renderers => glowRenderers;
     public Renderer[] ShellRenderers => shellRenderers;
@@ -98,8 +117,32 @@ public class PharmeeGlow : MonoBehaviour
     public void BindRenderers(params Renderer[] rs) { glowRenderers = rs ?? new Renderer[0]; Apply(); }
     public void BindShell(params Renderer[] rs) { shellRenderers = rs ?? new Renderer[0]; Apply(); }
 
-    private void Start() => Apply();
+    private void Start() { _narration = GetComponent<NPCNarrationController>(); Apply(); }
     private void OnValidate() => Apply();
+
+    /// The soft talk pulse. Writes only while she is speaking or easing out of it.
+    private void Update()
+    {
+        bool speaking = _narration != null && _narration.IsSpeaking;
+        float target = speaking ? 1f : 0f;
+        if (_speak == target && !speaking) return;
+        _speak = Mathf.MoveTowards(_speak, target, Time.deltaTime / PharmeeGlowMath.TalkEaseSeconds);
+        WriteGlow(PharmeeGlowMath.TalkIntensity(intensity, Time.time, _speak));
+    }
+
+    private void WriteGlow(float level)
+    {
+        if (_mpb == null) _mpb = new MaterialPropertyBlock();
+        Color e = PharmeeGlowMath.Emission(hue, level);
+        if (glowRenderers != null)
+            foreach (var r in glowRenderers)
+            {
+                if (r == null) continue;
+                r.GetPropertyBlock(_mpb);
+                _mpb.SetColor("_EmissionColor", e);
+                r.SetPropertyBlock(_mpb);
+            }
+    }
 
     public void Apply()
     {

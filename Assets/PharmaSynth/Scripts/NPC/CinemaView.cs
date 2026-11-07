@@ -7,9 +7,14 @@ using LocomotionProvider = UnityEngine.XR.Interaction.Toolkit.Locomotion.Locomot
 /// into a letterboxed RenderTexture; while active, the player's XR camera renders ONLY
 /// the `Cinema` layer — a black void holding a wide screen showing that texture, plus
 /// the subtitle and the fade quad. The XR camera is never moved or rotated (head
-/// tracking stays the player's), the shot camera owns every frame of the picture, and
-/// the screen is world-fixed where the player was looking, so nothing can be missed
-/// and nothing swims. Hands, HUD and the lab vanish with the culling swap.
+/// tracking stays the player's), and the shot camera owns every frame of the picture.
+///
+/// The screen is placed where the player is looking and then held fixed relative to the
+/// player's rig, not the world: cutscenes teleport the rig under the fade (to the review
+/// corner, back home), and a world-fixed screen was left beside, far from or behind the
+/// player. Seen from behind, only the double-sided caption showed, mirrored. If the head
+/// still ends up behind the screen, too far, or well off to one side, the screen is
+/// placed in front again. Hands, HUD and the lab vanish with the culling swap.
 ///
 /// Enter/Exit record exactly what they changed and restore exactly that.
 public class CinemaView : MonoBehaviour
@@ -21,7 +26,7 @@ public class CinemaView : MonoBehaviour
     // 2.35:1. 1280x544 read soft in the client reel; during a cinematic the XR camera
     // draws almost nothing (the dark room), so the shot camera has the budget.
     [SerializeField] private Vector2Int resolution = new Vector2Int(1600, 680);
-    [SerializeField] private float screenDistance = 2.6f;
+    [SerializeField] private float screenDistance = ScreenMath.DefaultDistance;
     [SerializeField] private float screenWidth = 3.4f;
 
     private RenderTexture _rt;
@@ -38,6 +43,13 @@ public class CinemaView : MonoBehaviour
     private Renderer _fadeQuad;
     private int _savedFadeLayer = -1;
     private readonly List<Behaviour> _locked = new List<Behaviour>();
+
+    // The screen's pose in the rig's space, so a teleport carries the screen along.
+    private Transform _rig;
+    private Vector3 _screenLocalPos;
+    private Quaternion _screenLocalRot = Quaternion.identity;
+    public float ScreenDistance => screenDistance;
+    public Transform ScreenTransform => _screen;
 
     public bool Active { get; private set; }
     private static int s_active;
@@ -170,8 +182,8 @@ public class CinemaView : MonoBehaviour
         foreach (var p in FindObjectsByType<LocomotionProvider>())
             if (p.enabled) { p.enabled = false; _locked.Add(p); }
 
-        ScreenPose(xr.transform.position, xr.transform.forward, screenDistance, out var sp, out var sr);
-        _screen.SetPositionAndRotation(sp, sr);
+        _rig = RigOf(xr);
+        PlaceScreen(xr.transform);
         _screen.gameObject.SetActive(true);
         _subtitle.text = "";
         _title.text = "";
@@ -181,6 +193,37 @@ public class CinemaView : MonoBehaviour
         FaceCamera.Override = shotCamera.transform;
         Active = true;
         s_active++;
+    }
+
+    /// The transform that teleports carry: the XR Origin if there is one, else the
+    /// camera's parent.
+    public static Transform RigOf(Camera xr)
+    {
+        if (xr == null) return null;
+        var origin = xr.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>();
+        if (origin != null) return origin.transform;
+        return xr.transform.parent != null ? xr.transform.parent : xr.transform;
+    }
+
+    private void PlaceScreen(Transform head)
+    {
+        ScreenPose(head.position, head.forward, screenDistance, out var sp, out var sr);
+        _screen.SetPositionAndRotation(sp, sr);
+        if (_rig != null)
+        {
+            _screenLocalPos = _rig.InverseTransformPoint(sp);
+            _screenLocalRot = Quaternion.Inverse(_rig.rotation) * sr;
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (!Active || _xr == null || _screen == null) return;
+        if (_rig != null)
+            _screen.SetPositionAndRotation(_rig.TransformPoint(_screenLocalPos), _rig.rotation * _screenLocalRot);
+        var head = _xr.transform;
+        if (ScreenMath.NeedsRecentre(head.position, head.forward, _screen.position, _screen.forward, screenDistance))
+            PlaceScreen(head);
     }
 
     public void Exit()
@@ -202,6 +245,7 @@ public class CinemaView : MonoBehaviour
         if (_title != null) _title.text = "";
         if (shotCamera != null) shotCamera.enabled = false;
         _xr = null;
+        _rig = null;
     }
 
     public void SetSubtitle(string text) { if (_subtitle != null) _subtitle.text = text ?? ""; }

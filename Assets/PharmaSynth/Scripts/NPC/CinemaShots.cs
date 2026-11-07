@@ -29,6 +29,32 @@ public class CinemaShot
 /// Pure camera math for cinematic cutscenes (suite-pinned). Eased position, level
 /// horizon (never a roll), and a look-at that is re-aimed every frame so a pan stays
 /// locked on a moving or distant target.
+/// Where the cinema screen sits relative to the viewer (suite-pinned).
+public static class ScreenMath
+{
+    /// Metres from the head to the screen. At 3.4 m wide this spans about 80 degrees, so
+    /// the whole frame is in view without turning the head.
+    public const float DefaultDistance = 2.1f;
+    /// Re-centre once the screen is more than this many degrees off the head's yaw.
+    public const float MaxOffAxisDegrees = 70f;
+
+    /// True when the screen must be placed in front of the viewer again: the viewer is
+    /// behind it (only the mirrored caption would show), too near, too far, or the
+    /// screen sits well off to one side.
+    public static bool NeedsRecentre(Vector3 head, Vector3 headForward, Vector3 screenPos,
+                                     Vector3 screenForward, float distance)
+    {
+        Vector3 toScreen = screenPos - head;
+        if (Vector3.Dot(screenForward, toScreen) <= 0f) return true;          // behind it
+        Vector3 flat = new Vector3(toScreen.x, 0f, toScreen.z);
+        float d = flat.magnitude;
+        if (d > distance * 1.6f || d < distance * 0.5f) return true;
+        Vector3 f = new Vector3(headForward.x, 0f, headForward.z);
+        if (f.sqrMagnitude < 1e-4f || d < 1e-4f) return false;
+        return Vector3.Angle(f, flat) > MaxOffAxisDegrees;
+    }
+}
+
 public static class ShotMath
 {
     public struct Pose { public Vector3 pos; public Quaternion rot; public Pose(Vector3 p, Quaternion r) { pos = p; rot = r; } }
