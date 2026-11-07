@@ -35,7 +35,7 @@ Everything above is **already configured in the repo** — a fresh clone + open 
 ## 2. Running in-editor
 
 1. Open **`Assets/Scenes/SampleScene.unity`** (the assembled lab).
-2. Press **Play**. Two ways to run: (a) **headless** — the XR Device Simulator + keyboard stand in for the headset (keep Standalone `InitManagerOnStart` OFF); (b) **headset** — connect a Quest via Quest Link / Air Link and turn Standalone `InitManagerOnStart` ON. Toggle either way with **Tools ▸ PharmaSynth ▸ Headset Play Mode (OpenXR on Play)** (checkmark = ON). As of 2026-07-12 it is **ON** (headset mode).
+2. Press **Play**. Two ways to run: (a) **headless** — the XR Device Simulator + keyboard stand in for the headset (keep Standalone `InitManagerOnStart` OFF); (b) **headset** — connect a Quest via Quest Link / Air Link and turn Standalone `InitManagerOnStart` ON. Switch with **Tools ▸ PharmaSynth ▸ Play Mode ▸ PC Dev Mode / Headset Mode (Quest Link)** (checkmark = active). Each sets the init flag AND the XR Device Simulator in every build scene; with the simulator left on, it removes the real headset and the hands float above the view.
 3. Walk to the **Begin button**, don PPE at the **PPELocker**, and run the Methane tutorial — or skip all interaction with the keyboard driver below.
 
 You can also start from `Assets/Scenes/MainMenu.unity` to exercise the full menu → lab flow (§4).

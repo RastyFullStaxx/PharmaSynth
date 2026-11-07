@@ -4353,11 +4353,6 @@ Controllers are REPLACED by skinned hands: XR Hands sample meshes (Art/Hands/Lef
 static void Build()
 ```
 
-### `HeadsetPlayModeToggle` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/HeadsetPlayModeToggle.cs`</sub>
-
-One-click switch for editor Play mode's XR init on the Standalone (PC) target — the setting buried under Project Settings ▸ XR Plug-in Management ▸ (per target) "Initialize XR on Startup". • ON  → pressing Play brings up OpenXR, so a Quest connected via Quest Link / Air Link drives the headset. Use this to test in the headset. • OFF → Play never touches OpenXR, so the headset-less PC dev loop (XR Device Simulator + keyboard DevExperimentDriver) is safe. Leaving it ON with NO headset connected can stall Play mode. Android is left untouched (the APK always auto-inits on the device).
-
 ### `HideStationPads` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/HideStationPads.cs`</sub>
 

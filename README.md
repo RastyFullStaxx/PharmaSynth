@@ -70,8 +70,8 @@ Device Simulator stands in for the headset: hold the right mouse button to look,
 move, and press G to grab with the selected controller. The full control list is in
 [`Docs/build-and-run.md`](Docs/build-and-run.md).
 
-**With a Quest 3 over Link**: turn on **Tools ▸ PharmaSynth ▸ Headset Play Mode (OpenXR on Play)**,
-connect the headset, then press Play.
+**With a Quest 3 over Link**: choose **Tools ▸ PharmaSynth ▸ Play Mode ▸ Headset Mode (Quest Link)**,
+connect the headset, then press Play. **PC Dev Mode** in the same menu switches back.
 
 ## Checking a change
 
