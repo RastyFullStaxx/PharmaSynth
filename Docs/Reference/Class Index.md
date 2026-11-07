@@ -1281,6 +1281,10 @@ Points-at-it inspector: each frame it casts from the pointer (right-hand ray, fa
 ```csharp
 void Bind(Transform aim, Transform headT, HoverInfoPanel p, LayerMask m)
 void BindAltAim(Transform alt)
+const float PersonCardSide
+static Vector3 PersonCardAnchor(Vector3 struck, Vector3 headPos, Vector3 headRight)
+static Transform NpcRoot(Collider col)
+static bool IsSpeaking(Transform npc)
 static LabInfoEntry ResolveFor(Collider col, out Vector3 anchor)
 static LabInfoEntry WithLiveLine(LabInfoEntry e, LiquidPhysics lp)
 static bool IsHeld(Collider col)
@@ -1852,6 +1856,7 @@ Pure timelapse maths (suite-pinned): day/night tint and the on-screen counter.
 
 ```csharp
 static readonly Color Night
+const float DefaultSpeed
 static int Cycles(float hours)
 static Color Tint(float k, float hours)
 static bool IsNight(float k, float hours)
@@ -2626,10 +2631,19 @@ bool pharmeePopIn
 bool HasCamera
 ```
 
-### `ShotMath` <sub>class</sub>
+### `ScreenMath` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/CinemaShots.cs`</sub>
 
-Pure camera math for cinematic cutscenes (suite-pinned). Eased position, level horizon (never a roll), and a look-at that is re-aimed every frame so a pan stays locked on a moving or distant target.
+Pure camera math for cinematic cutscenes (suite-pinned). Eased position, level horizon (never a roll), and a look-at that is re-aimed every frame so a pan stays locked on a moving or distant target. Where the cinema screen sits relative to the viewer (suite-pinned).
+
+```csharp
+const float DefaultDistance
+const float MaxOffAxisDegrees
+static bool NeedsRecentre(Vector3 head, Vector3 headForward, Vector3 screenPos,
+```
+
+### `ShotMath` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/CinemaShots.cs`</sub>
 
 ### `Pose` <sub>struct</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/CinemaShots.cs`</sub>
@@ -2644,11 +2658,13 @@ static Pose Evaluate(Pose start, Pose end, bool blend, Vector3? look, float t01)
 ### `CinemaView` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/CinemaView.cs`</sub>
 
-The cinematic cutscene "theatre". A separate, non-XR ShotCamera films the live lab into a letterboxed RenderTexture; while active, the player's XR camera renders ONLY the `Cinema` layer — a black void holding a wide screen showing that texture, plus the subtitle and the fade quad. The XR camera is never moved or rotated (head tracking stays the player's), the shot camera owns every frame of the picture, and the screen is world-fixed where the player was looking, so nothing can be missed and nothing swims. Hands, HUD and the lab vanish with the culling swap. Enter/Exit record exactly what they changed and restore exactly that.
+The cinematic cutscene "theatre". A separate, non-XR ShotCamera films the live lab into a letterboxed RenderTexture; while active, the player's XR camera renders ONLY the `Cinema` layer — a black void holding a wide screen showing that texture, plus the subtitle and the fade quad. The XR camera is never moved or rotated (head tracking stays the player's), and the shot camera owns every frame of the picture. The screen is placed where the player is looking and then held fixed relative to the player's rig, not the world: cutscenes teleport the rig under the fade (to the review corner, back home), and a world-fixed screen was left beside, far from or behind the player. Seen from behind, only the double-sided caption showed, mirrored. If the head still ends up behind the screen, too far, or well off to one side, the screen is placed in front again. Hands, HUD and the lab vanish with the cull
 
 ```csharp
 const string LayerName
 const string MarkersRoot
+float ScreenDistance
+Transform ScreenTransform
 bool Active
 static bool AnyActive
 Camera ShotCamera
@@ -2659,8 +2675,6 @@ bool ShotCameraIsFlat
 static int ShotMask()
 static void ScreenPose(Vector3 head, Vector3 headForward, float distance,
 void Enter(Camera xr)
-void Exit()
-void SetSubtitle(string text)
 ```
 
 ### `CutsceneData` <sub>class</sub>
@@ -3063,6 +3077,11 @@ Pure rules for how bright Pharmee reads (suite-pinned).
 const float DefaultIntensity
 const float DefaultShellAlbedo
 const float FaceCeiling
+static readonly Color CyanHue
+const float TalkPulseHz
+const float TalkPulseDepth
+const float TalkEaseSeconds
+static float TalkIntensity(float baseIntensity, float t, float speak)
 static Color CapBrightness(Color c, float ceiling)
 static Color Emission(Color hue, float intensity)
 static bool Blooms(Color emission, float bloomThreshold
@@ -3204,7 +3223,7 @@ Focused checklist text for the holo procedures board (the flat pads rendered eve
 static TaskPhase? ActivePhase(TaskGraph graph)
 static string BuildObjectivesHeader(ExperimentModuleDefinition module)
 static string BuildMaterialsHeader(ExperimentModuleDefinition module)
-static string BuildFocusedText(TaskGraph graph)
+static string BuildFocusedText(TaskGraph graph, System.Func<string, string> stepDetail
 static string BuildHeader(ExperimentRunner runner)
 ```
 
@@ -3299,6 +3318,7 @@ The world-space lab UI (tablet "pads", wrist holo board, reaction footer) render
 
 ```csharp
 static string Sanitize(string s)
+static string Dashes(string s)
 ```
 
 ### `GradeDisplay` <sub>class</sub>
@@ -3488,7 +3508,10 @@ Pure rules for keeping world-space name tags from sitting on top of each other (
 
 ```csharp
 const float MaxLift
+const float GapPixels
 static float[] Lifts(IReadOnlyList<float> screenY, IReadOnlyList<float> halfHeight,
+static bool[] Duplicates(IReadOnlyList<string> text, IReadOnlyList<float> screenX,
+static float[] Lifts(IReadOnlyList<float> screenX, IReadOnlyList<float> halfWidth,
 ```
 
 ### `LabelDeclutter` <sub>class</sub>
@@ -3498,6 +3521,27 @@ Drives LabelDeclutterMath over the live ProximityLabels. Thin: it measures, call
 
 ```csharp
 void Bind(float poll, float lift)
+```
+
+### `LabelStyle` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/UI/LabelStyle.cs`</sub>
+
+The look of an item's name tag: dark glass panel, cyan edge, a pointer line to the item, and two lines of text (the name, then the contents in a softer cyan). The sprites are generated in code, so there is no art asset to import or strip, and the panel keeps a constant edge at any size (9-sliced). Pure parts are suite-pinned.
+
+```csharp
+static readonly Color32 PanelFill
+static readonly Color32 Edge
+const string DetailColour
+static readonly Vector2 Padding
+const float LeaderWidth
+const float DotSize
+const float MinLeader
+static string TagText(string raw)
+static Sprite Panel
+static Sprite Pixel
+static Sprite Dot
+const int PanelSize
+static Color32 PanelPixel(int x, int y)
 ```
 
 ### `MainMenuController` <sub>class</sub>
@@ -3567,11 +3611,17 @@ Shows a small floating name tag above an object only when the player's camera is
 string CurrentText
 GameObject Tag
 void SetDeclutterLift(float metres)
+const float LiftGlideSeconds
+void SetDuplicateHidden(bool hidden)
+bool WantsToShow
+bool IsGuided
+string Text
+int Serial
+Vector3 RestPosition
+float ScreenHalfWidth(Camera cam)
 float ScreenHalfHeight(Camera cam)
 void SetLabel(string text, float dist
 const float TutorialRadiusMultiplier
-static float VisibleRadius(float baseRadius, bool tutorial)
-static bool ShouldShow(float distance, float baseRadius, bool tutorial, bool guided)
 ```
 
 ### `ResultsHistoryController` <sub>class</sub>
@@ -3585,6 +3635,28 @@ void Hide()
 void Refresh()
 static string BuildDisplayText(ProgressionService service)
 void ExportCsv()
+```
+
+### `RoundedCorners` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/UI/RoundedCorners.cs`</sub>
+
+Soft rounded corners for every UI panel and button, matching the item name tags. A sprite-less Image draws a hard rectangle, so each one gets the shared 9-sliced rounded sprite (Resources/UI/RoundedPanel), with a corner radius scaled to that Image's own size: panels get a generous curve, buttons a smaller one, thin bars and slider handles become pills. Real art (portraits, icons) and fill bars are left alone. Baked into both scenes by Tools ▸ PharmaSynth ▸ Round UI Corners, and applied again on every scene load, so a panel a builder menu recreates can never come back square.
+
+```csharp
+const string ResourcePath
+const int SpritePixels
+const float MaxRadius
+const float StripeMax
+static float RadiusFor(Vector2 size)
+static float Multiplier(float radius, float canvasPixelsPerUnit, float spritePixelsPerUnit)
+static float Alpha(int x, int y)
+static float RingAlpha(int x, int y)
+const int RingPixels
+const string RingResourcePath
+const string EdgeName
+static Sprite Sprite
+static Sprite Ring
+static bool Wants(UImage img, Sprite rounded)
 ```
 
 ### `FadeState` <sub>class</sub>
@@ -4703,6 +4775,7 @@ A step that has been PERFORMED and is now finishing on real frames.
 
 ```csharp
 static bool IsCompletionNoise(string bug)
+static int InvalidPixelCount(Color[] px)
 ```
 
 ### `QuizNavButtonsBuilder` <sub>class</sub>
@@ -4836,6 +4909,17 @@ Wires Pharmee's robot voice colouring onto HIS narration channel only Dr. Jimene
 ```csharp
 static void Apply()
 static void Remove()
+```
+
+### `RoundedCornersBuilder` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/RoundedCornersBuilder.cs`</sub>
+
+Tools ▸ PharmaSynth ▸ Round UI Corners: writes the shared rounded and ring sprites (once) and bakes it into every panel and button of SampleScene and MainMenu, then saves both. Idempotent. Run it on a scene freshly loaded from disk, never straight after a suite or simulator run (those drain the bench, and this saves).
+
+```csharp
+const string SpriteAsset
+const string RingAsset
+static void Run()
 ```
 
 ### `SceneFind` <sub>class</sub>

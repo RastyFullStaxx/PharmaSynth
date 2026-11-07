@@ -231,6 +231,42 @@ public static partial class PharmaSelfTests
             A("tag: the pointer is thin and only drawn when the tag has moved off its item",
                 LabelStyle.LeaderWidth < 0.003f && LabelStyle.MinLeader > 0.01f);
         }
+        // Every UI panel and button has soft rounded corners, like the tags.
+        {
+            const float Mid = RoundedCorners.SpritePixels / 2;
+            A("round: the sprite is clear in its corner and solid in its middle",
+                RoundedCorners.Alpha(0, 0) == 0f && RoundedCorners.Alpha((int)Mid, (int)Mid) == 1f
+                && RoundedCorners.Alpha((int)Mid, 0) == 1f);
+            A("round: a big panel gets the full radius, never more",
+                Mathf.Approximately(RoundedCorners.RadiusFor(new Vector2(1120, 176)), RoundedCorners.MaxRadius));
+            A("round: a thin bar becomes a pill",
+                Mathf.Approximately(RoundedCorners.RadiusFor(new Vector2(320, 15)), 7.5f)
+                && Mathf.Approximately(RoundedCorners.RadiusFor(new Vector2(34, 5)), 2.5f));
+            A("round: a button's corner sits between a pill and a panel",
+                RoundedCorners.RadiusFor(new Vector2(224, 56)) < RoundedCorners.MaxRadius
+                && RoundedCorners.RadiusFor(new Vector2(224, 56)) > 12f);
+            A("round: the multiplier draws the sprite's corner at the asked radius",
+                Mathf.Approximately(RoundedCorners.Multiplier(24f, 100f, 100f) * 24f, RoundedCorners.BorderPixels));
+            var rounded = AssetDatabase.LoadAssetAtPath<Sprite>(RoundedCornersBuilder.SpriteAsset);
+            A("round: the rounded sprite is a 9-sliced asset the runtime can load",
+                rounded != null && rounded.border.x == RoundedCorners.BorderPixels
+                && rounded == RoundedCorners.Sprite);
+            A("round: the ring sprite is only a thin band along the edge",
+                RoundedCorners.RingAlpha(0, 0) == 0f && RoundedCorners.RingAlpha((int)Mid, (int)Mid) == 0f
+                && RoundedCorners.RingAlpha((int)Mid, 1) == 1f && RoundedCorners.RingAlpha((int)Mid, 10) == 0f);
+            int jagged = 0;
+            foreach (var o in UnityEngine.Object.FindObjectsByType<UnityEngine.UI.Outline>(FindObjectsInactive.Include))
+            {
+                var oi = o.GetComponent<UnityEngine.UI.Image>();
+                if (o.enabled && oi != null && oi.sprite == rounded) jagged++;
+            }
+            A("round: no rounded panel keeps an Outline effect (its copies jog on the curve)", jagged == 0);
+            int square = 0; string first = null;
+            foreach (var img in UnityEngine.Object.FindObjectsByType<UnityEngine.UI.Image>(FindObjectsInactive.Include))
+                if (RoundedCorners.Wants(img, rounded) && img.sprite != rounded) { square++; first = first ?? img.name; }
+            A("round: no square panel or button is left in the lab scene (run Round UI Corners)" + (square > 0 ? ", " + square + " square, e.g. " + first : ""),
+                square == 0);
+        }
         // No em or en dashes on screen: a joining dash becomes a comma, a range or a lone
         // placeholder a hyphen.
         A("glyph: a label dash becomes a comma", GlyphSafe.Sanitize("Wash Bottle — 500 ml") == "Wash Bottle, 500 ml");

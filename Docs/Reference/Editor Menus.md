@@ -397,6 +397,11 @@ object it spawned, grouped by WHO spawned it, so the stage can be reviewed and p
 
 object it spawned, grouped by WHO spawned it, so the stage can be reviewed and pruned by hand. ⛔ DELETES NOTHING. Same intent as RevealMethaneStage: the stage normally only exists at runtime, so there is no way to see what an experiment litters the bench with until you are inside VR. This makes it visible and named. The grouping matters because the spawn sources are independent, and only ONE of them is the layout's fault: • LAYOUT VESSELS   — authored per experiment (Exp 2's 20 tubes duplicate t
 
+### `Tools/PharmaSynth/Round UI Corners`
+<sub>`Assets/PharmaSynth/Scripts/Editor/RoundedCornersBuilder.cs`</sub>
+
+Tools ▸ PharmaSynth ▸ Round UI Corners: writes the shared rounded and ring sprites (once) and bakes it into every panel and button of SampleScene and MainMenu, then saves both. Idempotent. Run it on a scene freshly loaded from disk, never straight after a suite or simulator run (those drain the bench, and this saves).
+
 ### `Tools/PharmaSynth/Run Lab Lighting Bake`
 <sub>`Assets/PharmaSynth/Scripts/Editor/LabLightingBake.cs`</sub>
 
