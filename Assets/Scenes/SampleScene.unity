@@ -35894,7 +35894,7 @@ Transform:
   m_GameObject: {fileID: 470282338}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 2.4100015, y: -0.84234196, z: 5.449997}
+  m_LocalPosition: {x: 0.002572958, y: -0.6569945, z: -0.36068967}
   m_LocalScale: {x: 0.5277478, y: 0.52774763, z: 0.52774763}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -63655,7 +63655,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DropRespawn
   killZ: -1
   minDistance: 0.4
-  _homePos: {x: -0.10321689, y: 1.6650003, z: -3.6293244}
+  _homePos: {x: -0.10321689, y: 1.6650003, z: -3.7519307}
   _homeRot: {x: 0, y: 0, z: 0, w: 1}
   _hasHome: 1
 --- !u!114 &928424398
@@ -63871,7 +63871,7 @@ Transform:
   m_GameObject: {fileID: 928424385}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.10321689, y: 1.6650003, z: -3.6293244}
+  m_LocalPosition: {x: -0.10321689, y: 1.6650003, z: -3.7519307}
   m_LocalScale: {x: 0.10477894, y: 0.10477894, z: 0.10477894}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -95631,7 +95631,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DropRespawn
   killZ: -1
   minDistance: 0.4
-  _homePos: {x: 0.0054831803, y: 1.6650003, z: -3.662}
+  _homePos: {x: 0.0054831803, y: 1.6650003, z: -3.7519312}
   _homeRot: {x: 0, y: 0, z: 0, w: 1}
   _hasHome: 1
 --- !u!114 &1367102999
@@ -95847,7 +95847,7 @@ Transform:
   m_GameObject: {fileID: 1367102986}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.0054831803, y: 1.6650003, z: -3.662}
+  m_LocalPosition: {x: 0.0054831803, y: 1.6650003, z: -3.7519312}
   m_LocalScale: {x: 0.10477894, y: 0.10477894, z: 0.10477894}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -97116,7 +97116,7 @@ Transform:
   m_GameObject: {fileID: 1390995052}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 2.41, y: -0.84234196, z: 5.4499993}
+  m_LocalPosition: {x: 0.0025715358, y: -0.6491636, z: -0.40368873}
   m_LocalScale: {x: 0.5277478, y: 0.52774763, z: 0.52774763}
   m_ConstrainProportionsScale: 0
   m_Children: []
