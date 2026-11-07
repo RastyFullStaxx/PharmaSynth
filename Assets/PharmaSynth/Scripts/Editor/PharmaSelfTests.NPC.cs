@@ -1085,6 +1085,25 @@ public static partial class PharmaSelfTests
             A("glow: the scene face is cyan too, under the face ceiling",
                 faceCmp != null && faceHappy.g > 3f * faceHappy.r && faceHappy.maxColorComponent <= PharmeeGlowMath.FaceCeiling + 1e-3f);
         }
+        {
+            // Lit, the eye meshes shade to NaN on some frames and bloom turns that into a
+            // white flash over the whole view (measured 2026-11-07). They draw unlit.
+            bool unlit = robot != null;
+            int faceParts = 0;
+            if (robot != null)
+                foreach (var fr in robot.GetComponentsInChildren<Renderer>(true))
+                {
+                    string fn = fr.name.ToLower();
+                    if (!fn.StartsWith("eyes") && !fn.StartsWith("mouth")) continue;
+                    faceParts++;
+                    unlit &= fr.sharedMaterial != null && fr.sharedMaterial.shader.name == "Universal Render Pipeline/Unlit"
+                             && fr.sharedMaterial.HasProperty("_Cull") && fr.sharedMaterial.GetFloat("_Cull") == 0f;   // both sides, or the eyes vanish
+                }
+            var fc = robot != null ? robot.GetComponentInChildren<PharmeeFace>(true) : null;
+            string cp = fc != null ? new UnityEditor.SerializedObject(fc).FindProperty("colorProperty").stringValue : "";
+            A("glow: her eyes and mouth draw unlit and double-sided (no NaN flash, eyes still visible), coloured through _BaseColor",
+                unlit && faceParts == 2 && cp == "_BaseColor");
+        }
         A("glow: the SCENE emissive cannot feed bloom either",
             glow != null && !PharmeeGlowMath.Blooms(PharmeeGlowMath.Emission(glow.Hue, glow.Intensity)));
         A("glow: the scene shell is tamed too (3 White_Glossy parts)",

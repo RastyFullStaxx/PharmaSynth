@@ -1349,6 +1349,28 @@ re-homing.
 > colours identical removes it with no logic change at all — `SetExpression`, `PharmeeMood`
 > and `ExpressionForGate` are untouched, and `Warning` keeps its amber because it fires only
 > on a real mistake and is meant to be noticed.
+> **Superseded 2026-11-07:** that step was one cause; the blinding flash itself was a NaN on her
+> eye meshes. See the next section.
+
+## One NaN pixel plus bloom is a white blast over the whole view
+
+> [!warning] The colour step above was real, and it was not the flash
+> With neutral and happy identical, Pharmee still flashed while she spoke: brief, repeated,
+> a white disc over her head that washed the whole frame. Every per-frame reading said
+> nothing changed: her emission held, bloom and exposure held, one camera rendered. The
+> cause was a **NaN**: her **eye meshes face backwards in the model**, and lit through the
+> model's double-sided `Blue_Light` material they shade to NaN on some frames as her talk
+> nod sweeps the angle. Post-process bloom spreads a single NaN pixel into a disc of white;
+> the pixel itself draws black, which is why her eyes showed as dark dashes in the glare.
+> Hiding parts one at a time found it (eyes hidden: 0 bad frames in 300; any other part
+> hidden: 1 to 9). Fixed at the source: `Wire NPC Polish` gives the eyes and mouth the
+> unlit, double-sided `PharmeeFaceUnlit` material, and `PharmeeFace` colours it through
+> `_BaseColor` (0 bad frames in 900 while she spoke). Single-sided, the eyes vanish.
+>
+> **How to find the next one:** render the camera with post-processing off into an
+> `ARGBFloat` RenderTexture every frame, scan for NaN or infinity, then hide renderers one at
+> a time. Sampling every 0.1 s, or reading only material values, misses it entirely. The
+> camera's Stop NaNs switch would hide it, at the cost of a full-screen pass on Quest.
 
 ## A save after a suite run bakes what the suite drained — and the suite drains scene data
 

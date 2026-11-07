@@ -83,8 +83,17 @@ public static class LabNpcPolishBuilder
             if (n.StartsWith("eyes") || n.StartsWith("mouth")) faceParts.Add(r);
         }
         if (faceParts.Count > 0) face.BindRenderers(faceParts.ToArray());
-        // The face is the only thing that CHANGES when she speaks, so it is the only thing
-        // that can flash. Cap every expression under the bloom threshold.
+        // ⛔ The eyes and mouth draw UNLIT. Lit with the model's Blue_Light material, the
+        // eye meshes shade to NaN on some frames (measured: hiding the eyes alone took the
+        // count of frames with invalid pixels to zero). Bloom spreads one NaN pixel into a
+        // white blast over the whole view, which flickered whenever her talk nod swept the
+        // angle. They are glowing screen features, so unlit loses nothing.
+        var unlit = FaceUnlitMaterial();
+        foreach (var r in faceParts) { r.sharedMaterial = unlit; EditorUtility.SetDirty(r); }
+        var soFace = new SerializedObject(face);
+        var prop = soFace.FindProperty("colorProperty");
+        if (prop != null) { prop.stringValue = "_BaseColor"; soFace.ApplyModifiedProperties(); }
+        // Cap every expression under the bloom threshold.
         // BLUE, not green, matching the antenna and every other emissive material on the robot
         // (all called Blue_Light); a green face reads as a different character mid-sentence.
         // ⛔ Neutral and Happy are ONE colour. The gate sets Neutral as each line
@@ -513,6 +522,30 @@ public static class LabNpcPolishBuilder
         }
         EditorUtility.SetDirty(ctrl);
         Debug.Log("[NpcPolish] walk state OK (param=Walking, idle='" + idle.name + "', walk='" + walk.name + "')");
+    }
+
+    public const string FaceUnlitPath = "Assets/PharmaSynth/Materials/PharmeeFaceUnlit.mat";
+
+    /// Unlit URP material for Pharmee's eyes and mouth; PharmeeFace sets its colour.
+    /// Double-sided: the eye meshes face backwards in the model, so a back-culled
+    /// material hides them (the model's own material draws both sides).
+    public static Material FaceUnlitMaterial()
+    {
+        var m = AssetDatabase.LoadAssetAtPath<Material>(FaceUnlitPath);
+        if (m == null)
+        {
+            m = new Material(Shader.Find("Universal Render Pipeline/Unlit")) { name = "PharmeeFaceUnlit" };
+            m.SetColor("_BaseColor", PharmeeGlowMath.CapBrightness(PharmeeGlowMath.CyanHue, PharmeeGlowMath.FaceCeiling));
+            AssetDatabase.CreateAsset(m, FaceUnlitPath);
+        }
+        if (m.HasProperty("_Cull") && m.GetFloat("_Cull") != 0f)
+        {
+            m.SetFloat("_Cull", 0f);   // UnityEngine.Rendering.CullMode.Off
+            m.doubleSidedGI = true;
+            EditorUtility.SetDirty(m);
+        }
+        AssetDatabase.SaveAssets();
+        return m;
     }
 }
 #endif
