@@ -1,0 +1,352 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cdb85042f7c8d74cb6d93b40d200268, type: 3}
+  m_Name: Ending_Campaign
+  m_EditorClassIdentifier: Assembly-CSharp::CutsceneData
+  kind: 5
+  title: 
+  beats:
+  - subtitle: 
+    seconds: 4
+    face: 0
+    shot:
+      camera: Cam_LabWide
+      moveTo: Arr_SweepB
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 58
+      pharmeePopIn: 0
+    cardTitle: Campaign Complete
+    cardLine: '{passed} of {total} experiments passed'
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 6
+    face: 0
+    shot:
+      camera: End_LineupA
+      moveTo: End_LineupB
+      blend: 0
+      look: 4
+      lookMarker: Look_Lineup
+      fov: 40
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: "Ethanol \xB7 Benzoic Acid \xB7 Acetanilide \xB7 Acetone \xB7 Chloroform
+      \xB7 Benzamide \xB7 Wine"
+    action: 6
+    actionTarget: Eq_Beaker_100mL|Beaker_100mL_2|Kit_Beaker_100mL_1_6|ErlenmeyerFlask_400mL_2|ErlenmeyerFlask_400mL_3|Eq_Beaker_500mL|Beaker_500mL_2
+    chemicals:
+    - {fileID: 11400000, guid: c1c44a22c3ded41409363bb900652b14, type: 2}
+    - {fileID: 11400000, guid: 9d55f320c4f116f41a2ac51f08ae18f1, type: 2}
+    - {fileID: 11400000, guid: 681a555f71cface45bc96fcbcd4b3d7f, type: 2}
+    - {fileID: 11400000, guid: be67e44da1618454384faac17d3a2d78, type: 2}
+    - {fileID: 11400000, guid: 72739e5d7ed8c37438a4124730da0006, type: 2}
+    - {fileID: 11400000, guid: c670af5d85067014db38951819f05867, type: 2}
+    - {fileID: 11400000, guid: 9765e3aa818c0f34cb7b0380ba8d3c3c, type: 2}
+  - subtitle: 
+    seconds: 4
+    face: 0
+    shot:
+      camera: End_Tubes
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Tubes
+      fov: 38
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Chemical Reactions, Prelim
+    action: 6
+    actionTarget: Kit_TestTube_0|Kit_TestTube_1|Kit_TestTube_2|Kit_TestTube_3
+    chemicals:
+    - {fileID: 11400000, guid: fe9cd0ccb9c6b594cbe5fe68fc152d32, type: 2}
+    - {fileID: 11400000, guid: 3abea28c02d43cc4a9d838d3a14a3fb7, type: 2}
+    - {fileID: 11400000, guid: b4ffe5e1b40c7944fb638a72d0adb098, type: 2}
+    - {fileID: 11400000, guid: e80077a411304ea4cbcaa8d77726ba01, type: 2}
+  - subtitle: 
+    seconds: 3.5
+    face: 0
+    shot:
+      camera: Arr_Burner
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Burner
+      fov: 40
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Methane, the Tutorial
+    action: 2
+    actionTarget: Kit_BunsenBurner_0_9
+    chemicals: []
+  - subtitle: 
+    seconds: 3.5
+    face: 0
+    shot:
+      camera: Arr_BenchHigh
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: Average grade {average}%
+    cardLine: Your best grade in every experiment
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 2.5
+    face: 0
+    shot:
+      camera: Arr_BenchLow
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 50
+      pharmeePopIn: 0
+    cardTitle: Tutorial
+    cardLine: '{Tutorial}'
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 2.5
+    face: 0
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 50
+      pharmeePopIn: 0
+    cardTitle: Prelim
+    cardLine: '{Prelim}'
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 2.5
+    face: 0
+    shot:
+      camera: Arr_BenchHigh
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: Midterm
+    cardLine: '{Midterm}'
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 2.5
+    face: 0
+    shot:
+      camera: Arr_SweepA
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 58
+      pharmeePopIn: 0
+    cardTitle: Finals
+    cardLine: '{Final}'
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 4
+    face: 0
+    shot:
+      camera: Arr_Pharmee
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Pharmee
+      fov: 42
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Pharmee is proud of you
+    action: 4
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 3.5
+    face: 0
+    shot:
+      camera: Arr_Jimenez
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Jimenez
+      fov: 42
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: So is Dr. Jimenez
+    action: 1
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 5
+    face: 0
+    shot:
+      camera: Cam_Timelapse
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: 
+    action: 5
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 4.5
+    face: 0
+    shot:
+      camera: End_Corridor
+      moveTo: End_CorridorBack
+      blend: 0
+      look: 4
+      lookMarker: Look_LabFromCorridor
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: 
+    action: 8
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 3
+    face: 0
+    shot:
+      camera: End_CorridorBack
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_LabFromCorridor
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: 
+    action: 7
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 3.5
+    face: 0
+    shot:
+      camera: Cam_LabWide
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 58
+      pharmeePopIn: 0
+    cardTitle: PharmaSynth
+    cardLine: Gear Up, Synth It Up!
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 3.5
+    face: 0
+    shot:
+      camera: Arr_SweepA
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 58
+      pharmeePopIn: 0
+    cardTitle: Laboratory manuscript
+    cardLine: '[Manuscript authors]'
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 3.5
+    face: 0
+    shot:
+      camera: Arr_BenchHigh
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: Developed by
+    cardLine: '[Development team]'
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 3.5
+    face: 0
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 50
+      pharmeePopIn: 0
+    cardTitle: Made for
+    cardLine: '[Institution]'
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+  - subtitle: 
+    seconds: 4
+    face: 0
+    shot:
+      camera: Arr_DoorInside
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Door
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: Thank you for playing
+    cardLine: 
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []

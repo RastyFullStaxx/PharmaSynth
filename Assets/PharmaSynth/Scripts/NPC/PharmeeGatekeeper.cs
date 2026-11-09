@@ -164,7 +164,7 @@ public partial class PharmeeGatekeeper : MonoBehaviour
         // The arrival reel plays first; the player is landed at the door under its black.
         while (ArrivalFlow.Busy)
         {
-            if (ArrivalDirector.Find() == null) { ArrivalFlow.LabPartPending = false; ArrivalFlow.Playing = false; ScreenFader.HoldBlackOnStart = false; if (ScreenFader.Instance != null) ScreenFader.Instance.FadeIn(); }
+            if (ShowcaseDirector.Find() == null) { ArrivalFlow.LabPartPending = false; ArrivalFlow.Playing = false; ScreenFader.HoldBlackOnStart = false; if (ScreenFader.Instance != null) ScreenFader.Instance.FadeIn(); }
             yield return null;
         }
         var boost = playerRig != null ? playerRig.GetComponent<SeatedHeightBoost>() : null;

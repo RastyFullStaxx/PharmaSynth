@@ -48,7 +48,7 @@ public class MainMenuController : MonoBehaviour
         var service = new ProgressionService();
         service.Load();
         GameFlow.Select(ResolveLabTarget(ProgressionFlow.Create(service), fallbackModuleId));
-        ArrivalDirector.EnterLab(labSceneName, demo);
+        ShowcaseDirector.EnterLab(labSceneName, demo);
     }
 
     public void OnSettings()

@@ -1180,6 +1180,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArrivalDirector
   reel: {fileID: 11400000, guid: f9226d49a527cd54a86f3530473e38a0, type: 2}
+  ending: {fileID: 0}
   labPart: 0
   music: {fileID: 0}
   musicVolume: 0.55

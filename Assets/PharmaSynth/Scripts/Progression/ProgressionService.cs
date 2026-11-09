@@ -22,6 +22,8 @@ public class ProgressSaveData
     public List<ModuleRecord> modules = new List<ModuleRecord>();
     /// The arrival reel has played (or been skipped) for this save.
     public bool arrivalSeen;
+    /// The campaign-complete reel has played (or been skipped) for this save.
+    public bool endingSeen;
 }
 
 /// Tracks which experiments the player has passed and persists it (versioned JSON

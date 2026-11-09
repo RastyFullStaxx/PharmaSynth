@@ -1481,8 +1481,8 @@ public static partial class PharmaSelfTests
         A("arrival: a seen flag survives the save file",
             JsonUtility.FromJson<ProgressSaveData>(JsonUtility.ToJson(new ProgressSaveData { arrivalSeen = true })).arrivalSeen);
 
-        var cube = AssetDatabase.LoadAssetAtPath<CutsceneData>(ArrivalSceneBuilder.CubeReelPath);
-        var lab = AssetDatabase.LoadAssetAtPath<CutsceneData>(ArrivalSceneBuilder.LabReelPath);
+        var cube = AssetDatabase.LoadAssetAtPath<CutsceneData>(ShowcaseReelBuilder.CubeReelPath);
+        var lab = AssetDatabase.LoadAssetAtPath<CutsceneData>(ShowcaseReelBuilder.LabReelPath);
         A("arrival: both reels exist as Arrival cutscenes",
             cube != null && lab != null && cube.kind == CutsceneData.Kind.Arrival && lab.kind == CutsceneData.Kind.Arrival);
         if (cube == null || lab == null) return;
@@ -1493,7 +1493,7 @@ public static partial class PharmaSelfTests
         A("arrival: the whole tour runs about a minute (" + seconds.ToString("F0") + " s)", seconds >= 50f && seconds <= 100f);
 
         // Every marker a shot names exists under the lab's CutsceneMarkers root.
-        var director = UnityEngine.Object.FindAnyObjectByType<ArrivalDirector>();
+        var director = UnityEngine.Object.FindAnyObjectByType<ShowcaseDirector>();
         if (director == null) return;   // not the lab scene
         A("arrival: the lab's director plays the lab half", director.LabPart && director.Reel == lab);
         var root = director.transform;
@@ -1517,6 +1517,59 @@ public static partial class PharmaSelfTests
             if (!ok) orphan += b.actionTarget + " ";
         }
         A("arrival: every teaser's props exist in the lab" + (orphan.Length > 0 ? " (missing " + orphan + ")" : ""), orphan.Length == 0);
+        EndingSuite(director);
+    }
+
+    // The campaign-complete reel: results from the save, the products, the credits.
+    static void EndingSuite(ShowcaseDirector director)
+    {
+        A("ending: plays on the first campaign completion only", EndingMath.ShouldPlay(true, false, false)
+            && !EndingMath.ShouldPlay(true, true, false) && !EndingMath.ShouldPlay(false, false, false));
+        A("ending: the demo button plays it any time", EndingMath.ShouldPlay(false, true, true));
+        var sample = EndingMath.Sample();
+        A("ending: results fill the cards", EndingMath.Fill("{passed} of {total} experiments passed", sample) == "9 of 9 experiments passed");
+        A("ending: a period card lists its best grades in order", EndingMath.Fill("{Prelim}", sample) == "95 · 93");
+        A("ending: the average is floored like the grade screen", EndingMath.Average(sample) == 94);
+        var partial = new ProgressSaveData();
+        partial.modules.Add(new ModuleRecord { moduleId = "tutorial-methane", bestGrade = 91.9f, passed = true });
+        A("ending: a missing experiment reads 0, a grade is floored",
+            EndingMath.Fill("{Tutorial} {Final}", partial) == "91 0 · 0" && EndingMath.Passed(partial) == 1);
+        A("ending: an ending-seen flag survives the save file",
+            JsonUtility.FromJson<ProgressSaveData>(JsonUtility.ToJson(new ProgressSaveData { endingSeen = true })).endingSeen);
+
+        var end = AssetDatabase.LoadAssetAtPath<CutsceneData>(ShowcaseReelBuilder.EndingReelPath);
+        A("ending: the reel exists as an Ending cutscene", end != null && end.kind == CutsceneData.Kind.Ending);
+        if (end == null) return;
+        bool silent = true, credits = false; float seconds = 0f;
+        foreach (var b in end.beats) { silent &= string.IsNullOrEmpty(b.subtitle); seconds += b.seconds; credits |= b.cardTitle == "Developed by"; }
+        A("ending: no beat is spoken, and the credits are in it", silent && credits);
+        A("ending: it runs about a minute (" + seconds.ToString("F0") + " s)", seconds >= 50f && seconds <= 100f);
+        if (director == null) return;
+        A("ending: the lab's director holds the ending", director.Ending == end);
+        string missing = "", props = "";
+        foreach (var b in end.beats)
+        {
+            foreach (var n in new[] { b.shot.camera, b.shot.moveTo, b.shot.lookMarker })
+                if (!string.IsNullOrEmpty(n) && director.transform.Find(n) == null) missing += n + " ";
+            if (b.action != ShowcaseAction.Lineup) continue;
+            var names = b.actionTarget.Split('|');
+            for (int i = 0; i < names.Length; i++)
+            {
+                var go = GameObject.Find(names[i]);
+                if (go == null || go.GetComponentInChildren<LiquidPhysics>() == null || b.chemicals == null
+                    || i >= b.chemicals.Length || b.chemicals[i] == null) props += names[i] + " ";
+            }
+        }
+        A("ending: every shot's markers exist" + (missing.Length > 0 ? " (missing " + missing + ")" : ""), missing.Length == 0);
+        A("ending: every line-up vessel exists with its chemical" + (props.Length > 0 ? " (missing " + props + ")" : ""), props.Length == 0);
+        var demo = UnityEngine.Object.FindAnyObjectByType<DemoHudController>(FindObjectsInactive.Include);
+        var endingBtn = demo != null ? new SerializedObject(demo).FindProperty("endingButton").objectReferenceValue as GameObject : null;
+        var click = endingBtn != null ? endingBtn.GetComponent<UnityEngine.UI.Button>() : null;
+        bool wired = false;
+        if (click != null)
+            for (int i = 0; i < click.onClick.GetPersistentEventCount(); i++)
+                wired |= click.onClick.GetPersistentMethodName(i) == nameof(DemoHudController.OnPlayEnding);
+        A("ending: the demo HUD's Play Ending button is wired", wired);
     }
 }
 #endif

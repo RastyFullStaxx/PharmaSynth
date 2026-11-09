@@ -110,7 +110,7 @@ public class HubSelectController : MonoBehaviour
         if (!CanSelect(flow, moduleId)) return false;
         GameFlow.Select(moduleId);
         if (Application.isPlaying)
-            ArrivalDirector.EnterLab(labSceneName, DemoSession.Active);
+            ShowcaseDirector.EnterLab(labSceneName, DemoSession.Active);
         return true;
     }
 }

@@ -11,6 +11,7 @@ public class DemoHudController : MonoBehaviour
     [SerializeField] private GameObject skipButton;
     [SerializeField] private GameObject finishButton;
     [SerializeField] private GameObject quizButton;
+    [SerializeField] private GameObject endingButton;   // Play Ending: shown at the door, between runs
 
     public void Bind(ExperimentRunner r, PostLabController p,
         GameObject clusterRoot, GameObject skip, GameObject finish, GameObject quiz)
@@ -37,6 +38,9 @@ public class DemoHudController : MonoBehaviour
         Toggle(skipButton, skip);
         Toggle(finishButton, demoOnly);
         Toggle(quizButton, quizOpen);
+        var show = endingButton != null ? ShowcaseDirector.Find() : null;
+        Toggle(endingButton, DemoSession.Active && !live && !quizOpen && !review
+                             && show != null && show.Ending != null && !show.Playing);
     }
 
     private static void Toggle(GameObject go, bool on)
@@ -47,6 +51,14 @@ public class DemoHudController : MonoBehaviour
     public void OnSkipStep() => DemoActions.CompleteCurrentStep(runner);
 
     public void OnFinishExperiment() => DemoActions.CompleteAllTasks(runner);
+
+    /// Demo only: the campaign-complete reel with sample results, then the celebration.
+    public void OnPlayEnding()
+    {
+        var show = ShowcaseDirector.Find();
+        var gate = FindAnyObjectByType<PharmeeGatekeeper>();
+        if (show != null) show.TryPlayEnding(true, gate != null ? gate.CelebrateCampaign : (System.Action)null);
+    }
 
     public void OnAutoQuiz()
     {

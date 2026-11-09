@@ -301,14 +301,25 @@ public partial class PharmeeGatekeeper
         // its own celebration: dedicated lines + confetti + the pass sting.
         if (flow.AllComplete())
         {
-            Say(PharmeeLines.Pick(PharmeeLines.CampaignComplete, _remarkVariant++));
-            AudioService.TryPlay("grade-pass");
-            if (Application.isPlaying)
-                EffectVfx.Confetti(transform.position + Vector3.up * 1.4f);
+            // The ending reel plays first (once per save), then the celebration; with no
+            // reel to play, TryPlayEnding celebrates straight away.
+            var show = Application.isPlaying ? ShowcaseDirector.Find() : null;
+            if (show != null) show.TryPlayEnding(false, CelebrateCampaign);
+            else CelebrateCampaign();
             return;
         }
         var newly = UnlockDiff.NewlyUnlocked(_unlockedAtStart, flow);
         Say(UnlockDiff.AnnouncementFor(newly));
+    }
+
+    /// The whole-campaign finish: dedicated lines, confetti and the pass sting. Public so
+    /// the demo HUD's Play Ending can end on it too.
+    public void CelebrateCampaign()
+    {
+        Say(PharmeeLines.Pick(PharmeeLines.CampaignComplete, _remarkVariant++));
+        AudioService.TryPlay("grade-pass");
+        if (Application.isPlaying)
+            EffectVfx.Confetti(transform.position + Vector3.up * 1.4f);
     }
 
     /// All 9 experiments passed (checked fresh from disk).

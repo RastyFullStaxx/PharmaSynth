@@ -557,3 +557,6 @@ Ten items from one headset session, diagnosed by reading the live run rather tha
 ## §38 Arrival reel (2026-11-10) — suite 1781/1781
 - [x] Silent cinematic tour between the cube room and the lab door (first entry of a save, every demo entry), hold B/Y to skip; plays and skips cleanly in editor Play.
 - [ ] ⬜ **Headset**: watch it through on the Quest (screen distance, caption size, music level); hold B to skip once; confirm you land at the door and Pharmee greets.
+- [x] Ending reel (campaign complete, once per save; demo HUD Play Ending) and one text theme (font + palette, cinema text under the picture); both play in editor Play.
+- [ ] ⬜ **Credits**: replace `[Manuscript authors]`, `[Development team]`, `[Institution]` in `Ending_Campaign` (Inspector).
+- [ ] ⬜ **Headset**: watch the ending via Demo ▸ Play Ending; read the cinema text band at arm's length.

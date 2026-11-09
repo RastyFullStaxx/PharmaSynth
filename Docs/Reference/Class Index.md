@@ -2500,6 +2500,7 @@ Versioned save payload.
 int version
 List<ModuleRecord> modules
 bool arrivalSeen
+bool endingSeen
 ```
 
 ### `ProgressionService` <sub>class</sub>
@@ -2611,50 +2612,6 @@ static Vector3 RigPositionFor(Vector3 markerPos, float deltaYawDeg, Vector3 rigP
 ## NPC
 
 `Assets/PharmaSynth/Scripts/NPC/`
-
-### `ShowcaseAction` <sub>enum</sub>
-<sub>`Assets/PharmaSynth/Scripts/NPC/ArrivalDirector.cs`</sub>
-
-What the lab does during an arrival beat. Every action is undone when the reel ends.
-
-### `ArrivalMath` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/NPC/ArrivalDirector.cs`</sub>
-
-Pure rules for the arrival reel (suite-pinned).
-
-```csharp
-const float SkipHoldSeconds
-const float TimelapseHours
-const float TimelapseScale
-static bool ShouldPlay(bool seen, bool demo)
-static bool SkipDone(float heldSeconds)
-static float PouredMl(float k, float totalMl)
-```
-
-### `ArrivalFlow` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/NPC/ArrivalDirector.cs`</sub>
-
-The hand-off across the cube room → lab scene load.
-
-```csharp
-static bool LabPartPending
-static bool Playing
-static bool Busy
-```
-
-### `ArrivalDirector` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/NPC/ArrivalDirector.cs`</sub>
-
-The arrival scene: a silent cinematic tour of PharmaSynth that plays between the cube room and the lab door. Two halves, one per scene, each a CutsceneData reel of shots with on-screen cards and captions (no voice): the cube-room half ends on black and loads the lab, the lab half picks up under that black and ends with the player at the front door, where the gatekeeper's normal welcome takes over. Lives on the scene's CutsceneMarkers root beside its CinemaView, so the headset view is never moved: the shots play on the cinema screen in the dark room. Built by Tools ▸ PharmaSynth ▸ Cutscenes ▸ Build Arrival Scene.
-
-```csharp
-CutsceneData Reel
-bool LabPart
-void Bind(CutsceneData r, bool lab, AudioClip m)
-static ArrivalDirector Find()
-static void EnterLab(string labScene, bool demo)
-bool PlayThenLoad(string labScene)
-```
 
 ### `CinemaLook` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/CinemaShots.cs`</sub>
@@ -3000,7 +2957,7 @@ void OnAbandonAfterFail()
 void SpeakWelcome()
 void ResetToEntrance()
 void OnRetryRequested()
-void Bind(NPCNarrationController n, ChoicePanelController p, PPEController ppeCtrl,
+void CelebrateCampaign()
 ```
 
 ### `PharmeeGatekeeper` <sub>class</sub>
@@ -3255,6 +3212,67 @@ void ReturnHomeAndHold(Transform faceTarget
 static bool StuckTick(ref float timer, float movedSq, float dt, float giveUpSeconds)
 ```
 
+### `ShowcaseAction` <sub>enum</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/ShowcaseDirector.cs`</sub>
+
+What the lab does during a showcase beat. Every action is undone when the reel ends. Appended values only: reel assets store the action as its index.
+
+### `EndingMath` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/ShowcaseDirector.cs`</sub>
+
+The ending's results, read from the save and written into the reel's cards (suite-pinned).
+
+```csharp
+static bool ShouldPlay(bool allComplete, bool seen, bool forced)
+static List<int> Grades(ProgressSaveData data, ExperimentPeriod? period
+static int Passed(ProgressSaveData data)
+static int Average(ProgressSaveData data)
+static string Fill(string text, ProgressSaveData data)
+static ProgressSaveData Sample()
+```
+
+### `ArrivalMath` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/ShowcaseDirector.cs`</sub>
+
+Pure rules for the arrival reel (suite-pinned).
+
+```csharp
+const float SkipHoldSeconds
+const float TimelapseHours
+const float TimelapseScale
+static bool ShouldPlay(bool seen, bool demo)
+static bool SkipDone(float heldSeconds)
+static float PouredMl(float k, float totalMl)
+```
+
+### `ArrivalFlow` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/ShowcaseDirector.cs`</sub>
+
+The hand-off across the cube room → lab scene load.
+
+```csharp
+static bool LabPartPending
+static bool Playing
+static bool Busy
+```
+
+### `ShowcaseDirector` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/ShowcaseDirector.cs`</sub>
+
+The showcase reels: silent cinematic tours (cards and captions, no voice) played on the cinema screen, so the headset view is never moved. ARRIVAL, between the cube room and the lab door. Two halves, one per scene: the cube-room half ends on black and loads the lab, the lab half picks up under that black and ends with the player at the front door, where the gatekeeper's normal welcome takes over. ENDING (lab only), once per save when the whole campaign is passed, then the gatekeeper's voiced celebration; the demo HUD's Play Ending replays it any time. Its cards carry EndingMath tokens filled from the save. Lives on the scene's CutsceneMarkers root beside its CinemaView. Built by Tools ▸ PharmaSynth ▸ Cutscenes ▸ Build Showcase Reels.
+
+```csharp
+CutsceneData Reel
+CutsceneData Ending
+bool LabPart
+bool Playing
+void Bind(CutsceneData r, bool lab, AudioClip m, CutsceneData end
+bool TryPlayEnding(bool forced, Action done)
+static ShowcaseDirector Find()
+static void EnterLab(string labScene, bool demo)
+bool PlayThenLoad(string labScene)
+```
+
 ---
 
 ## UI
@@ -3331,6 +3349,7 @@ void Bind(ExperimentRunner r, PostLabController p,
 static bool SkipAllowed(bool demo, bool tutorial, bool running, bool review)
 void OnSkipStep()
 void OnFinishExperiment()
+void OnPlayEnding()
 void OnAutoQuiz()
 ```
 
@@ -3793,6 +3812,24 @@ static string BuildChecklistText(TaskGraph graph)
 static string PhaseLabel(TaskPhase p)
 ```
 
+### `TextTheme` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/UI/TextTheme.cs`</sub>
+
+The game's one text style: the font every text uses (HUD, dialogue, labels, panels, the cube room, the cinema) and the palette text is drawn in. Lives at Resources/UI/TextTheme; swapping the font here changes every text in the game. It is also TextMesh Pro's default font (TMP Settings), so text created at runtime picks it up; every text already in a scene is baked by Tools ▸ PharmaSynth ▸ Apply Text Theme and re-applied on each scene load, so nothing drifts back to another font.
+
+```csharp
+const string ResourcePath
+TMP_FontAsset font
+Color body
+Color accent
+Color muted
+Color warning
+static TextTheme Current
+static TMP_FontAsset Font
+static bool Apply(TMP_Text t)
+static int ApplyAll(Scene scene)
+```
+
 ### `TutorialCoach` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/UI/TutorialCoach.cs`</sub>
 
@@ -4209,26 +4246,6 @@ static bool IsFurniture(string objectName)
 static void Run()
 ```
 
-### `ArrivalSceneBuilder` <sub>class</sub>
-<sub>`Assets/PharmaSynth/Scripts/Editor/ArrivalSceneBuilder.cs`</sub>
-
-Tools ▸ PharmaSynth ▸ Cutscenes ▸ Build Arrival Scene: wires the arrival reel into both scenes. In each it makes sure the CutsceneMarkers root has a CinemaView and an ArrivalDirector, creates the arrival camera markers that are missing (existing ones keep their hand-tuned poses), creates the two reel assets if missing, and saves. "Reset Arrival Scene" rewrites markers and reels to these defaults. Run it on a scene freshly loaded from disk: it saves both scenes.
-
-```csharp
-const string LabScene
-const string CubeScene
-const string Folder
-const string CubeReelPath
-const string LabReelPath
-static readonly (string name, Vector3 pos, Vector3 look)[] CubeMarkers
-static readonly (string name, Vector3 pos, Vector3 look)[] LabMarkers
-static List<CutsceneData.Beat> CubeBeats()
-static List<CutsceneData.Beat> LabBeats()
-static void Build()
-static void Reset()
-static void RenderOpen()
-```
-
 ### `AtmosphereBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/AtmosphereBuilder.cs`</sub>
 
@@ -4303,6 +4320,7 @@ Compact VR HUD layout: the timer + title move OUT of the centre and merge into t
 
 ```csharp
 static void Rebuild()
+static void AppendToMenu(RectTransform list, RectTransform button)
 ```
 
 ### `CutsceneReelRecorder` <sub>class</sub>
@@ -5041,6 +5059,28 @@ static void Wire()
 static Material EnsureFxMaterial()
 ```
 
+### `ShowcaseReelBuilder` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/ShowcaseReelBuilder.cs`</sub>
+
+Tools ▸ PharmaSynth ▸ Cutscenes ▸ Build Showcase Reels: wires the arrival reel into both scenes and the campaign-complete ending into the lab. In each scene it makes sure the CutsceneMarkers root has a CinemaView and a ShowcaseDirector, creates the camera markers that are missing (existing ones keep their hand-tuned poses), creates the reel assets if missing, adds the demo HUD's Play Ending button, and saves. "Reset Showcase Reels" rewrites markers and reels to these defaults. Run it on a scene freshly loaded from disk: it saves both scenes.
+
+```csharp
+const string LabScene
+const string CubeScene
+const string Folder
+const string CubeReelPath
+const string LabReelPath
+const string EndingReelPath
+static readonly (string name, Vector3 pos, Vector3 look)[] CubeMarkers
+static readonly (string name, Vector3 pos, Vector3 look)[] LabMarkers
+static List<CutsceneData.Beat> CubeBeats()
+static List<CutsceneData.Beat> LabBeats()
+static readonly (string name, Vector3 pos, Vector3 look)[] EndingMarkers
+static List<CutsceneData.Beat> EndingBeats()
+static void Build()
+static void Reset()
+```
+
 ### `SimulateEverything` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/SimulateEverything.cs`</sub>
 
@@ -5143,6 +5183,18 @@ Edit-mode helper ("let me select + reposition the stools in the editor, not in P
 
 ```csharp
 static void SelectStools()
+```
+
+### `TextThemeBuilder` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/TextThemeBuilder.cs`</sub>
+
+Tools ▸ PharmaSynth ▸ Apply Text Theme: creates the theme (once), makes its font TextMesh Pro's default so runtime-created text uses it, and bakes it into every text of SampleScene and MainMenu, then saves both. Idempotent; to change the game's font, set the theme's font and run this again. Run it on a scene freshly loaded from disk. The balance's LCD readout (legacy UI.Text in a digital face) is an instrument display, not game text, and is left alone.
+
+```csharp
+const string ThemeAsset
+const string DefaultFont
+static void Run()
+static TextTheme EnsureTheme()
 ```
 
 ### `TubeRackSlotBuilder` <sub>class</sub>

@@ -5,8 +5,73 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-/// What the lab does during an arrival beat. Every action is undone when the reel ends.
-public enum ShowcaseAction { None, OpenDoor, LightBurner, Pour, PharmeeCelebrate, Timelapse }
+/// What the lab does during a showcase beat. Every action is undone when the reel ends.
+/// Appended values only: reel assets store the action as its index.
+public enum ShowcaseAction { None, OpenDoor, LightBurner, Pour, PharmeeCelebrate, Timelapse, Lineup, CloseDoor, Night }
+
+/// The ending's results, read from the save and written into the reel's cards (suite-pinned).
+public static class EndingMath
+{
+    /// First campaign completion of a save plays it once; the demo button plays it any time.
+    public static bool ShouldPlay(bool allComplete, bool seen, bool forced) => forced || (allComplete && !seen);
+
+    /// Best grade per experiment, in catalog order; a missing record reads 0.
+    public static List<int> Grades(ProgressSaveData data, ExperimentPeriod? period = null)
+    {
+        var list = new List<int>();
+        foreach (var e in ExperimentCatalog.Entries)
+        {
+            if (period.HasValue && e.period != period.Value) continue;
+            ModuleRecord rec = null;
+            if (data != null && data.modules != null)
+                foreach (var m in data.modules) if (m != null && m.moduleId == e.moduleId) { rec = m; break; }
+            list.Add(rec != null ? Mathf.FloorToInt(rec.bestGrade) : 0);
+        }
+        return list;
+    }
+
+    public static int Passed(ProgressSaveData data)
+    {
+        int n = 0;
+        foreach (var e in ExperimentCatalog.Entries)
+            if (data != null && data.modules != null)
+                foreach (var m in data.modules) if (m != null && m.moduleId == e.moduleId && m.passed) { n++; break; }
+        return n;
+    }
+
+    /// Floored mean of the best grades (the grade screen floors too).
+    public static int Average(ProgressSaveData data)
+    {
+        var g = Grades(data);
+        if (g.Count == 0) return 0;
+        float sum = 0f; foreach (var x in g) sum += x;
+        return Mathf.FloorToInt(sum / g.Count);
+    }
+
+    /// Replace the reel's tokens: {passed} {total} {average} and {Tutorial} {Prelim}
+    /// {Midterm} {Final} (that period's best grades, "96 · 92").
+    public static string Fill(string text, ProgressSaveData data)
+    {
+        if (string.IsNullOrEmpty(text) || text.IndexOf('{') < 0) return text;
+        text = text.Replace("{passed}", Passed(data).ToString())
+                   .Replace("{total}", ExperimentCatalog.Count.ToString())
+                   .Replace("{average}", Average(data).ToString());
+        foreach (ExperimentPeriod p in Enum.GetValues(typeof(ExperimentPeriod)))
+            text = text.Replace("{" + p + "}", string.Join(" · ", Grades(data, p)));
+        return text;
+    }
+
+    /// Stand-in results for a demo, where nothing has really been graded.
+    public static ProgressSaveData Sample()
+    {
+        var d = new ProgressSaveData();
+        int[] g = { 98, 95, 93, 96, 92, 94, 91, 97, 95 };
+        int i = 0;
+        foreach (var e in ExperimentCatalog.Entries)
+            d.modules.Add(new ModuleRecord { moduleId = e.moduleId, bestGrade = g[i++ % g.Length], passed = true, attempts = 1 });
+        return d;
+    }
+}
 
 /// Pure rules for the arrival reel (suite-pinned).
 public static class ArrivalMath
@@ -36,18 +101,24 @@ public static class ArrivalFlow
     public static bool Busy => LabPartPending || Playing;
 }
 
-/// The arrival scene: a silent cinematic tour of PharmaSynth that plays between the
-/// cube room and the lab door. Two halves, one per scene, each a CutsceneData reel of
-/// shots with on-screen cards and captions (no voice): the cube-room half ends on black
-/// and loads the lab, the lab half picks up under that black and ends with the player
-/// at the front door, where the gatekeeper's normal welcome takes over.
+/// The showcase reels: silent cinematic tours (cards and captions, no voice) played on
+/// the cinema screen, so the headset view is never moved.
 ///
-/// Lives on the scene's CutsceneMarkers root beside its CinemaView, so the headset view
-/// is never moved: the shots play on the cinema screen in the dark room.
-/// Built by Tools ▸ PharmaSynth ▸ Cutscenes ▸ Build Arrival Scene.
-public class ArrivalDirector : MonoBehaviour
+/// ARRIVAL, between the cube room and the lab door. Two halves, one per scene: the
+/// cube-room half ends on black and loads the lab, the lab half picks up under that
+/// black and ends with the player at the front door, where the gatekeeper's normal
+/// welcome takes over.
+/// ENDING (lab only), once per save when the whole campaign is passed, then the
+/// gatekeeper's voiced celebration; the demo HUD's Play Ending replays it any time. Its
+/// cards carry EndingMath tokens filled from the save.
+///
+/// Lives on the scene's CutsceneMarkers root beside its CinemaView.
+/// Built by Tools ▸ PharmaSynth ▸ Cutscenes ▸ Build Showcase Reels.
+public class ShowcaseDirector : MonoBehaviour
 {
     [SerializeField] private CutsceneData reel;
+    [Tooltip("Lab scene only: the campaign-complete reel.")]
+    [SerializeField] private CutsceneData ending;
     [Tooltip("The lab half: plays on load when the cube-room half handed over.")]
     [SerializeField] private bool labPart;
     [Tooltip("Played under the lab half (the cube room's own music carries the first half).")]
@@ -56,10 +127,39 @@ public class ArrivalDirector : MonoBehaviour
     [SerializeField] private float fadeSeconds = 0.6f;
 
     public CutsceneData Reel => reel;
+    public CutsceneData Ending => ending;
     public bool LabPart => labPart;
-    public void Bind(CutsceneData r, bool lab, AudioClip m) { reel = r; labPart = lab; music = m; }
+    public bool Playing { get; private set; }
+    public void Bind(CutsceneData r, bool lab, AudioClip m, CutsceneData end = null) { reel = r; labPart = lab; music = m; ending = end; }
 
-    public static ArrivalDirector Find() => FindAnyObjectByType<ArrivalDirector>();
+    /// Results the playing reel's tokens are filled from (null = no tokens filled).
+    private ProgressSaveData _results;
+
+    /// The campaign-complete reel. Plays when the whole campaign is passed for the first
+    /// time on this save, or always when `forced` (the demo button, with sample results).
+    /// `done` runs after it, or straight away when nothing plays. True when it plays.
+    public bool TryPlayEnding(bool forced, Action done)
+    {
+        var s = new ProgressionService();
+        s.Load();
+        bool all = ProgressionFlow.Create(s).AllComplete();
+        if (Playing || !EndingMath.ShouldPlay(all, s.Data.endingSeen, forced) || !CanPlay(ending))
+        {
+            done?.Invoke();
+            return false;
+        }
+        _results = forced && !all ? EndingMath.Sample() : s.Data;
+        StartCoroutine(Run(ending, skipped =>
+        {
+            if (!forced) { s.Load(); s.Data.endingSeen = true; s.Save(); }
+            _results = null;
+            if (ScreenFader.Instance != null) ScreenFader.Instance.FadeIn(fadeSeconds);
+            done?.Invoke();
+        }));
+        return true;
+    }
+
+    public static ShowcaseDirector Find() => FindAnyObjectByType<ShowcaseDirector>();
 
     private CinemaView _cinema;
     private AudioSource _musicSource;
@@ -83,8 +183,8 @@ public class ArrivalDirector : MonoBehaviour
     /// The cube-room half: play, then load the lab under black. False when it can't play.
     public bool PlayThenLoad(string labScene)
     {
-        if (!CanPlay()) return false;
-        StartCoroutine(Run(skipped =>
+        if (!CanPlay(reel)) return false;
+        StartCoroutine(Run(reel, skipped =>
         {
             if (skipped) MarkSeen();
             ArrivalFlow.LabPartPending = !skipped;
@@ -99,13 +199,13 @@ public class ArrivalDirector : MonoBehaviour
         if (!labPart || !ArrivalFlow.LabPartPending) return;
         ArrivalFlow.Playing = true;
         ArrivalFlow.LabPartPending = false;
-        if (!CanPlay()) { FinishLab(false); return; }
-        StartCoroutine(Run(FinishLab));
+        if (!CanPlay(reel)) { FinishLab(false); return; }
+        StartCoroutine(Run(reel, FinishLab));
     }
 
-    private bool CanPlay()
+    private bool CanPlay(CutsceneData r)
     {
-        if (!Application.isPlaying || !isActiveAndEnabled || reel == null || reel.beats == null || reel.beats.Count == 0) return false;
+        if (!Application.isPlaying || !isActiveAndEnabled || r == null || r.beats == null || r.beats.Count == 0) return false;
         if (_cinema == null) _cinema = GetComponent<CinemaView>();
         if (_cinema == null) _cinema = FindAnyObjectByType<CinemaView>();
         return _cinema != null && Camera.main != null;
@@ -137,9 +237,10 @@ public class ArrivalDirector : MonoBehaviour
         s.Save();
     }
 
-    private IEnumerator Run(Action<bool> after)
+    private IEnumerator Run(CutsceneData reel, Action<bool> after)
     {
-        ArrivalFlow.Playing = true;
+        Playing = true;
+        if (reel == this.reel) ArrivalFlow.Playing = true;
         _skipped = false; _held = 0f;
         EnableSkip();
         yield return Fade(1f);
@@ -155,8 +256,8 @@ public class ArrivalDirector : MonoBehaviour
         {
             var b = reel.beats[i];
             if (b == null) continue;
-            _cinema.SetTitle(b.cardTitle, b.cardLine);
-            _cinema.SetSubtitle(b.caption);
+            _cinema.SetTitle(EndingMath.Fill(b.cardTitle, _results), EndingMath.Fill(b.cardLine, _results));
+            _cinema.SetSubtitle(EndingMath.Fill(b.caption, _results));
             var shot = b.shot ?? new CinemaShot();
             ShotMath.Ends(shot.blend, CurrentPose(), _cinema.MarkerPose(shot.camera), _cinema.MarkerPose(shot.moveTo),
                           out var start, out var end);
@@ -184,7 +285,8 @@ public class ArrivalDirector : MonoBehaviour
         _cinema.SetSubtitle("");
         _cinema.Exit();
         DisableSkip();
-        ArrivalFlow.Playing = false;
+        if (reel == this.reel) ArrivalFlow.Playing = false;
+        Playing = false;
         after?.Invoke(_skipped);
     }
 
@@ -310,6 +412,32 @@ public class ArrivalDirector : MonoBehaviour
                     into.AddLiquid(chem, want - poured, notify: false);   // a display pour, never a task
                     poured = want;
                 };
+            }
+            case ShowcaseAction.CloseDoor:
+            {
+                var door = FindAnyObjectByType<DoorOpener>();
+                if (door != null) door.SetOpen(false);
+                return null;
+            }
+            case ShowcaseAction.Lineup:
+            {
+                // actionTarget "a|b|c" with chemicals[i] for vessel i: each fills to 60%.
+                var chems = b.chemicals ?? new ChemicalData[0];
+                for (int i = 0; i < names.Length && i < chems.Length; i++)
+                {
+                    var into = Named<LiquidPhysics>(names[i]);
+                    if (into == null || chems[i] == null) continue;
+                    var before = into.currentChemical; float beforeMl = into.currentLiquidVolume;
+                    var v = into;
+                    _undo.Add(() => { if (before != null && beforeMl > 0f) v.SetContents(before, beforeMl); else v.ClearContents(); });
+                    into.SetContents(chems[i], into.maxVolume * 0.6f);
+                }
+                return null;
+            }
+            case ShowcaseAction.Night:
+            {
+                _cinema.SetTint(TimelapseMath.Night);   // held until the reel ends
+                return null;
             }
             case ShowcaseAction.PharmeeCelebrate:
             {

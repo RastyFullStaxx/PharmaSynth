@@ -10,7 +10,7 @@ using UnityEngine;
 public class CutsceneData : ScriptableObject
 {
     /// Appended values only: assets store the kind as its index.
-    public enum Kind { Intro, ReagentPrep, Success, Failure, Arrival }
+    public enum Kind { Intro, ReagentPrep, Success, Failure, Arrival, Ending }
 
     [Serializable]
     public class Beat
@@ -21,7 +21,8 @@ public class CutsceneData : ScriptableObject
         public CinemaShot shot = new CinemaShot();
 
         // Silent on-screen text for the arrival reel (the subtitle above is SPOKEN by
-        // Pharmee's narration channel). A card shows big over the shot; a caption small.
+        // Pharmee's narration channel). Both show in the text band under the picture: the
+        // card in the title size, the caption in the caption size.
         public string cardTitle = "";
         public string cardLine = "";
         public string caption = "";
@@ -29,6 +30,8 @@ public class CutsceneData : ScriptableObject
         public ShowcaseAction action = ShowcaseAction.None;
         /// The scene object(s) the action works on, by name; "a|b" = from a into b.
         public string actionTarget = "";
+        /// Lineup: the chemical each named vessel is filled with, in the same order.
+        public ChemicalData[] chemicals;
     }
 
     public Kind kind = Kind.Intro;

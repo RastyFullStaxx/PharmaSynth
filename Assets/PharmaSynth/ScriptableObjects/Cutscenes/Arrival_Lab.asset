@@ -31,6 +31,7 @@ MonoBehaviour:
     caption: 
     action: 1
     actionTarget: 
+    chemicals: []
   - subtitle: 
     seconds: 7
     face: 0
@@ -47,6 +48,7 @@ MonoBehaviour:
     caption: A full chemistry lab, built for VR
     action: 0
     actionTarget: 
+    chemicals: []
   - subtitle: 
     seconds: 6
     face: 0
@@ -63,6 +65,7 @@ MonoBehaviour:
     caption: 57 reagents, always on the shelf
     action: 0
     actionTarget: 
+    chemicals: []
   - subtitle: 
     seconds: 6
     face: 0
@@ -79,6 +82,7 @@ MonoBehaviour:
     caption: Real glassware, real apparatus
     action: 0
     actionTarget: 
+    chemicals: []
   - subtitle: 
     seconds: 4
     face: 0
@@ -95,6 +99,7 @@ MonoBehaviour:
     caption: Light the burner
     action: 2
     actionTarget: Kit_BunsenBurner_0_9
+    chemicals: []
   - subtitle: 
     seconds: 4.5
     face: 0
@@ -111,6 +116,7 @@ MonoBehaviour:
     caption: Pour every reagent by hand
     action: 3
     actionTarget: Raw_PotassiumPermanganate0.1%|FlorenceFlask
+    chemicals: []
   - subtitle: 
     seconds: 5
     face: 0
@@ -127,6 +133,7 @@ MonoBehaviour:
     caption: 
     action: 5
     actionTarget: 
+    chemicals: []
   - subtitle: 
     seconds: 4.5
     face: 0
@@ -143,6 +150,7 @@ MonoBehaviour:
     caption: Pharmee, your lab partner
     action: 4
     actionTarget: 
+    chemicals: []
   - subtitle: 
     seconds: 4
     face: 0
@@ -159,6 +167,7 @@ MonoBehaviour:
     caption: Dr. Jimenez, your examiner
     action: 0
     actionTarget: 
+    chemicals: []
   - subtitle: 
     seconds: 3
     face: 0
@@ -175,6 +184,7 @@ MonoBehaviour:
     caption: 
     action: 0
     actionTarget: 
+    chemicals: []
   - subtitle: 
     seconds: 2.5
     face: 0
@@ -191,6 +201,7 @@ MonoBehaviour:
     caption: 
     action: 0
     actionTarget: 
+    chemicals: []
   - subtitle: 
     seconds: 2.5
     face: 0
@@ -207,6 +218,7 @@ MonoBehaviour:
     caption: 
     action: 0
     actionTarget: 
+    chemicals: []
   - subtitle: 
     seconds: 2.5
     face: 0
@@ -223,6 +235,7 @@ MonoBehaviour:
     caption: 
     action: 0
     actionTarget: 
+    chemicals: []
   - subtitle: 
     seconds: 4
     face: 0
@@ -239,3 +252,4 @@ MonoBehaviour:
     caption: 
     action: 0
     actionTarget: 
+    chemicals: []

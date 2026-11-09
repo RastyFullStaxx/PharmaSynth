@@ -42,6 +42,11 @@ Furniture is scenery, not equipment: the stools must not be grabbable. The six l
 
 alone is chemically INERT) → propyl alcohol staged + bound, rule pointed at it (manuscript/test intent: ester with propyl). M2  Chloroform gets the manuscript's oxidation confirmatory test (K-dichromate + conc H2SO4, procedure L3419-21 + results sheet) → new task + reagent + reaction rule. M3  Wine Making ferments non-grape juice, per the manuscript's explicit grape exclusion (L3830-31) → Chem_GrapeJuice renamed "Mixed Fruit Juice" (GUID refs untouched; string lookups updated). M4  Reagent fidel
 
+### `Tools/PharmaSynth/Apply Text Theme`
+<sub>`Assets/PharmaSynth/Scripts/Editor/TextThemeBuilder.cs`</sub>
+
+Tools ▸ PharmaSynth ▸ Apply Text Theme: creates the theme (once), makes its font TextMesh Pro's default so runtime-created text uses it, and bakes it into every text of SampleScene and MainMenu, then saves both. Idempotent; to change the game's font, set the theme's font and run this again. Run it on a scene freshly loaded from disk. The balance's LCD readout (legacy UI.Text in a digital face) is an instrument display, not game text, and is left alone.
+
 ### `Tools/PharmaSynth/Apply Verb Data`
 <sub>`Assets/PharmaSynth/Scripts/Editor/VerbDataApplier.cs`</sub>
 

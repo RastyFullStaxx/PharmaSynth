@@ -157,6 +157,28 @@ public static class CompactHudBuilder
         Debug.Log("<color=#4CD07D>[CompactHUD] compact HUD rebuilt in '" + hudGo.scene.name + "'.</color>");
     }
 
+    /// Lay one more button into the hamburger dropdown, under the ones already there, grow
+    /// the list to fit and close the menu on click. Idempotent: an item already in the list
+    /// keeps its slot.
+    public static void AppendToMenu(RectTransform list, RectTransform button)
+    {
+        int index = 0;
+        foreach (Transform c in list)
+        {
+            if (c == button) break;
+            if (c.GetComponent<Button>() != null) index++;
+        }
+        int count = 0;
+        button.SetParent(list, false);
+        foreach (Transform c in list) if (c.GetComponent<Button>() != null) count++;
+        SetRect(button, new Vector2(1, 1), new Vector2(1, 1),
+                new Vector2(-8f, -8f - index * (MenuItemSize.y + MenuItemGap)), MenuItemSize);
+        SetRect(list, new Vector2(1, 1), new Vector2(1, 1), MenuListPos, MenuListSizeFor(count));
+        var dropdown = Object.FindAnyObjectByType<HudMenuDropdown>(FindObjectsInactive.Include);
+        var btn = button.GetComponent<Button>();
+        if (dropdown != null && btn != null) AddCloseOnce(btn.onClick, dropdown);
+    }
+
     // ---- helpers -------------------------------------------------------------
 
     /// Pull the demo verbs (Skip Step / Finish Experiment / Auto-Answer Quiz) out of
@@ -171,7 +193,7 @@ public static class CompactHudBuilder
         if (demo == null) return found;
 
         var so = new SerializedObject(demo);
-        foreach (var field in new[] { "skipButton", "finishButton", "quizButton" })
+        foreach (var field in new[] { "skipButton", "finishButton", "quizButton", "endingButton" })
         {
             var go = so.FindProperty(field)?.objectReferenceValue as GameObject;
             if (go == null) continue;
