@@ -134,28 +134,14 @@ public class CinemaView : MonoBehaviour
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             _screen = sg.transform;
 
-            var tg = new GameObject("CinemaSubtitle") { hideFlags = HideFlags.DontSave };
-            tg.transform.SetParent(_screen, false);
-            tg.transform.localPosition = new Vector3(0f, -0.62f, -0.01f);
-            tg.transform.localScale = new Vector3(1f / screenWidth, 1f / h, 1f);   // undo the quad's stretch
-            _subtitle = tg.AddComponent<TextMeshPro>();
-            _subtitle.alignment = TextAlignmentOptions.Center;
-            _subtitle.fontSize = 1.4f;
-            _subtitle.rectTransform.sizeDelta = new Vector2(screenWidth * 0.9f, 0.4f);
-            _subtitle.text = "";
-
-            // Title card ("Preparations Complete / Proceed to the experiment") over the
-            // opening wide shot — the slides' card, without a button to press.
-            var cg2 = new GameObject("CinemaTitle") { hideFlags = HideFlags.DontSave };
-            cg2.transform.SetParent(_screen, false);
-            cg2.transform.localPosition = new Vector3(0f, 0.05f, -0.01f);
-            cg2.transform.localScale = new Vector3(1f / screenWidth, 1f / h, 1f);
-            _title = cg2.AddComponent<TextMeshPro>();
-            _title.alignment = TextAlignmentOptions.Center;
-            _title.fontSize = 2.2f;   // 3.2 wrapped "Experiment Complete" onto two lines (autopilot shot)
-            _title.fontStyle = FontStyles.Bold;
-            _title.rectTransform.sizeDelta = new Vector2(screenWidth * 0.9f, 1.2f);
-            _title.text = "";
+            // Both texts sit in a band UNDER the picture, top-aligned so they grow down and
+            // never cover the video: the title card first, the caption/subtitle below it.
+            var theme = TextTheme.Current;
+            Color body = theme != null ? theme.body : Color.white;
+            _subtitle = MakeText("CinemaSubtitle", h, theme != null ? theme.cinemaCaptionSize : 0.9f, FontStyles.Normal, body);
+            _title = MakeText("CinemaTitle", h, theme != null ? theme.cinemaTitleSize : 1.4f, FontStyles.Bold, body);
+            _title.transform.localPosition = new Vector3(0f, TextTop, -0.01f);
+            PlaceSubtitle();
             _screen.gameObject.SetActive(false);
         }
         if (layer >= 0) { _screen.gameObject.layer = layer; _subtitle.gameObject.layer = layer; _title.gameObject.layer = layer; }
@@ -250,6 +236,36 @@ public class CinemaView : MonoBehaviour
 
     public void SetSubtitle(string text) { if (_subtitle != null) _subtitle.text = GlyphSafe.Sanitize(text ?? ""); }
 
+    /// Top of the text band, in screen units (the picture spans -0.5..0.5): just under it.
+    public const float TextTop = -0.54f;
+    /// Height the title card takes in the band (its own line plus its smaller second line).
+    public const float TitleBand = 0.24f;
+
+    private TextMeshPro MakeText(string name, float screenHeight, float size, FontStyles style, Color colour)
+    {
+        var g = new GameObject(name) { hideFlags = HideFlags.DontSave };
+        g.transform.SetParent(_screen, false);
+        g.transform.localScale = new Vector3(1f / screenWidth, 1f / screenHeight, 1f);   // undo the quad's stretch
+        var t = g.AddComponent<TextMeshPro>();
+        TextTheme.Apply(t);
+        t.alignment = TextAlignmentOptions.Top;
+        t.fontSize = size;
+        t.fontStyle = style;
+        t.color = colour;
+        t.rectTransform.pivot = new Vector2(0.5f, 1f);
+        t.rectTransform.sizeDelta = new Vector2(screenWidth * 0.9f, 1.2f);
+        t.text = "";
+        return t;
+    }
+
+    /// The caption sits at the top of the band, or under the title card while one shows.
+    private void PlaceSubtitle()
+    {
+        if (_subtitle == null) return;
+        bool title = _title != null && !string.IsNullOrEmpty(_title.text);
+        _subtitle.transform.localPosition = new Vector3(0f, title ? TextTop - TitleBand : TextTop, -0.01f);
+    }
+
     /// Multiplies the picture (the timelapse's day/night). Exit resets it to white.
     public void SetTint(Color c)
     {
@@ -263,7 +279,8 @@ public class CinemaView : MonoBehaviour
     {
         EnsureBuilt();
         _title.text = string.IsNullOrEmpty(title) ? ""
-            : GlyphSafe.Sanitize(title) + (string.IsNullOrEmpty(line) ? "" : "\n<size=45%>" + GlyphSafe.Sanitize(line) + "</size>");
+            : GlyphSafe.Sanitize(title) + (string.IsNullOrEmpty(line) ? "" : "\n<size=60%>" + GlyphSafe.Sanitize(line) + "</size>");
+        PlaceSubtitle();
     }
     public string TitleText => _title != null ? _title.text : "";
 

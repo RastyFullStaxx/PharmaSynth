@@ -267,6 +267,25 @@ public static partial class PharmaSelfTests
             A("round: no square panel or button is left in the lab scene (run Round UI Corners)" + (square > 0 ? ", " + square + " square, e.g. " + first : ""),
                 square == 0);
         }
+        // One text style: every text on the theme font, which is also TMP's default.
+        {
+            var theme = AssetDatabase.LoadAssetAtPath<TextTheme>(TextThemeBuilder.ThemeAsset);
+            A("text: the theme exists, has a font and the runtime loads it",
+                theme != null && theme.font != null && TextTheme.Current == theme);
+            A("text: the theme font is TextMesh Pro's default, so runtime text uses it",
+                theme != null && TMPro.TMP_Settings.defaultFontAsset == theme.font);
+            int off = 0; string firstOff = null;
+            foreach (var t in UnityEngine.Object.FindObjectsByType<TMPro.TMP_Text>(FindObjectsInactive.Include))
+                if (theme != null && t.font != theme.font) { off++; firstOff = firstOff ?? t.name; }
+            A("text: every text in the lab scene uses the theme font (run Apply Text Theme)"
+              + (off > 0 ? ", " + off + " off, e.g. " + firstOff : ""), off == 0);
+            A("text: the cinema text band starts below the picture's bottom edge", CinemaView.TextTop < -0.5f);
+            A("text: a caption under a title card starts below the card",
+                CinemaView.TextTop - CinemaView.TitleBand < CinemaView.TextTop - 0.15f);
+            A("text: cinema captions are smaller than the title and smaller than before",
+                theme != null && theme.cinemaCaptionSize < theme.cinemaTitleSize
+                && theme.cinemaTitleSize < 2.2f && theme.cinemaCaptionSize < 1.4f);
+        }
         // No em or en dashes on screen: a joining dash becomes a comma, a range or a lone
         // placeholder a hyphen.
         A("glyph: a label dash becomes a comma", GlyphSafe.Sanitize("Wash Bottle — 500 ml") == "Wash Bottle, 500 ml");
