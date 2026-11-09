@@ -1465,5 +1465,58 @@ public static partial class PharmaSelfTests
                 && VisualSweep.ColourDistance(rule.resultLiquid.liquidColor, rule.inputChemicalA.liquidColor) >= VisualSweep.VisibleDelta);
         }
     }
+
+    // The arrival reel: a silent cinematic tour between the cube room and the lab door.
+    static void ArrivalSuite()
+    {
+        A("arrival: a save's first lab entry plays it", ArrivalMath.ShouldPlay(seen: false, demo: false));
+        A("arrival: once seen it does not play again", !ArrivalMath.ShouldPlay(seen: true, demo: false));
+        A("arrival: a demo session plays it every time", ArrivalMath.ShouldPlay(seen: true, demo: true));
+        A("arrival: a tap never skips, a one-second hold does",
+            !ArrivalMath.SkipDone(0.3f) && ArrivalMath.SkipDone(ArrivalMath.SkipHoldSeconds));
+        A("arrival: the teaser pour starts gently and ends full",
+            ArrivalMath.PouredMl(0f, 20f) == 0f && Mathf.Approximately(ArrivalMath.PouredMl(1f, 20f), 20f)
+            && ArrivalMath.PouredMl(0.25f, 20f) < 5f);
+        A("arrival: the reel opens on no auto title card", CutsceneDirector.CardFor(CutsceneData.Kind.Arrival).title == "");
+        A("arrival: a seen flag survives the save file",
+            JsonUtility.FromJson<ProgressSaveData>(JsonUtility.ToJson(new ProgressSaveData { arrivalSeen = true })).arrivalSeen);
+
+        var cube = AssetDatabase.LoadAssetAtPath<CutsceneData>(ArrivalSceneBuilder.CubeReelPath);
+        var lab = AssetDatabase.LoadAssetAtPath<CutsceneData>(ArrivalSceneBuilder.LabReelPath);
+        A("arrival: both reels exist as Arrival cutscenes",
+            cube != null && lab != null && cube.kind == CutsceneData.Kind.Arrival && lab.kind == CutsceneData.Kind.Arrival);
+        if (cube == null || lab == null) return;
+        bool silent = true; float seconds = 0f;
+        foreach (var r in new[] { cube, lab })
+            foreach (var b in r.beats) { silent &= string.IsNullOrEmpty(b.subtitle); seconds += b.seconds; }
+        A("arrival: no beat is spoken (captions only)", silent);
+        A("arrival: the whole tour runs about a minute (" + seconds.ToString("F0") + " s)", seconds >= 50f && seconds <= 100f);
+
+        // Every marker a shot names exists under the lab's CutsceneMarkers root.
+        var director = UnityEngine.Object.FindAnyObjectByType<ArrivalDirector>();
+        if (director == null) return;   // not the lab scene
+        A("arrival: the lab's director plays the lab half", director.LabPart && director.Reel == lab);
+        var root = director.transform;
+        string missing = "";
+        foreach (var b in lab.beats)
+            foreach (var n in new[] { b.shot.camera, b.shot.moveTo, b.shot.lookMarker })
+                if (!string.IsNullOrEmpty(n) && root.Find(n) == null) missing += n + " ";
+        A("arrival: every lab shot's markers exist" + (missing.Length > 0 ? " (missing " + missing + ")" : ""), missing.Length == 0);
+        string orphan = "";
+        foreach (var b in lab.beats)
+        {
+            if (b.action != ShowcaseAction.LightBurner && b.action != ShowcaseAction.Pour) continue;
+            var names = b.actionTarget.Split('|');
+            var first = GameObject.Find(names[0]);
+            bool ok = b.action == ShowcaseAction.LightBurner
+                ? first != null && first.GetComponentInChildren<BurnerController>() != null
+                : first != null && first.GetComponentInChildren<LiquidPhysics>() != null
+                  && first.GetComponentInChildren<LiquidPhysics>().currentChemical != null
+                  && names.Length > 1 && GameObject.Find(names[1]) != null
+                  && GameObject.Find(names[1]).GetComponentInChildren<LiquidPhysics>() != null;
+            if (!ok) orphan += b.actionTarget + " ";
+        }
+        A("arrival: every teaser's props exist in the lab" + (orphan.Length > 0 ? " (missing " + orphan + ")" : ""), orphan.Length == 0);
+    }
 }
 #endif

@@ -9,7 +9,8 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Cutscene", menuName = "PharmaSynth/Cutscene")]
 public class CutsceneData : ScriptableObject
 {
-    public enum Kind { Intro, ReagentPrep, Success, Failure }
+    /// Appended values only: assets store the kind as its index.
+    public enum Kind { Intro, ReagentPrep, Success, Failure, Arrival }
 
     [Serializable]
     public class Beat
@@ -18,6 +19,16 @@ public class CutsceneData : ScriptableObject
         [Min(0.2f)] public float seconds = 3f;
         public PharmeeFaceExpression face = PharmeeFaceExpression.Neutral;
         public CinemaShot shot = new CinemaShot();
+
+        // Silent on-screen text for the arrival reel (the subtitle above is SPOKEN by
+        // Pharmee's narration channel). A card shows big over the shot; a caption small.
+        public string cardTitle = "";
+        public string cardLine = "";
+        public string caption = "";
+        /// Something the lab does during this beat (light a burner, open the door).
+        public ShowcaseAction action = ShowcaseAction.None;
+        /// The scene object(s) the action works on, by name; "a|b" = from a into b.
+        public string actionTarget = "";
     }
 
     public Kind kind = Kind.Intro;

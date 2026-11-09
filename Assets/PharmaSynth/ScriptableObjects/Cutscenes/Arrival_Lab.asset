@@ -1,0 +1,241 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cdb85042f7c8d74cb6d93b40d200268, type: 3}
+  m_Name: Arrival_Lab
+  m_EditorClassIdentifier: Assembly-CSharp::CutsceneData
+  kind: 4
+  title: 
+  beats:
+  - subtitle: 
+    seconds: 5
+    face: 0
+    shot:
+      camera: Arr_Corridor
+      moveTo: Arr_CorridorIn
+      blend: 0
+      look: 4
+      lookMarker: Look_Corridor
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: 
+    action: 1
+    actionTarget: 
+  - subtitle: 
+    seconds: 7
+    face: 0
+    shot:
+      camera: Arr_SweepA
+      moveTo: Arr_SweepB
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 58
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: A full chemistry lab, built for VR
+    action: 0
+    actionTarget: 
+  - subtitle: 
+    seconds: 6
+    face: 0
+    shot:
+      camera: Arr_CabinetA
+      moveTo: Arr_CabinetB
+      blend: 0
+      look: 4
+      lookMarker: Look_Cabinets
+      fov: 50
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: 57 reagents, always on the shelf
+    action: 0
+    actionTarget: 
+  - subtitle: 
+    seconds: 6
+    face: 0
+    shot:
+      camera: Arr_ShelfA
+      moveTo: Arr_ShelfB
+      blend: 0
+      look: 4
+      lookMarker: Look_Shelf
+      fov: 45
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Real glassware, real apparatus
+    action: 0
+    actionTarget: 
+  - subtitle: 
+    seconds: 4
+    face: 0
+    shot:
+      camera: Arr_Burner
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Burner
+      fov: 40
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Light the burner
+    action: 2
+    actionTarget: Kit_BunsenBurner_0_9
+  - subtitle: 
+    seconds: 4.5
+    face: 0
+    shot:
+      camera: Arr_Pour
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Pour
+      fov: 38
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Pour every reagent by hand
+    action: 3
+    actionTarget: Raw_PotassiumPermanganate0.1%|FlorenceFlask
+  - subtitle: 
+    seconds: 5
+    face: 0
+    shot:
+      camera: Cam_Timelapse
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: 
+    action: 5
+    actionTarget: 
+  - subtitle: 
+    seconds: 4.5
+    face: 0
+    shot:
+      camera: Arr_Pharmee
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Pharmee
+      fov: 42
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Pharmee, your lab partner
+    action: 4
+    actionTarget: 
+  - subtitle: 
+    seconds: 4
+    face: 0
+    shot:
+      camera: Arr_Jimenez
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Jimenez
+      fov: 42
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Dr. Jimenez, your examiner
+    action: 0
+    actionTarget: 
+  - subtitle: 
+    seconds: 3
+    face: 0
+    shot:
+      camera: Arr_BenchHigh
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: 9 Experiments
+    cardLine: "Prelim \xB7 Midterm \xB7 Finals"
+    caption: 
+    action: 0
+    actionTarget: 
+  - subtitle: 
+    seconds: 2.5
+    face: 0
+    shot:
+      camera: Arr_BenchLow
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 50
+      pharmeePopIn: 0
+    cardTitle: Prelim
+    cardLine: "Chemical Reactions \xB7 Ethyl Alcohol"
+    caption: 
+    action: 0
+    actionTarget: 
+  - subtitle: 
+    seconds: 2.5
+    face: 0
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 50
+      pharmeePopIn: 0
+    cardTitle: Midterm
+    cardLine: "Benzoic Acid \xB7 Acetanilide \xB7 Acetone \xB7 Chloroform"
+    caption: 
+    action: 0
+    actionTarget: 
+  - subtitle: 
+    seconds: 2.5
+    face: 0
+    shot:
+      camera: Arr_BenchHigh
+      moveTo: Arr_SweepB
+      blend: 0
+      look: 4
+      lookMarker: Look_Bench
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: Finals
+    cardLine: "Benzamide \xB7 Wine Making"
+    caption: 
+    action: 0
+    actionTarget: 
+  - subtitle: 
+    seconds: 4
+    face: 0
+    shot:
+      camera: Arr_DoorInside
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_Door
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: Your lab is ready
+    cardLine: Step inside
+    caption: 
+    action: 0
+    actionTarget: 

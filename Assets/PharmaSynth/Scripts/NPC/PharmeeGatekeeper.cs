@@ -161,6 +161,12 @@ public partial class PharmeeGatekeeper : MonoBehaviour
     /// land the player at the entrance exactly where Restart does.
     private System.Collections.IEnumerator SpawnAtEntranceRoutine()
     {
+        // The arrival reel plays first; the player is landed at the door under its black.
+        while (ArrivalFlow.Busy)
+        {
+            if (ArrivalDirector.Find() == null) { ArrivalFlow.LabPartPending = false; ArrivalFlow.Playing = false; ScreenFader.HoldBlackOnStart = false; if (ScreenFader.Instance != null) ScreenFader.Instance.FadeIn(); }
+            yield return null;
+        }
         var boost = playerRig != null ? playerRig.GetComponent<SeatedHeightBoost>() : null;
         float t = 0f;
         while (boost != null && !boost.Calibrated && t < 3f)

@@ -93,6 +93,7 @@ public static partial class PharmaSelfTests
         PharmeePolishSuite();
         ChecklistPagerSuite();
         CinemaSuite();
+        ArrivalSuite();
         ForgivenessSuite();
         DemoModeSuite();
         DemoActionsSuite();

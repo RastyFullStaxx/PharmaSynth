@@ -203,10 +203,11 @@ Up: [[Home]] - [[The Lab Scene]] - [[Gotchas]]
 ## MainMenu (the cube room)
 <sub>`Assets/Scenes/MainMenu.unity`</sub>
 
-### Root objects (11)
+### Root objects (12)
 
 | Object | local Y |
 |---|---|
+| `CutsceneMarkers` | 0.000 |
 | `Directional Light` | 0.000 |
 | `EventSystem` | 0.000 |
 | `Main Camera` | 1.500 |

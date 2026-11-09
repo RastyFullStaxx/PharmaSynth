@@ -553,3 +553,7 @@ Ten items from one headset session, diagnosed by reading the live run rather tha
 ## §37 Quest performance backlog (checked 2026-11-07)
 - [x] **Texture compression is already right**: all 314 textures use the automatic format, which an Android build compresses to ASTC; at 2048 px that is roughly 150 MB together, within a Quest 3's budget. Resize only what device profiling shows is memory-bound; blind downsizing just blurs surfaces.
 - [x] **Occlusion culling: not worth baking** for one open room where nearly everything is in view; it costs CPU every frame. Revisit only if a device profile shows the lab draw-call bound.
+
+## §38 Arrival reel (2026-11-10) — suite 1781/1781
+- [x] Silent cinematic tour between the cube room and the lab door (first entry of a save, every demo entry), hold B/Y to skip; plays and skips cleanly in editor Play.
+- [ ] ⬜ **Headset**: watch it through on the Quest (screen distance, caption size, music level); hold B to skip once; confirm you land at the door and Pharmee greets.

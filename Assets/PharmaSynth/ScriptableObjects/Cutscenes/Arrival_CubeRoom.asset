@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cdb85042f7c8d74cb6d93b40d200268, type: 3}
+  m_Name: Arrival_CubeRoom
+  m_EditorClassIdentifier: Assembly-CSharp::CutsceneData
+  kind: 4
+  title: 
+  beats:
+  - subtitle: 
+    seconds: 5
+    face: 0
+    shot:
+      camera: Arr_CubeHighL
+      moveTo: Arr_CubeHighR
+      blend: 0
+      look: 4
+      lookMarker: Look_CubeCentre
+      fov: 60
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: 
+    action: 0
+    actionTarget: 
+  - subtitle: 
+    seconds: 4
+    face: 0
+    shot:
+      camera: Arr_CubeLowA
+      moveTo: Arr_CubeLowB
+      blend: 0
+      look: 4
+      lookMarker: Look_CubeCeiling
+      fov: 62
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: 
+    action: 0
+    actionTarget: 
+  - subtitle: 
+    seconds: 4
+    face: 0
+    shot:
+      camera: Arr_CubeTitle
+      moveTo: 
+      blend: 0
+      look: 4
+      lookMarker: Look_CubeUp
+      fov: 60
+      pharmeePopIn: 0
+    cardTitle: PharmaSynth
+    cardLine: Gear Up, Synth It Up!
+    caption: 
+    action: 0
+    actionTarget: 

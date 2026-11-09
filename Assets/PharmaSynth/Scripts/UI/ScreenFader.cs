@@ -51,6 +51,8 @@ public class FadeState
 public class ScreenFader : MonoBehaviour
 {
     public static ScreenFader Instance { get; private set; }
+    /// Set across a scene load to keep the next scene black until its owner fades in.
+    public static bool HoldBlackOnStart;
 
     [SerializeField] private Renderer quad;              // auto-built under Camera.main if null
     [SerializeField] private bool fadeInOnStart = true;
@@ -80,7 +82,8 @@ public class ScreenFader : MonoBehaviour
     private void Start()
     {
         EnsureQuad();
-        if (fadeInOnStart)
+        if (HoldBlackOnStart) SetAlpha(1f);   // the arrival reel fades in itself
+        else if (fadeInOnStart)
         {
             SetAlpha(1f);
             FadeIn();

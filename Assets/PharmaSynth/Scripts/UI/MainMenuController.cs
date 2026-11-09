@@ -48,7 +48,7 @@ public class MainMenuController : MonoBehaviour
         var service = new ProgressionService();
         service.Load();
         GameFlow.Select(ResolveLabTarget(ProgressionFlow.Create(service), fallbackModuleId));
-        ScreenFader.FadeOutThen(() => SceneManager.LoadScene(labSceneName));
+        ArrivalDirector.EnterLab(labSceneName, demo);
     }
 
     public void OnSettings()

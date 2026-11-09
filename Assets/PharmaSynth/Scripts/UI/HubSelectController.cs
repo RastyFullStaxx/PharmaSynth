@@ -110,7 +110,7 @@ public class HubSelectController : MonoBehaviour
         if (!CanSelect(flow, moduleId)) return false;
         GameFlow.Select(moduleId);
         if (Application.isPlaying)
-            ScreenFader.FadeOutThen(() => SceneManager.LoadScene(labSceneName));
+            ArrivalDirector.EnterLab(labSceneName, DemoSession.Active);
         return true;
     }
 }

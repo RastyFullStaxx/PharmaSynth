@@ -2499,6 +2499,7 @@ Versioned save payload.
 ```csharp
 int version
 List<ModuleRecord> modules
+bool arrivalSeen
 ```
 
 ### `ProgressionService` <sub>class</sub>
@@ -2611,6 +2612,50 @@ static Vector3 RigPositionFor(Vector3 markerPos, float deltaYawDeg, Vector3 rigP
 
 `Assets/PharmaSynth/Scripts/NPC/`
 
+### `ShowcaseAction` <sub>enum</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/ArrivalDirector.cs`</sub>
+
+What the lab does during an arrival beat. Every action is undone when the reel ends.
+
+### `ArrivalMath` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/ArrivalDirector.cs`</sub>
+
+Pure rules for the arrival reel (suite-pinned).
+
+```csharp
+const float SkipHoldSeconds
+const float TimelapseHours
+const float TimelapseScale
+static bool ShouldPlay(bool seen, bool demo)
+static bool SkipDone(float heldSeconds)
+static float PouredMl(float k, float totalMl)
+```
+
+### `ArrivalFlow` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/ArrivalDirector.cs`</sub>
+
+The hand-off across the cube room → lab scene load.
+
+```csharp
+static bool LabPartPending
+static bool Playing
+static bool Busy
+```
+
+### `ArrivalDirector` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/NPC/ArrivalDirector.cs`</sub>
+
+The arrival scene: a silent cinematic tour of PharmaSynth that plays between the cube room and the lab door. Two halves, one per scene, each a CutsceneData reel of shots with on-screen cards and captions (no voice): the cube-room half ends on black and loads the lab, the lab half picks up under that black and ends with the player at the front door, where the gatekeeper's normal welcome takes over. Lives on the scene's CutsceneMarkers root beside its CinemaView, so the headset view is never moved: the shots play on the cinema screen in the dark room. Built by Tools ▸ PharmaSynth ▸ Cutscenes ▸ Build Arrival Scene.
+
+```csharp
+CutsceneData Reel
+bool LabPart
+void Bind(CutsceneData r, bool lab, AudioClip m)
+static ArrivalDirector Find()
+static void EnterLab(string labScene, bool demo)
+bool PlayThenLoad(string labScene)
+```
+
 ### `CinemaLook` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/CinemaShots.cs`</sub>
 
@@ -2684,6 +2729,8 @@ A data-driven cutscene: a sequence of subtitle "beats" with a Pharmee expression
 
 ### `Kind` <sub>enum</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/CutsceneData.cs`</sub>
+
+Appended values only: assets store the kind as its index.
 
 ### `Beat` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/NPC/CutsceneData.cs`</sub>
@@ -3680,6 +3727,7 @@ VR-safe screen fade: a black quad floating just in front of the camera (a screen
 
 ```csharp
 static ScreenFader Instance
+static bool HoldBlackOnStart
 FadeState State
 Renderer FadeRenderer
 void PulseWarning(Color tint, float seconds
@@ -4159,6 +4207,26 @@ Furniture is scenery, not equipment: the stools must not be grabbable. The six l
 static readonly string[] Fragments
 static bool IsFurniture(string objectName)
 static void Run()
+```
+
+### `ArrivalSceneBuilder` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/ArrivalSceneBuilder.cs`</sub>
+
+Tools ▸ PharmaSynth ▸ Cutscenes ▸ Build Arrival Scene: wires the arrival reel into both scenes. In each it makes sure the CutsceneMarkers root has a CinemaView and an ArrivalDirector, creates the arrival camera markers that are missing (existing ones keep their hand-tuned poses), creates the two reel assets if missing, and saves. "Reset Arrival Scene" rewrites markers and reels to these defaults. Run it on a scene freshly loaded from disk: it saves both scenes.
+
+```csharp
+const string LabScene
+const string CubeScene
+const string Folder
+const string CubeReelPath
+const string LabReelPath
+static readonly (string name, Vector3 pos, Vector3 look)[] CubeMarkers
+static readonly (string name, Vector3 pos, Vector3 look)[] LabMarkers
+static List<CutsceneData.Beat> CubeBeats()
+static List<CutsceneData.Beat> LabBeats()
+static void Build()
+static void Reset()
+static void RenderOpen()
 ```
 
 ### `AtmosphereBuilder` <sub>class</sub>
