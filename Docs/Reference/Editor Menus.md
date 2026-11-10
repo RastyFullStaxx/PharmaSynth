@@ -45,7 +45,7 @@ alone is chemically INERT) → propyl alcohol staged + bound, rule pointed at it
 ### `Tools/PharmaSynth/Apply Text Theme`
 <sub>`Assets/PharmaSynth/Scripts/Editor/TextThemeBuilder.cs`</sub>
 
-Tools ▸ PharmaSynth ▸ Apply Text Theme: creates the theme (once), makes its font TextMesh Pro's default so runtime-created text uses it, and bakes it into every text of SampleScene and MainMenu, then saves both. Idempotent; to change the game's font, set the theme's font and run this again. Run it on a scene freshly loaded from disk. The balance's LCD readout (legacy UI.Text in a digital face) is an instrument display, not game text, and is left alone.
+Tools ▸ PharmaSynth ▸ Apply Text Theme: creates the theme (once) and the game font's TMP assets (Inter, regular + bold, dynamic, LiberationSans as glyph fallback), makes the theme font TextMesh Pro's default so runtime-created text uses it, and bakes it into every text of SampleScene and MainMenu, then saves both. Idempotent. A theme still on the stock LiberationSans is moved to Inter; any other font set in the theme is kept, so to change the game's font, set the theme's font and run this again.
 
 ### `Tools/PharmaSynth/Apply Verb Data`
 <sub>`Assets/PharmaSynth/Scripts/Editor/VerbDataApplier.cs`</sub>

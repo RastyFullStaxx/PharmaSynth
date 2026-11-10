@@ -3827,6 +3827,7 @@ Color warning
 static TextTheme Current
 static TMP_FontAsset Font
 static bool Apply(TMP_Text t)
+static bool UsesAtlasOf(Material m, TMP_FontAsset f)
 static int ApplyAll(Scene scene)
 ```
 
@@ -5188,11 +5189,14 @@ static void SelectStools()
 ### `TextThemeBuilder` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Editor/TextThemeBuilder.cs`</sub>
 
-Tools ▸ PharmaSynth ▸ Apply Text Theme: creates the theme (once), makes its font TextMesh Pro's default so runtime-created text uses it, and bakes it into every text of SampleScene and MainMenu, then saves both. Idempotent; to change the game's font, set the theme's font and run this again. Run it on a scene freshly loaded from disk. The balance's LCD readout (legacy UI.Text in a digital face) is an instrument display, not game text, and is left alone.
+Tools ▸ PharmaSynth ▸ Apply Text Theme: creates the theme (once) and the game font's TMP assets (Inter, regular + bold, dynamic, LiberationSans as glyph fallback), makes the theme font TextMesh Pro's default so runtime-created text uses it, and bakes it into every text of SampleScene and MainMenu, then saves both. Idempotent. A theme still on the stock LiberationSans is moved to Inter; any other font set in the theme is kept, so to change the game's font, set the theme's font and run this again. Run it on a scene freshly loaded from disk. The balance's LCD readout (legacy UI.Text in a digital face) is an instrument display, not game text, and is left alone.
 
 ```csharp
 const string ThemeAsset
-const string DefaultFont
+const string StockFont
+const string GameFont
+const string GameFontBold
+const string Prebaked
 static void Run()
 static TextTheme EnsureTheme()
 ```

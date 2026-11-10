@@ -274,9 +274,15 @@ public static partial class PharmaSelfTests
                 theme != null && theme.font != null && TextTheme.Current == theme);
             A("text: the theme font is TextMesh Pro's default, so runtime text uses it",
                 theme != null && TMPro.TMP_Settings.defaultFontAsset == theme.font);
+            var weights = theme != null && theme.font != null ? theme.font.fontWeightTable : null;
+            A("text: the game font is Inter, with real Inter Bold for bold and a glyph fallback",
+                theme != null && theme.font != null && theme.font.name == "Inter SDF"
+                && weights != null && weights.Length > 7 && weights[7].regularTypeface != null
+                && weights[7].regularTypeface.name == "Inter Bold SDF"
+                && theme.font.fallbackFontAssetTable != null && theme.font.fallbackFontAssetTable.Count > 0);
             int off = 0; string firstOff = null;
             foreach (var t in UnityEngine.Object.FindObjectsByType<TMPro.TMP_Text>(FindObjectsInactive.Include))
-                if (theme != null && t.font != theme.font) { off++; firstOff = firstOff ?? t.name; }
+                if (theme != null && (t.font != theme.font || !TextTheme.UsesAtlasOf(t.fontSharedMaterial, theme.font))) { off++; firstOff = firstOff ?? t.name; }
             A("text: every text in the lab scene uses the theme font (run Apply Text Theme)"
               + (off > 0 ? ", " + off + " off, e.g. " + firstOff : ""), off == 0);
             A("text: the cinema text band starts below the picture's bottom edge", CinemaView.TextTop < -0.5f);

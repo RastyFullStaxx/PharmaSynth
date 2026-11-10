@@ -39,16 +39,22 @@ public class TextTheme : ScriptableObject
         }
     }
 
-    /// Put one text on the theme font. A material made for another font is replaced by the
-    /// theme font's own; a custom material already made for the theme font is kept.
+    /// Put one text on the theme font. A material that does not draw from the theme font's
+    /// atlas (made for another font, or lost) is replaced by the theme font's own; a custom
+    /// material made for the theme font is kept.
     public static bool Apply(TMP_Text t)
     {
         var f = Font;
-        if (t == null || f == null || t.font == f) return false;
+        if (t == null || f == null) return false;
+        if (t.font == f && UsesAtlasOf(t.fontSharedMaterial, f)) return false;
         t.font = f;
         t.fontSharedMaterial = f.material;
         return true;
     }
+
+    public static bool UsesAtlasOf(Material m, TMP_FontAsset f)
+        => m != null && f != null && m.HasProperty(ShaderUtilities.ID_MainTex)
+           && m.GetTexture(ShaderUtilities.ID_MainTex) == f.atlasTexture;
 
     public static int ApplyAll(Scene scene)
     {
