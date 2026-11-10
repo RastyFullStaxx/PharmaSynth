@@ -232,6 +232,11 @@ Demo Mode scene wiring. Three menus: • Build Demo Menu Button — MainMenu sce
 
 Dev-only capture bridge: renders a one-off camera to a PNG on disk so out-of-editor tooling can see the scene (the MCP scene-preview capture is broken on this machine). Pose/output come from Temp/dev-capture-request.json when present; defaults to the player spawn head pose.
 
+### `Tools/PharmaSynth/Fit Conical Liquids`
+<sub>`Assets/PharmaSynth/Scripts/Editor/ConicalLiquidFitter.cs`</sub>
+
+Tools ▸ PharmaSynth ▸ Fit Conical Liquids: gives every conical flask in the open scene the lathed LiquidShape mesh (saved as an asset so the scene can keep it) in place of the straight cylinder that poked through the glass. Idempotent; saves the scene, so run it on a scene freshly loaded from disk.
+
 ### `Tools/PharmaSynth/Fit Glassware (upright · pivot · seat)`
 <sub>`Assets/PharmaSynth/Scripts/Editor/UprightPourables.cs`</sub>
 

@@ -33,10 +33,11 @@ public static class ShowcaseReelBuilder
         ("Arr_CubeHighR",  new Vector3( 2.5f, 3.0f, -2.0f), new Vector3(0f, 1.3f, 1.2f)),
         ("Arr_CubeLowA",   new Vector3(-2.4f, 0.5f, -2.2f), new Vector3(0f, 2.4f, 0.4f)),
         ("Arr_CubeLowB",   new Vector3( 2.4f, 0.5f, -2.2f), new Vector3(0f, 2.4f, 0.4f)),
-        ("Arr_CubeTitle",  new Vector3( 0.0f, 1.3f, -1.8f), new Vector3(0f, 3.2f, 0.2f)),
+        // The whole menu panel (2.0 x 2.3 m, centred at 0.09, 1.76, 2.5), framed and centred.
+        ("Arr_CubeTitle",  new Vector3( 0.09f, 1.76f, -0.25f), new Vector3(0.09f, 1.76f, 2.5f)),
         ("Look_CubeCentre", new Vector3(0f, 1.3f, 1.2f), new Vector3(0f, 1.3f, 2.2f)),
         ("Look_CubeCeiling", new Vector3(0f, 2.4f, 0.4f), new Vector3(0f, 2.4f, 1.4f)),
-        ("Look_CubeUp",     new Vector3(0f, 3.2f, 0.2f), new Vector3(0f, 3.2f, 1.2f)),
+        ("Look_Menu",       new Vector3(0.09f, 1.76f, 2.5f), new Vector3(0.09f, 1.76f, 3.5f)),
     };
 
     public static readonly (string name, Vector3 pos, Vector3 look)[] LabMarkers =
@@ -106,7 +107,7 @@ public static class ShowcaseReelBuilder
     {
         B(5.0f, Shot("Arr_CubeHighL", "Arr_CubeHighR", "Look_CubeCentre", 60f)),
         B(4.0f, Shot("Arr_CubeLowA", "Arr_CubeLowB", "Look_CubeCeiling", 62f)),
-        B(4.0f, Shot("Arr_CubeTitle", "", "Look_CubeUp", 60f), card: "PharmaSynth", line: "Gear Up, Synth It Up!"),
+        B(4.0f, Shot("Arr_CubeTitle", "", "Look_Menu", 55f), card: "PharmaSynth", line: "Gear Up, Synth It Up!"),
     };
 
     public static List<CutsceneData.Beat> LabBeats() => new List<CutsceneData.Beat>

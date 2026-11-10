@@ -61,8 +61,8 @@ MonoBehaviour:
       moveTo: 
       blend: 0
       look: 4
-      lookMarker: Look_CubeUp
-      fov: 60
+      lookMarker: Look_Menu
+      fov: 55
       pharmeePopIn: 0
     cardTitle: PharmaSynth
     cardLine: Gear Up, Synth It Up!

@@ -422,6 +422,20 @@ static bool DebugOverlay
 static float PourVolume(bool pouring, float baseVol, float catVol, float flow01)
 ```
 
+### `LiquidShape` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Chemistry/LiquidShape.cs`</sub>
+
+The shape of a vessel's liquid. A beaker's liquid is a straight column, but an Erlenmeyer flask narrows from its body into its neck, and a straight column of liquid pokes out through the sloping glass at any real fill. Conical flasks get a lathed mesh that follows the glass inward instead. Meshes are in the unit space of Unity's cylinder primitive (y -1..1, radius 0.5 at the base), so the fill-child sizing and the fill shader are unchanged.
+
+```csharp
+const string ConicalMeshName
+static readonly Vector2[] ConicalProfile
+static bool IsConical(string vesselName)
+static float RadiusAt(Vector2[] profile, float t)
+static Mesh Conical
+static Mesh Lathe(Vector2[] profile, int segments, string name)
+```
+
 ### `LiquidTaskBinding` <sub>class</sub>
 <sub>`Assets/PharmaSynth/Scripts/Chemistry/LiquidTaskBinding.cs`</sub>
 
@@ -4329,6 +4343,17 @@ Compact VR HUD layout: the timer + title move OUT of the centre and merge into t
 ```csharp
 static void Rebuild()
 static void AppendToMenu(RectTransform list, RectTransform button)
+```
+
+### `ConicalLiquidFitter` <sub>class</sub>
+<sub>`Assets/PharmaSynth/Scripts/Editor/ConicalLiquidFitter.cs`</sub>
+
+Tools ▸ PharmaSynth ▸ Fit Conical Liquids: gives every conical flask in the open scene the lathed LiquidShape mesh (saved as an asset so the scene can keep it) in place of the straight cylinder that poked through the glass. Idempotent; saves the scene, so run it on a scene freshly loaded from disk.
+
+```csharp
+const string MeshAsset
+static void Run()
+static Mesh EnsureMesh()
 ```
 
 ### `CutsceneReelRecorder` <sub>class</sub>

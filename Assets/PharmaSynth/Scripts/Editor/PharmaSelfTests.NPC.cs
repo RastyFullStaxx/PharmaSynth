@@ -1551,6 +1551,25 @@ public static partial class PharmaSelfTests
             if (!string.IsNullOrEmpty(b.effects) && (b.effects.Contains("shift:FlorenceFlask")
                 || b.effects.Contains("spatter:FlorenceFlask") || b.effects.Contains("colorflash:FlorenceFlask"))) pourClean = false;
         A("arrival: the pour flask is not colour-cycled, splashed or flashed", pourClean);
+
+        // Conical flasks: the liquid follows the glass into the neck.
+        var prof = LiquidShape.ConicalProfile;
+        bool narrowing = true;
+        for (float t = 0.05f; t <= 1f; t += 0.05f)
+            narrowing &= LiquidShape.RadiusAt(prof, t) <= LiquidShape.RadiusAt(prof, t - 0.05f) + 1e-5f;
+        A("liquid: a conical flask's liquid never widens going up, and its neck is narrower than its base",
+            narrowing && LiquidShape.RadiusAt(prof, 1f) < 0.6f * LiquidShape.RadiusAt(prof, 0f));
+        var cb = LiquidShape.Conical.bounds;
+        A("liquid: the conical mesh keeps the cylinder's size, so fill and sizing are unchanged",
+            Mathf.Abs(cb.min.y + 1f) < 1e-4f && Mathf.Abs(cb.max.y - 1f) < 1e-4f && Mathf.Abs(cb.extents.x - 0.5f) < 1e-3f);
+        int straight = 0; string straightName = "";
+        foreach (var lp in UnityEngine.Object.FindObjectsByType<LiquidPhysics>(FindObjectsInactive.Include))
+        {
+            if (!LiquidShape.IsConical(lp.name) || lp.mainRenderer == null) continue;
+            var mf = lp.mainRenderer.GetComponent<MeshFilter>();
+            if (mf != null && (mf.sharedMesh == null || mf.sharedMesh.name != LiquidShape.ConicalMeshName)) { straight++; straightName = lp.name; }
+        }
+        A("liquid: every conical flask in the lab has the conical liquid (run Fit Conical Liquids) " + straightName, straight == 0);
         EndingSuite(director);
     }
 

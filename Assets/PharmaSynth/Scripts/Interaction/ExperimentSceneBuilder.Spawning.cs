@@ -870,6 +870,8 @@ public partial class ExperimentSceneBuilder
             w / Mathf.Max(1e-4f, Mathf.Abs(ls.x)),
             (round ? h : h * 0.5f) / Mathf.Max(1e-4f, Mathf.Abs(ls.y)),   // cylinder mesh is 2 units tall, sphere 1
             w / Mathf.Max(1e-4f, Mathf.Abs(ls.z)));
+        // A conical flask narrows into its neck: a straight column would poke through the glass.
+        if (!round && LiquidShape.IsConical(inst.name)) go.GetComponent<MeshFilter>().sharedMesh = LiquidShape.Conical;
         var r2 = go.GetComponent<Renderer>();
         r2.sharedMaterial = new Material(shader) { name = "PharmaLiquid_Runtime" };
         r2.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
