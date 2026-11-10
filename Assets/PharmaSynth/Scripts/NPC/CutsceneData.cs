@@ -32,6 +32,13 @@ public class CutsceneData : ScriptableObject
         public string actionTarget = "";
         /// Lineup: the chemical each named vessel is filled with, in the same order.
         public ChemicalData[] chemicals;
+        /// Showcase reels: the lab's name tags show for the shot camera during this beat.
+        public bool showLabels;
+        /// Showcase reels: dramatic effects alongside the action, "kind:object|kind:object".
+        /// Kinds: fizz, smoke, steam, coldair, spatter, colorflash (repeating); flamepop,
+        /// fireburst, confetti, shatter (once, a moment into the beat); shift (cycles the
+        /// vessel through the beat's chemicals).
+        public string effects = "";
     }
 
     public Kind kind = Kind.Intro;

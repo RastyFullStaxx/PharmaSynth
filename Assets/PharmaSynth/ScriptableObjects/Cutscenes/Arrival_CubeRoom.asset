@@ -32,6 +32,8 @@ MonoBehaviour:
     action: 0
     actionTarget: 
     chemicals: []
+    showLabels: 0
+    effects: 
   - subtitle: 
     seconds: 4
     face: 0
@@ -49,6 +51,8 @@ MonoBehaviour:
     action: 0
     actionTarget: 
     chemicals: []
+    showLabels: 0
+    effects: 
   - subtitle: 
     seconds: 4
     face: 0
@@ -66,3 +70,5 @@ MonoBehaviour:
     action: 0
     actionTarget: 
     chemicals: []
+    showLabels: 0
+    effects: 

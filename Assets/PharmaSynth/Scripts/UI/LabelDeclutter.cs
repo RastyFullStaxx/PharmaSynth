@@ -35,6 +35,44 @@ public static class LabelDeclutterMath
                                 IReadOnlyList<float> metresPerPixel, float maxLift = MaxLift)
         => Lifts(null, null, screenY, halfHeight, metresPerPixel, maxLift);
 
+    /// Which tags to hide because they STILL overlap a kept tag after lifting: where the lift
+    /// cap runs out (a dense rack, a close camera) the farther tag gives way rather than
+    /// draw over its neighbour. Guided tags are kept first and never hidden; then the
+    /// nearer tag (taller on screen) wins, then the lower `order`, so the answer is stable.
+    public static bool[] Crowded(IReadOnlyList<float> screenX, IReadOnlyList<float> halfWidth,
+                                 IReadOnlyList<float> screenY, IReadOnlyList<float> halfHeight,
+                                 IReadOnlyList<float> lifts, IReadOnlyList<float> metresPerPixel,
+                                 IReadOnlyList<bool> guided, IReadOnlyList<int> order)
+    {
+        int n = screenY != null ? screenY.Count : 0;
+        var hidden = new bool[n];
+        var y = new float[n];
+        for (int i = 0; i < n; i++)
+            y[i] = screenY[i] + (metresPerPixel[i] > 0f ? lifts[i] / metresPerPixel[i] : 0f);
+        var idx = new List<int>(n);
+        for (int i = 0; i < n; i++) idx.Add(i);
+        idx.Sort((a, b) =>
+        {
+            bool ga = guided != null && guided[a], gb = guided != null && guided[b];
+            if (ga != gb) return ga ? -1 : 1;
+            int byHeight = halfHeight[b].CompareTo(halfHeight[a]);
+            if (byHeight != 0) return byHeight;
+            return (order != null ? order[a] : a).CompareTo(order != null ? order[b] : b);
+        });
+        var kept = new List<int>(n);
+        foreach (int i in idx)
+        {
+            bool clash = false;
+            if (!(guided != null && guided[i]))
+                foreach (int j in kept)
+                    if (Mathf.Abs(screenX[i] - screenX[j]) < halfWidth[i] + halfWidth[j]
+                        && Mathf.Abs(y[i] - y[j]) < halfHeight[i] + halfHeight[j]) { clash = true; break; }
+            hidden[i] = clash;
+            if (!clash) kept.Add(i);
+        }
+        return hidden;
+    }
+
     /// Which tags to hide because another tag with the SAME text already overlaps them on
     /// screen: a rack of six empty tubes needs one "Test Tube, empty", not six stacked
     /// copies. Guided tags are kept first and never hidden; among the rest the lower
@@ -135,12 +173,18 @@ public class LabelDeclutter : MonoBehaviour
 
     private float _nextPoll;
     private Camera _cam;
+
+    /// While set, tags are separated in this camera's screen instead of the head's (the
+    /// showcase reels set it to the cinema's shot camera, alongside ProximityLabel.Viewer).
+    public static Camera ViewerCamera;
     private readonly List<ProximityLabel> _visible = new List<ProximityLabel>();
     private readonly List<float> _x = new List<float>();
     private readonly List<float> _halfW = new List<float>();
     private readonly List<float> _y = new List<float>();
     private readonly List<float> _half = new List<float>();
     private readonly List<float> _mpp = new List<float>();
+    private readonly List<bool> _visGuided = new List<bool>();
+    private readonly List<int> _visOrder = new List<int>();
     private readonly List<ProximityLabel> _candidates = new List<ProximityLabel>();
     private readonly List<string> _text = new List<string>();
     private readonly List<bool> _guided = new List<bool>();
@@ -156,7 +200,8 @@ public class LabelDeclutter : MonoBehaviour
         _nextPoll = Time.time + pollSeconds;
 
         if (_cam == null) _cam = Camera.main;
-        if (_cam == null) return;
+        var cam = ViewerCamera != null ? ViewerCamera : _cam;
+        if (cam == null) return;
 
         // Pass 1: of the tags that want to show, hide exact duplicates sitting on top of
         // each other. Measured at rest, so hiding one never changes the next answer.
@@ -165,38 +210,46 @@ public class LabelDeclutter : MonoBehaviour
         foreach (var label in FindObjectsByType<ProximityLabel>())
         {
             if (label == null || label.Tag == null || !label.WantsToShow) continue;
-            Vector3 sp = _cam.WorldToScreenPoint(label.RestPosition);
+            Vector3 sp = cam.WorldToScreenPoint(label.RestPosition);
             if (sp.z <= 0.05f) { label.SetDuplicateHidden(false); continue; }
             _candidates.Add(label); _text.Add(label.Text); _guided.Add(label.IsGuided);
             _order.Add(label.Serial);
             _cx.Add(sp.x); _cy.Add(sp.y);
-            _cw.Add(Mathf.Max(1f, label.ScreenHalfWidth(_cam))); _ch.Add(Mathf.Max(1f, label.ScreenHalfHeight(_cam)));
+            _cw.Add(Mathf.Max(1f, label.ScreenHalfWidth(cam))); _ch.Add(Mathf.Max(1f, label.ScreenHalfHeight(cam)));
         }
         var dup = LabelDeclutterMath.Duplicates(_text, _cx, _cw, _cy, _ch, _guided, _order);
         for (int i = 0; i < _candidates.Count; i++) _candidates[i].SetDuplicateHidden(dup[i]);
 
         // Pass 2: lift the tags still showing so none overlap.
         _visible.Clear(); _x.Clear(); _halfW.Clear(); _y.Clear(); _half.Clear(); _mpp.Clear();
+        _visGuided.Clear(); _visOrder.Clear();
         for (int c = 0; c < _candidates.Count; c++)
         {
             if (dup[c]) continue;
             var label = _candidates[c];
             Vector3 rest = label.RestPosition;                 // where the tag sits unlifted
-            Vector3 sp = _cam.WorldToScreenPoint(rest);
+            Vector3 sp = cam.WorldToScreenPoint(rest);
             if (sp.z <= 0.05f) continue;                       // behind the camera
             _visible.Add(label);
             _x.Add(sp.x);
             // A few pixels of air around each panel, so neighbours sit apart, not edge to edge.
-            _halfW.Add(Mathf.Max(1f, label.ScreenHalfWidth(_cam)) + LabelDeclutterMath.GapPixels);
+            _halfW.Add(Mathf.Max(1f, label.ScreenHalfWidth(cam)) + LabelDeclutterMath.GapPixels);
             _y.Add(sp.y);
-            _half.Add(Mathf.Max(1f, label.ScreenHalfHeight(_cam)) + LabelDeclutterMath.GapPixels);
+            _half.Add(Mathf.Max(1f, label.ScreenHalfHeight(cam)) + LabelDeclutterMath.GapPixels);
             // Metres per pixel at this depth, so the pixel solve converts back to a lift.
-            Vector3 up = _cam.WorldToScreenPoint(rest + Vector3.up * 0.1f);
+            Vector3 up = cam.WorldToScreenPoint(rest + Vector3.up * 0.1f);
             float dy = Mathf.Abs(up.y - sp.y);
             _mpp.Add(dy > 0.01f ? 0.1f / dy : 0f);
+            _visGuided.Add(label.IsGuided);
+            _visOrder.Add(label.Serial);
         }
 
         var lifts = LabelDeclutterMath.Lifts(_x, _halfW, _y, _half, _mpp, maxLift);
-        for (int i = 0; i < _visible.Count; i++) _visible[i].SetDeclutterLift(lifts[i]);
+        var crowded = LabelDeclutterMath.Crowded(_x, _halfW, _y, _half, lifts, _mpp, _visGuided, _visOrder);
+        for (int i = 0; i < _visible.Count; i++)
+        {
+            _visible[i].SetDeclutterLift(lifts[i]);
+            if (crowded[i]) _visible[i].SetDuplicateHidden(true);   // same switch: hidden by the solver
+        }
     }
 }

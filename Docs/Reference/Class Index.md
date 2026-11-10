@@ -3242,6 +3242,9 @@ const float TimelapseHours
 const float TimelapseScale
 static bool ShouldPlay(bool seen, bool demo)
 static bool SkipDone(float heldSeconds)
+const float EffectInterval
+const int ShiftEvery
+static int ShiftColour(int step, int index, int colours)
 static float PouredMl(float k, float totalMl)
 ```
 
@@ -3576,6 +3579,7 @@ Pure rules for keeping world-space name tags from sitting on top of each other (
 const float MaxLift
 const float GapPixels
 static float[] Lifts(IReadOnlyList<float> screenY, IReadOnlyList<float> halfHeight,
+static bool[] Crowded(IReadOnlyList<float> screenX, IReadOnlyList<float> halfWidth,
 static bool[] Duplicates(IReadOnlyList<string> text, IReadOnlyList<float> screenX,
 static float[] Lifts(IReadOnlyList<float> screenX, IReadOnlyList<float> halfWidth,
 ```
@@ -3586,6 +3590,7 @@ static float[] Lifts(IReadOnlyList<float> screenX, IReadOnlyList<float> halfWidt
 Drives LabelDeclutterMath over the live ProximityLabels. Thin: it measures, calls the pure solver and hands each label a lift. Polls at the same 5 Hz TutorialHighlighter uses. Tags are read at a human pace, and a per-frame solve over every visible label would cost more than the problem.
 
 ```csharp
+static Camera ViewerCamera
 void Bind(float poll, float lift)
 ```
 
@@ -3675,6 +3680,7 @@ Shows a small floating name tag above an object only when the player's camera is
 
 ```csharp
 string CurrentText
+static Transform Viewer
 GameObject Tag
 void SetDeclutterLift(float metres)
 const float LiftGlideSeconds
@@ -3687,7 +3693,6 @@ Vector3 RestPosition
 float ScreenHalfWidth(Camera cam)
 float ScreenHalfHeight(Camera cam)
 void SetLabel(string text, float dist
-const float TutorialRadiusMultiplier
 ```
 
 ### `ResultsHistoryController` <sub>class</sub>

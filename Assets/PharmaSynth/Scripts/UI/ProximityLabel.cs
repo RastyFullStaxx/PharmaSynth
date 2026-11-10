@@ -16,6 +16,12 @@ public class ProximityLabel : MonoBehaviour
     [SerializeField] private float fontSize = 5.5f;
 
     private Transform _cam;
+    private Transform _ownCam;
+
+    /// While set, every tag shows, faces and measures from this viewer instead of the
+    /// player's head: the showcase reels point it at the cinema's shot camera so the
+    /// filmed reagents and apparatus carry their tags.
+    public static Transform Viewer;
     private GameObject _tag;
 
     /// The tag object, so LabelDeclutter can measure where it landed on screen.
@@ -201,10 +207,11 @@ public class ProximityLabel : MonoBehaviour
     private void Update()
     {
         if (_tag == null) { Build(); if (_tag == null) return; }
-        if (_cam == null)
+        if (_ownCam == null)
         {
-            var c = Camera.main; if (c == null) return; _cam = c.transform;
+            var c = Camera.main; if (c == null) return; _ownCam = c.transform;
         }
+        _cam = Viewer != null ? Viewer : _ownCam;
         float d = Vector3.Distance(_cam.position, transform.position);
         if (!_guideChecked) { _guide = GetComponent<HoverHighlight>(); _guideChecked = true; }
         bool guided = _guide != null && _guide.IsGuided;

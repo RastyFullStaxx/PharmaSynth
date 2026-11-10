@@ -87,6 +87,15 @@ public static class ArrivalMath
 
     public static bool SkipDone(float heldSeconds) => heldSeconds >= SkipHoldSeconds;
 
+    /// Seconds between effect bursts in an Effects beat; colour shifts every third burst.
+    public const float EffectInterval = 0.4f;
+    public const int ShiftEvery = 3;
+
+    /// The chemical a colour-shifting vessel shows at burst `step`: vessel `index` starts
+    /// one colour along from the one before it, so a row never shows one colour.
+    public static int ShiftColour(int step, int index, int colours)
+        => colours <= 0 ? -1 : (step / ShiftEvery + index) % colours;
+
     /// Millilitres poured by fraction k of a pour beat (eased, so the stream starts gently).
     public static float PouredMl(float k, float totalMl) => totalMl * ShotMath.Ease(k);
 }
@@ -258,12 +267,15 @@ public class ShowcaseDirector : MonoBehaviour
             if (b == null) continue;
             _cinema.SetTitle(EndingMath.Fill(b.cardTitle, _results), EndingMath.Fill(b.cardLine, _results));
             _cinema.SetSubtitle(EndingMath.Fill(b.caption, _results));
+            SetLabelViewer(b.showLabels);
             var shot = b.shot ?? new CinemaShot();
             ShotMath.Ends(shot.blend, CurrentPose(), _cinema.MarkerPose(shot.camera), _cinema.MarkerPose(shot.moveTo),
                           out var start, out var end);
             float fov0 = _cinema.ShotCamera.fieldOfView;
             float dur = Mathf.Max(0.2f, b.seconds);
-            var tick = BeginAction(b);
+            var act = BeginAction(b);
+            var fx = string.IsNullOrEmpty(b.effects) ? null : BeginEffects(b, b.effects.Split('|'));
+            Action<float> tick = act == null ? fx : fx == null ? act : k => { act(k); fx(k); };
             // Real seconds: the timelapse speeds the lab up, never the reel.
             for (float t = 0f; t < dur && !_skipped; t += Time.unscaledDeltaTime)
             {
@@ -280,6 +292,7 @@ public class ShowcaseDirector : MonoBehaviour
 
         yield return Fade(1f);
         StopMusic();
+        SetLabelViewer(false);
         UndoActions();
         _cinema.SetTitle("", "");
         _cinema.SetSubtitle("");
@@ -460,6 +473,77 @@ public class ShowcaseDirector : MonoBehaviour
         }
     }
 
+    /// Beat.effects "kind:object|kind:object". Repeating kinds re-fire every EffectInterval
+    /// (smoke and steam on alternate bursts); one-shot kinds fire once on the third burst,
+    /// after the shot has settled; shift cycles the vessel through the beat's chemicals (the
+    /// liquid blends between them) and its contents are restored after.
+    private Action<float> BeginEffects(CutsceneData.Beat b, string[] entries)
+    {
+        var fx = new List<(string kind, GameObject go, LiquidPhysics lp, int index)>();
+        int shifts = 0;
+        foreach (var e in entries)
+        {
+            int c = e.IndexOf(':');
+            if (c <= 0) continue;
+            var go = GameObject.Find(e.Substring(c + 1));
+            if (go == null) continue;
+            string kind = e.Substring(0, c);
+            var lp = go.GetComponentInChildren<LiquidPhysics>();
+            if (kind == "shift" && lp != null)
+            {
+                var before = lp.currentChemical; float beforeMl = lp.currentLiquidVolume;
+                var v = lp;
+                _undo.Add(() => { if (before != null && beforeMl > 0f) v.SetContents(before, beforeMl); else v.ClearContents(); });
+            }
+            fx.Add((kind, go, lp, kind == "shift" ? shifts++ : 0));
+        }
+        var chems = b.chemicals ?? new ChemicalData[0];
+        float dur = Mathf.Max(0.2f, b.seconds), next = 0f;
+        int step = 0;
+        return k =>
+        {
+            float t = k * dur;
+            if (t < next) return;
+            next = t + ArrivalMath.EffectInterval;
+            foreach (var f in fx)
+            {
+                if (f.go == null) continue;
+                var box = ExperimentSceneBuilder.SolidWorldBounds(f.go);
+                var top = new Vector3(box.center.x, box.max.y, box.center.z);
+                switch (f.kind)
+                {
+                    case "fizz": EffectVfx.Fizz(box.center); break;
+                    case "smoke": if (step % 2 == 0) EffectVfx.Smoke(top); break;
+                    case "steam": if (step % 2 == 1) EffectVfx.Smoke(top, new Color(0.95f, 0.97f, 1f, 0.5f)); break;
+                    case "coldair": if (step % 2 == 0) EffectVfx.ColdAir(top); break;
+                    case "spatter": if (step % 2 == 1) EffectVfx.Spatter(top, LiquidTint(f.lp)); break;
+                    case "colorflash": if (step % ArrivalMath.ShiftEvery == 1) EffectVfx.ColorFlash(box.center, LiquidTint(f.lp)); break;
+                    case "flamepop": if (step == 2) EffectVfx.FlamePop(top); break;
+                    case "fireburst": if (step == 2) EffectVfx.FireBurst(top); break;
+                    case "confetti": if (step == 2) EffectVfx.Confetti(top); break;
+                    case "shatter": if (step == 2) EffectVfx.Shatter(box.center); break;
+                    case "shift":
+                        int ci = ArrivalMath.ShiftColour(step, f.index, chems.Length);
+                        if (f.lp != null && ci >= 0 && step % ArrivalMath.ShiftEvery == 0 && chems[ci] != null)
+                            f.lp.SetContents(chems[ci], f.lp.maxVolume * 0.5f);
+                        break;
+                }
+            }
+            step++;
+        };
+    }
+
+    private static Color LiquidTint(LiquidPhysics lp)
+        => lp != null && lp.currentChemical != null ? lp.currentChemical.liquidColor : new Color(0.6f, 0.8f, 1f, 0.9f);
+
+    /// Point the lab's name tags (and their overlap solver) at the shot camera, or back.
+    private void SetLabelViewer(bool on)
+    {
+        var cam = on && _cinema != null ? _cinema.ShotCamera : null;
+        ProximityLabel.Viewer = cam != null ? cam.transform : null;
+        LabelDeclutter.ViewerCamera = cam;
+    }
+
     private void EndTimelapse()
     {
         if (!_timelapse) return;
@@ -480,7 +564,7 @@ public class ShowcaseDirector : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_cinema != null && _cinema.Active) { UndoActions(); _cinema.Exit(); }
+        if (_cinema != null && _cinema.Active) { SetLabelViewer(false); UndoActions(); _cinema.Exit(); }
     }
 
     private static T Named<T>(string name) where T : Component

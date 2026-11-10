@@ -908,6 +908,24 @@ public static partial class PharmaSelfTests
                     if (pl.transform.parent != null && pl.transform.parent.GetComponentInParent<ProximityLabel>() != null) { nested++; nestedName = pl.name; }
                 A("label: no tag sits inside an item that already has one (it read the mesh's node name) " + nestedName, nested == 0);
             }
+            // Where lifting runs out, the farther tag gives way instead of drawing over.
+            {
+                var xs = new List<float> { 100f, 105f, 400f };
+                var ws = new List<float> { 40f, 40f, 40f };
+                var ys = new List<float> { 300f, 300f, 300f };
+                var hs = new List<float> { 10f, 8f, 8f };          // tag 0 is nearer (taller)
+                var crLifts = new List<float> { 0f, 0f, 0f };        // the cap left them unlifted
+                var crMpp = new List<float> { 0.001f, 0.001f, 0.001f };
+                var od = new List<int> { 2, 1, 3 };
+                var crowd = LabelDeclutterMath.Crowded(xs, ws, ys, hs, crLifts, crMpp, new List<bool> { false, false, false }, od);
+                A("label: two tags still overlapping after the lift keep the nearer, hide the farther", !crowd[0] && crowd[1]);
+                A("label: a tag with room to itself is never hidden", !crowd[2]);
+                var guidedCrowd = LabelDeclutterMath.Crowded(xs, ws, ys, hs, crLifts, crMpp, new List<bool> { false, true, false }, od);
+                A("label: a guided tag is never hidden by the crowd rule", !guidedCrowd[1]);
+                var liftedApart = LabelDeclutterMath.Crowded(xs, ws, ys, hs, new List<float> { 0f, 0.03f, 0f }, crMpp,
+                                                             new List<bool> { false, false, false }, od);
+                A("label: tags the lift separated both stay", !liftedApart[0] && !liftedApart[1]);
+            }
         }
 
         // The vessel explains itself: what bounced, and that a free tube is free.

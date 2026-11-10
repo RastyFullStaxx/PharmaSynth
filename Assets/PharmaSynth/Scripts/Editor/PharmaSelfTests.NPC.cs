@@ -1517,6 +1517,33 @@ public static partial class PharmaSelfTests
             if (!ok) orphan += b.actionTarget + " ";
         }
         A("arrival: every teaser's props exist in the lab" + (orphan.Length > 0 ? " (missing " + orphan + ")" : ""), orphan.Length == 0);
+
+        // Drama on the shelf and tags on what is filmed.
+        A("arrival: neighbouring vessels never show the same colour",
+            ArrivalMath.ShiftColour(0, 0, 4) != ArrivalMath.ShiftColour(0, 1, 4)
+            && ArrivalMath.ShiftColour(ArrivalMath.ShiftEvery, 0, 4) != ArrivalMath.ShiftColour(0, 0, 4)
+            && ArrivalMath.ShiftColour(5, 0, 0) == -1);
+        int labelled = 0; string fxMissing = "";
+        var kinds = new HashSet<string>();
+        foreach (var b in lab.beats)
+        {
+            if (b.showLabels) labelled++;
+            if (string.IsNullOrEmpty(b.effects)) continue;
+            foreach (var e in b.effects.Split('|'))
+            {
+                int c = e.IndexOf(':');
+                if (c <= 0 || GameObject.Find(e.Substring(c + 1)) == null) fxMissing += e + " ";
+                else kinds.Add(e.Substring(0, c));
+            }
+            if (b.effects.Contains("shift:") && (b.chemicals == null || b.chemicals.Length == 0
+                || System.Array.IndexOf(b.chemicals, null) >= 0)) fxMissing += "(chemicals) ";
+        }
+        A("arrival: the cabinet, shelf, burner and pour shots show the lab's name tags", labelled >= 4);
+        A("arrival: every effect's object exists in the lab" + (fxMissing.Length > 0 ? " (missing " + fxMissing + ")" : ""), fxMissing.Length == 0);
+        string unused = "";
+        foreach (var k in new[] { "fizz", "smoke", "steam", "coldair", "spatter", "colorflash", "flamepop", "fireburst", "confetti", "shatter", "shift" })
+            if (!kinds.Contains(k)) unused += k + " ";
+        A("arrival: the tour uses every effect the lab has" + (unused.Length > 0 ? " (unused " + unused + ")" : ""), unused.Length == 0);
         EndingSuite(director);
     }
 

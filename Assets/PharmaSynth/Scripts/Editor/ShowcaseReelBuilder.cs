@@ -78,6 +78,25 @@ public static class ShowcaseReelBuilder
         => new CutsceneData.Beat { seconds = s, shot = shot, caption = caption, cardTitle = card, cardLine = line,
                                    action = action, actionTarget = target, subtitle = "" };
 
+    /// The lab's name tags show for the shot camera during this beat.
+    static CutsceneData.Beat Labelled(CutsceneData.Beat b) { b.showLabels = true; return b; }
+
+    static CutsceneData.Beat Fx(CutsceneData.Beat b, string effects) { b.effects = effects; return b; }
+
+    /// Drama on the glassware shelf: tubes and beakers cycle colours, the Florence flask
+    /// bubbles, the water bath steams, a distilling flask smokes.
+    const string ShelfEffects = "shift:Kit_TestTube_0|shift:Kit_TestTube_1|shift:Kit_TestTube_2|steam:WaterBath"
+        + "|shift:FlorenceFlask|fizz:FlorenceFlask|shift:Eq_Beaker_100mL|shift:ErlenmeyerFlask_400mL_2|smoke:DistillingFlask";
+    static readonly string[] ShiftColours = { "Chem_PotassiumPermanganate", "Chem_BenedictsReagent", "Chem_FerricChloride10", "Chem_BromineWater" };
+
+    static CutsceneData.Beat WithChemicals(CutsceneData.Beat b, string[] chems)
+    {
+        b.chemicals = new ChemicalData[chems.Length];
+        for (int i = 0; i < chems.Length; i++)
+            b.chemicals[i] = AssetDatabase.LoadAssetAtPath<ChemicalData>(ChemFolder + chems[i] + ".asset");
+        return b;
+    }
+
     public static List<CutsceneData.Beat> CubeBeats() => new List<CutsceneData.Beat>
     {
         B(5.0f, Shot("Arr_CubeHighL", "Arr_CubeHighR", "Look_CubeCentre", 60f)),
@@ -89,20 +108,25 @@ public static class ShowcaseReelBuilder
     {
         B(5.0f, Shot("Arr_Corridor", "Arr_CorridorIn", "Look_Corridor", 55f), action: ShowcaseAction.OpenDoor),
         B(7.0f, Shot("Arr_SweepA", "Arr_SweepB", "Look_Bench", 58f), caption: "A full chemistry lab, built for VR"),
-        B(6.0f, Shot("Arr_CabinetA", "Arr_CabinetB", "Look_Cabinets", 50f), caption: "57 reagents, always on the shelf"),
-        B(6.0f, Shot("Arr_ShelfA", "Arr_ShelfB", "Look_Shelf", 45f), caption: "Real glassware, real apparatus"),
-        B(4.0f, Shot("Arr_Burner", "", "Look_Burner", 40f), caption: "Light the burner",
+        Labelled(Fx(B(6.0f, Shot("Arr_CabinetA", "Arr_CabinetB", "Look_Cabinets", 50f), caption: "57 reagents, always on the shelf"),
+          "coldair:Raw_IceBucket")),
+        Labelled(WithChemicals(Fx(B(8.0f, Shot("Arr_ShelfA", "Arr_ShelfB", "Look_Shelf", 45f), caption: "Real glassware, real reactions"),
+          ShelfEffects), ShiftColours)),
+        Labelled(Fx(B(4.0f, Shot("Arr_Burner", "", "Look_Burner", 40f), caption: "Light the burner",
           action: ShowcaseAction.LightBurner, target: "Kit_BunsenBurner_0_9"),
-        B(4.5f, Shot("Arr_Pour", "", "Look_Pour", 38f), caption: "Pour every reagent by hand",
+          "flamepop:Kit_BunsenBurner_0_9|fireburst:Kit_BunsenBurner_0_9|smoke:Kit_BunsenBurner_0_9")),
+        Labelled(Fx(B(4.5f, Shot("Arr_Pour", "", "Look_Pour", 38f), caption: "Pour every reagent by hand",
           action: ShowcaseAction.Pour, target: "Raw_PotassiumPermanganate0.1%|FlorenceFlask"),
+          "fizz:FlorenceFlask|spatter:FlorenceFlask|colorflash:FlorenceFlask")),
         B(5.0f, Shot("Cam_Timelapse", "", "Look_Bench", 55f), action: ShowcaseAction.Timelapse),
-        B(4.5f, Shot("Arr_Pharmee", "", "Look_Pharmee", 42f), caption: "Pharmee, your lab partner",
-          action: ShowcaseAction.PharmeeCelebrate),
+        Fx(B(4.5f, Shot("Arr_Pharmee", "", "Look_Pharmee", 42f), caption: "Pharmee, your lab partner",
+          action: ShowcaseAction.PharmeeCelebrate), "confetti:RobotNPC"),
         B(4.0f, Shot("Arr_Jimenez", "", "Look_Jimenez", 42f), caption: "Dr. Jimenez, your examiner"),
         B(3.0f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f), card: "9 Experiments", line: "Prelim · Midterm · Finals"),
         B(2.5f, Shot("Arr_BenchLow", "", "Look_Bench", 50f), card: "Prelim", line: "Chemical Reactions · Ethyl Alcohol"),
         B(2.5f, Shot("Cam_Bench", "", "Look_Bench", 50f), card: "Midterm", line: "Benzoic Acid · Acetanilide · Acetone · Chloroform"),
-        B(2.5f, Shot("Arr_BenchHigh", "Arr_SweepB", "Look_Bench", 55f), card: "Finals", line: "Benzamide · Wine Making"),
+        Fx(B(2.5f, Shot("Arr_BenchHigh", "Arr_SweepB", "Look_Bench", 55f), card: "Finals", line: "Benzamide · Wine Making"),
+          "shatter:ErlenmeyerFlask_400mL_3|steam:WaterBath"),
         B(4.0f, Shot("Arr_DoorInside", "", "Look_Door", 55f), card: "Your lab is ready", line: "Step inside"),
     };
 
