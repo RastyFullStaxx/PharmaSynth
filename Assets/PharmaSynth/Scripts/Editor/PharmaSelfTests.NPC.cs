@@ -1523,11 +1523,11 @@ public static partial class PharmaSelfTests
             ArrivalMath.ShiftColour(0, 0, 4) != ArrivalMath.ShiftColour(0, 1, 4)
             && ArrivalMath.ShiftColour(ArrivalMath.ShiftEvery, 0, 4) != ArrivalMath.ShiftColour(0, 0, 4)
             && ArrivalMath.ShiftColour(5, 0, 0) == -1);
-        int labelled = 0; string fxMissing = "";
+        int labelled = 0; bool cabinetTagged = false; string fxMissing = "";
         var kinds = new HashSet<string>();
         foreach (var b in lab.beats)
         {
-            if (b.showLabels) labelled++;
+            if (b.showLabels) { labelled++; cabinetTagged |= b.shot.camera == "Arr_CabinetA"; }
             if (string.IsNullOrEmpty(b.effects)) continue;
             foreach (var e in b.effects.Split('|'))
             {
@@ -1538,7 +1538,7 @@ public static partial class PharmaSelfTests
             if (b.effects.Contains("shift:") && (b.chemicals == null || b.chemicals.Length == 0
                 || System.Array.IndexOf(b.chemicals, null) >= 0)) fxMissing += "(chemicals) ";
         }
-        A("arrival: the cabinet, shelf, burner and pour shots show the lab's name tags", labelled >= 4);
+        A("arrival: only the reagent cabinets show name tags (apparatus shots stay clean)", labelled == 1 && cabinetTagged);
         A("arrival: every effect's object exists in the lab" + (fxMissing.Length > 0 ? " (missing " + fxMissing + ")" : ""), fxMissing.Length == 0);
         string unused = "";
         foreach (var k in new[] { "fizz", "smoke", "steam", "coldair", "spatter", "colorflash", "flamepop", "fireburst", "confetti", "shatter", "shift" })

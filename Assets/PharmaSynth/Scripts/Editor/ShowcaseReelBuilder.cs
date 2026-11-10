@@ -78,7 +78,8 @@ public static class ShowcaseReelBuilder
         => new CutsceneData.Beat { seconds = s, shot = shot, caption = caption, cardTitle = card, cardLine = line,
                                    action = action, actionTarget = target, subtitle = "" };
 
-    /// The lab's name tags show for the shot camera during this beat.
+    /// The lab's name tags show for the shot camera during this beat. Only the reagent
+    /// cabinets use it: the apparatus shots are too dense for tags to read cleanly.
     static CutsceneData.Beat Labelled(CutsceneData.Beat b) { b.showLabels = true; return b; }
 
     static CutsceneData.Beat Fx(CutsceneData.Beat b, string effects) { b.effects = effects; return b; }
@@ -110,14 +111,14 @@ public static class ShowcaseReelBuilder
         B(7.0f, Shot("Arr_SweepA", "Arr_SweepB", "Look_Bench", 58f), caption: "A full chemistry lab, built for VR"),
         Labelled(Fx(B(6.0f, Shot("Arr_CabinetA", "Arr_CabinetB", "Look_Cabinets", 50f), caption: "57 reagents, always on the shelf"),
           "coldair:Raw_IceBucket")),
-        Labelled(WithChemicals(Fx(B(8.0f, Shot("Arr_ShelfA", "Arr_ShelfB", "Look_Shelf", 45f), caption: "Real glassware, real reactions"),
-          ShelfEffects), ShiftColours)),
-        Labelled(Fx(B(4.0f, Shot("Arr_Burner", "", "Look_Burner", 40f), caption: "Light the burner",
+        WithChemicals(Fx(B(8.0f, Shot("Arr_ShelfA", "Arr_ShelfB", "Look_Shelf", 45f), caption: "Real glassware, real reactions"),
+          ShelfEffects), ShiftColours),
+        Fx(B(4.0f, Shot("Arr_Burner", "", "Look_Burner", 40f), caption: "Light the burner",
           action: ShowcaseAction.LightBurner, target: "Kit_BunsenBurner_0_9"),
-          "flamepop:Kit_BunsenBurner_0_9|fireburst:Kit_BunsenBurner_0_9|smoke:Kit_BunsenBurner_0_9")),
-        Labelled(Fx(B(4.5f, Shot("Arr_Pour", "", "Look_Pour", 38f), caption: "Pour every reagent by hand",
+          "flamepop:Kit_BunsenBurner_0_9|fireburst:Kit_BunsenBurner_0_9|smoke:Kit_BunsenBurner_0_9"),
+        Fx(B(4.5f, Shot("Arr_Pour", "", "Look_Pour", 38f), caption: "Pour every reagent by hand",
           action: ShowcaseAction.Pour, target: "Raw_PotassiumPermanganate0.1%|FlorenceFlask"),
-          "fizz:FlorenceFlask|spatter:FlorenceFlask|colorflash:FlorenceFlask")),
+          "fizz:FlorenceFlask|spatter:FlorenceFlask|colorflash:FlorenceFlask"),
         B(5.0f, Shot("Cam_Timelapse", "", "Look_Bench", 55f), action: ShowcaseAction.Timelapse),
         Fx(B(4.5f, Shot("Arr_Pharmee", "", "Look_Pharmee", 42f), caption: "Pharmee, your lab partner",
           action: ShowcaseAction.PharmeeCelebrate), "confetti:RobotNPC"),
