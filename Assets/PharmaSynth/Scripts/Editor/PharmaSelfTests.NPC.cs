@@ -1596,6 +1596,9 @@ public static partial class PharmaSelfTests
         bool silent = true, credits = false; float seconds = 0f;
         foreach (var b in end.beats) { silent &= string.IsNullOrEmpty(b.subtitle); seconds += b.seconds; credits |= b.cardTitle == "Developed by"; }
         A("ending: no beat is spoken, and the credits are in it", silent && credits);
+        bool placeholder = false;
+        foreach (var b in end.beats) placeholder |= (b.cardTitle + b.cardLine + b.caption).Contains("[");
+        A("ending: the credits carry real names, no [placeholder] left", !placeholder);
         A("ending: it runs about a minute (" + seconds.ToString("F0") + " s)", seconds >= 50f && seconds <= 100f);
         if (director == null) return;
         A("ending: the lab's director holds the ending", director.Ending == end);

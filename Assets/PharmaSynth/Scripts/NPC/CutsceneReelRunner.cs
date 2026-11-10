@@ -21,6 +21,8 @@ public class CutsceneReelRunner : MonoBehaviour
     public const string ShowcaseDir = "Logs/showcase-reel";
     string Dir => showcase ? ShowcaseDir : OutDir;
     const int W = 1920, H = 1080, Fps = 30;
+    /// Metres behind the viewing distance and below the screen's centre the capture sits.
+    const float CaptureBack = 0.2f, CaptureDrop = 0.15f;
 
     Camera _cap;
     RenderTexture _rt;
@@ -110,7 +112,12 @@ public class CutsceneReelRunner : MonoBehaviour
     /// to the lab door. Ending: the demo HUD's Play Ending, once the arrival has settled.
     IEnumerator Showcase()
     {
-        for (int i = 0; i < 600 && FindAnyObjectByType<MainMenuController>() == null; i++) yield return null;
+        // The first Play after an editor start can take a while to load; wait in real time,
+        // and open the cube room ourselves if Play began anywhere else.
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "MainMenu"
+            && FindAnyObjectByType<MainMenuController>() == null)
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+        for (float w = 0f; w < 30f && FindAnyObjectByType<MainMenuController>() == null; w += Time.unscaledDeltaTime) yield return null;
         yield return new WaitForSeconds(3f);   // the cube room's own fade-in
         var menu = FindAnyObjectByType<MainMenuController>();
         if (menu == null) { Debug.LogError("[Reel] Play mode did not start in the cube room."); Finish(); yield break; }
@@ -147,15 +154,18 @@ public class CutsceneReelRunner : MonoBehaviour
         while (quiet < tailFrames && guard++ < Fps * maxSeconds)
         {
             yield return new WaitForEndOfFrame();
-            // Square in front of the cinema screen at its viewing distance, never on the
-            // head: a head that moves while recording (the simulator's mouse, a worn
-            // headset) would shake the whole video. 6 degrees down keeps the text band
-            // under the picture in frame. With no screen up, the last pose holds.
+            // Square in front of the cinema screen, never on the head: a head that moves
+            // while recording (the simulator's mouse, a worn headset) would shake the whole
+            // video. Level, a little lower and further back rather than tilted down: a
+            // tilted camera leans upright letters at the frame's edges (keystone), and this
+            // keeps the picture and the text band under it both in frame. With no screen
+            // up, the last pose holds.
             var cinema = FindAnyObjectByType<CinemaView>();
             var screen = cinema != null && cinema.Active ? cinema.ScreenTransform : null;
             if (screen != null)
-                _cap.transform.SetPositionAndRotation(screen.position - screen.forward * cinema.ScreenDistance,
-                                                      Quaternion.LookRotation(screen.forward) * Quaternion.Euler(6f, 0f, 0f));
+                _cap.transform.SetPositionAndRotation(
+                    screen.position - screen.forward * (cinema.ScreenDistance + CaptureBack) - Vector3.up * CaptureDrop,
+                    Quaternion.LookRotation(screen.forward));
             _cap.Render();
             var prev = RenderTexture.active; RenderTexture.active = _rt;
             _tex.ReadPixels(new Rect(0, 0, W, H), 0, 0, false);

@@ -324,7 +324,7 @@ MonoBehaviour:
       fov: 58
       pharmeePopIn: 0
     cardTitle: Laboratory manuscript
-    cardLine: '[Manuscript authors]'
+    cardLine: "Marielle Festejo \xB7 Gwen Flores \xB7 Stephen Christian Garachico"
     caption: 
     action: 0
     actionTarget: 
@@ -332,7 +332,7 @@ MonoBehaviour:
     showLabels: 0
     effects: 
   - subtitle: 
-    seconds: 3.5
+    seconds: 3
     face: 0
     shot:
       camera: Arr_BenchHigh
@@ -343,7 +343,7 @@ MonoBehaviour:
       fov: 55
       pharmeePopIn: 0
     cardTitle: Developed by
-    cardLine: '[Development team]'
+    cardLine: "Marielle Festejo \xB7 Gwen Flores \xB7 Stephen Christian Garachico"
     caption: 
     action: 0
     actionTarget: 
@@ -351,7 +351,26 @@ MonoBehaviour:
     showLabels: 0
     effects: 
   - subtitle: 
-    seconds: 3.5
+    seconds: 3
+    face: 0
+    shot:
+      camera: Arr_BenchLow
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Bench
+      fov: 50
+      pharmeePopIn: 0
+    cardTitle: Marielle Festejo
+    cardLine: Gameplay mechanics and the chemistry simulation
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 3
     face: 0
     shot:
       camera: Cam_Bench
@@ -361,8 +380,46 @@ MonoBehaviour:
       lookMarker: Look_Bench
       fov: 50
       pharmeePopIn: 0
+    cardTitle: Gwen Flores
+    cardLine: 'Backend: grading, progression and saves'
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 3
+    face: 0
+    shot:
+      camera: Arr_BenchHigh
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Bench
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: Stephen Christian Garachico
+    cardLine: Interface, cutscenes and the lab environment
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 4
+    face: 0
+    shot:
+      camera: Arr_SweepA
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Bench
+      fov: 58
+      pharmeePopIn: 0
     cardTitle: Made for
-    cardLine: '[Institution]'
+    cardLine: College of Computer Studies, Technological Institute of the Philippines
     caption: 
     action: 0
     actionTarget: 

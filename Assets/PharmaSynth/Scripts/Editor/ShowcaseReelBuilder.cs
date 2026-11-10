@@ -197,7 +197,9 @@ public static class ShowcaseReelBuilder
         return b;
     }
 
-    /// Cards carry EndingMath tokens; credits are placeholders to fill in the Inspector.
+    const string Team = "Marielle Festejo · Gwen Flores · Stephen Christian Garachico";
+
+    /// Cards carry EndingMath tokens. The credits can also be edited in the reel asset.
     public static List<CutsceneData.Beat> EndingBeats() => new List<CutsceneData.Beat>
     {
         B(4.0f, Shot("Cam_LabWide", "Arr_SweepB", "Look_Bench", 58f), card: "Campaign Complete", line: "{passed} of {total} experiments passed"),
@@ -218,9 +220,12 @@ public static class ShowcaseReelBuilder
         B(4.5f, Shot("End_Corridor", "End_CorridorBack", "Look_LabFromCorridor", 55f), action: ShowcaseAction.Night),
         B(3.0f, Shot("End_CorridorBack", "", "Look_LabFromCorridor", 55f), action: ShowcaseAction.CloseDoor),
         B(3.5f, Shot("Cam_LabWide", "", "Look_Bench", 58f), card: "PharmaSynth", line: "Gear Up, Synth It Up!"),
-        B(3.5f, Shot("Arr_SweepA", "", "Look_Bench", 58f, blend: true), card: "Laboratory manuscript", line: "[Manuscript authors]"),
-        B(3.5f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f, blend: true), card: "Developed by", line: "[Development team]"),
-        B(3.5f, Shot("Cam_Bench", "", "Look_Bench", 50f, blend: true), card: "Made for", line: "[Institution]"),
+        B(3.5f, Shot("Arr_SweepA", "", "Look_Bench", 58f, blend: true), card: "Laboratory manuscript", line: Team),
+        B(3.0f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f, blend: true), card: "Developed by", line: Team),
+        B(3.0f, Shot("Arr_BenchLow", "", "Look_Bench", 50f, blend: true), card: "Marielle Festejo", line: "Gameplay mechanics and the chemistry simulation"),
+        B(3.0f, Shot("Cam_Bench", "", "Look_Bench", 50f, blend: true), card: "Gwen Flores", line: "Backend: grading, progression and saves"),
+        B(3.0f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f, blend: true), card: "Stephen Christian Garachico", line: "Interface, cutscenes and the lab environment"),
+        B(4.0f, Shot("Arr_SweepA", "", "Look_Bench", 58f, blend: true), card: "Made for", line: "College of Computer Studies, Technological Institute of the Philippines"),
         B(4.0f, Shot("Arr_DoorInside", "", "Look_Door", 55f), card: "Thank you for playing"),
     };
 
