@@ -35,7 +35,7 @@ MonoBehaviour:
     showLabels: 0
     effects: 
   - subtitle: 
-    seconds: 7
+    seconds: 6
     face: 0
     shot:
       camera: Arr_SweepA
@@ -54,7 +54,26 @@ MonoBehaviour:
     showLabels: 0
     effects: 
   - subtitle: 
-    seconds: 6
+    seconds: 1.1
+    face: 0
+    shot:
+      camera: Arr_CabinetA
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Cabinets
+      fov: 50
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: 57 reagents, always on the shelf
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 5.5
     face: 0
     shot:
       camera: Arr_CabinetA
@@ -73,11 +92,30 @@ MonoBehaviour:
     showLabels: 1
     effects: coldair:Raw_IceBucket
   - subtitle: 
-    seconds: 8
+    seconds: 1.2
     face: 0
     shot:
-      camera: Arr_ShelfA
-      moveTo: Arr_ShelfB
+      camera: Arr_ShelfB
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Shelf
+      fov: 45
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Real glassware, real reactions
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 7.5
+    face: 0
+    shot:
+      camera: Arr_ShelfB
+      moveTo: Arr_ShelfA
       blend: 0
       look: 4
       lookMarker: Look_Shelf
@@ -96,7 +134,26 @@ MonoBehaviour:
     showLabels: 0
     effects: shift:Kit_TestTube_0|shift:Kit_TestTube_1|shift:Kit_TestTube_2|steam:WaterBath|spatter:WaterBath|colorflash:Kit_TestTube_1|shift:ErlenmeyerFlask_400mL_2|fizz:ErlenmeyerFlask_400mL_2|shift:Eq_Beaker_100mL|smoke:DistillingFlask
   - subtitle: 
-    seconds: 4
+    seconds: 1
+    face: 0
+    shot:
+      camera: Arr_Burner
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Burner
+      fov: 40
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Light the burner
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 3.5
     face: 0
     shot:
       camera: Arr_Burner
@@ -115,7 +172,26 @@ MonoBehaviour:
     showLabels: 0
     effects: flamepop:Kit_BunsenBurner_0_9|fireburst:Kit_BunsenBurner_0_9|smoke:Kit_BunsenBurner_0_9
   - subtitle: 
-    seconds: 4.5
+    seconds: 1
+    face: 0
+    shot:
+      camera: Arr_Pour
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Pour
+      fov: 38
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Pour every reagent by hand
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 4
     face: 0
     shot:
       camera: Arr_Pour
@@ -133,6 +209,101 @@ MonoBehaviour:
     chemicals: []
     showLabels: 0
     effects: fizz:FlorenceFlask
+  - subtitle: 
+    seconds: 1.1
+    face: 0
+    shot:
+      camera: End_Tubes
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Tubes
+      fov: 38
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Every step, by hand
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 1.1
+    face: 0
+    shot:
+      camera: Arr_Burner
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Burner
+      fov: 40
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Every step, by hand
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 1.1
+    face: 0
+    shot:
+      camera: Arr_BenchLow
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Bench
+      fov: 50
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Every step, by hand
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 1.1
+    face: 0
+    shot:
+      camera: Cam_Bench
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Bench
+      fov: 50
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Every step, by hand
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 1.1
+    face: 0
+    shot:
+      camera: Arr_BenchHigh
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Bench
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: Every step, by hand
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
   - subtitle: 
     seconds: 5
     face: 0
@@ -196,7 +367,7 @@ MonoBehaviour:
     shot:
       camera: Arr_BenchHigh
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Bench
       fov: 55
@@ -215,7 +386,7 @@ MonoBehaviour:
     shot:
       camera: Arr_BenchLow
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Bench
       fov: 50
@@ -234,7 +405,7 @@ MonoBehaviour:
     shot:
       camera: Cam_Bench
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Bench
       fov: 50
@@ -267,7 +438,26 @@ MonoBehaviour:
     showLabels: 0
     effects: shatter:ErlenmeyerFlask_400mL_3|steam:WaterBath
   - subtitle: 
-    seconds: 4
+    seconds: 1.2
+    face: 0
+    shot:
+      camera: Arr_DoorInside
+      moveTo: 
+      blend: 1
+      look: 4
+      lookMarker: Look_Door
+      fov: 55
+      pharmeePopIn: 0
+    cardTitle: 
+    cardLine: 
+    caption: 
+    action: 0
+    actionTarget: 
+    chemicals: []
+    showLabels: 0
+    effects: 
+  - subtitle: 
+    seconds: 3.5
     face: 0
     shot:
       camera: Arr_DoorInside

@@ -110,30 +110,49 @@ public static class ShowcaseReelBuilder
         B(4.0f, Shot("Arr_CubeTitle", "", "Look_Menu", 55f), card: "PharmaSynth", line: "Gear Up, Synth It Up!"),
     };
 
+    /// A whip: a quick eased glide from wherever the camera is to the next angle (fast in
+    /// the middle), used between sections and for the montage. Only between shots whose
+    /// straight path is clear of walls and shelves; across a wall the reel cuts instead.
+    static CutsceneData.Beat W(float s, string cam, string look, float fov, string caption = "")
+        => B(s, Shot(cam, "", look, fov, blend: true), caption: caption);
+
+    const string Montage = "Every step, by hand";
+
     public static List<CutsceneData.Beat> LabBeats() => new List<CutsceneData.Beat>
     {
         B(5.0f, Shot("Arr_Corridor", "Arr_CorridorIn", "Look_Corridor", 55f), action: ShowcaseAction.OpenDoor),
-        B(7.0f, Shot("Arr_SweepA", "Arr_SweepB", "Look_Bench", 58f), caption: "A full chemistry lab, built for VR"),
-        Labelled(Fx(B(6.0f, Shot("Arr_CabinetA", "Arr_CabinetB", "Look_Cabinets", 50f), caption: "57 reagents, always on the shelf"),
+        B(6.0f, Shot("Arr_SweepA", "Arr_SweepB", "Look_Bench", 58f), caption: "A full chemistry lab, built for VR"),
+        W(1.1f, "Arr_CabinetA", "Look_Cabinets", 50f, "57 reagents, always on the shelf"),
+        Labelled(Fx(B(5.5f, Shot("Arr_CabinetA", "Arr_CabinetB", "Look_Cabinets", 50f), caption: "57 reagents, always on the shelf"),
           "coldair:Raw_IceBucket")),
-        WithChemicals(Fx(B(8.0f, Shot("Arr_ShelfA", "Arr_ShelfB", "Look_Shelf", 45f), caption: "Real glassware, real reactions"),
+        W(1.2f, "Arr_ShelfB", "Look_Shelf", 45f, "Real glassware, real reactions"),
+        WithChemicals(Fx(B(7.5f, Shot("Arr_ShelfB", "Arr_ShelfA", "Look_Shelf", 45f), caption: "Real glassware, real reactions"),
           ShelfEffects), ShiftColours),
-        Fx(B(4.0f, Shot("Arr_Burner", "", "Look_Burner", 40f), caption: "Light the burner",
+        W(1.0f, "Arr_Burner", "Look_Burner", 40f, "Light the burner"),
+        Fx(B(3.5f, Shot("Arr_Burner", "", "Look_Burner", 40f), caption: "Light the burner",
           action: ShowcaseAction.LightBurner, target: "Kit_BunsenBurner_0_9"),
           "flamepop:Kit_BunsenBurner_0_9|fireburst:Kit_BunsenBurner_0_9|smoke:Kit_BunsenBurner_0_9"),
-        Fx(B(4.5f, Shot("Arr_Pour", "", "Look_Pour", 38f), caption: "Pour every reagent by hand",
+        W(1.0f, "Arr_Pour", "Look_Pour", 38f, "Pour every reagent by hand"),
+        Fx(B(4.0f, Shot("Arr_Pour", "", "Look_Pour", 38f), caption: "Pour every reagent by hand",
           action: ShowcaseAction.Pour, target: "Raw_PotassiumPermanganate0.1%|FlorenceFlask"),
           "fizz:FlorenceFlask"),
+        // The montage: five quick whips round the bench.
+        W(1.1f, "End_Tubes", "Look_Tubes", 38f, Montage),
+        W(1.1f, "Arr_Burner", "Look_Burner", 40f, Montage),
+        W(1.1f, "Arr_BenchLow", "Look_Bench", 50f, Montage),
+        W(1.1f, "Cam_Bench", "Look_Bench", 50f, Montage),
+        W(1.1f, "Arr_BenchHigh", "Look_Bench", 55f, Montage),
         B(5.0f, Shot("Cam_Timelapse", "", "Look_Bench", 55f), action: ShowcaseAction.Timelapse),
         Fx(B(4.5f, Shot("Arr_Pharmee", "", "Look_Pharmee", 42f), caption: "Pharmee, your lab partner",
           action: ShowcaseAction.PharmeeCelebrate), "confetti:RobotNPC"),
         B(4.0f, Shot("Arr_Jimenez", "", "Look_Jimenez", 42f), caption: "Dr. Jimenez, your examiner"),
-        B(3.0f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f), card: "9 Experiments", line: "Prelim · Midterm · Finals"),
-        B(2.5f, Shot("Arr_BenchLow", "", "Look_Bench", 50f), card: "Prelim", line: "Chemical Reactions · Ethyl Alcohol"),
-        B(2.5f, Shot("Cam_Bench", "", "Look_Bench", 50f), card: "Midterm", line: "Benzoic Acid · Acetanilide · Acetone · Chloroform"),
+        B(3.0f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f, blend: true), card: "9 Experiments", line: "Prelim · Midterm · Finals"),
+        B(2.5f, Shot("Arr_BenchLow", "", "Look_Bench", 50f, blend: true), card: "Prelim", line: "Chemical Reactions · Ethyl Alcohol"),
+        B(2.5f, Shot("Cam_Bench", "", "Look_Bench", 50f, blend: true), card: "Midterm", line: "Benzoic Acid · Acetanilide · Acetone · Chloroform"),
         Fx(B(2.5f, Shot("Arr_BenchHigh", "Arr_SweepB", "Look_Bench", 55f), card: "Finals", line: "Benzamide · Wine Making"),
           "shatter:ErlenmeyerFlask_400mL_3|steam:WaterBath"),
-        B(4.0f, Shot("Arr_DoorInside", "", "Look_Door", 55f), card: "Your lab is ready", line: "Step inside"),
+        W(1.2f, "Arr_DoorInside", "Look_Door", 55f),
+        B(3.5f, Shot("Arr_DoorInside", "", "Look_Door", 55f), card: "Your lab is ready", line: "Step inside"),
     };
 
     public static readonly (string name, Vector3 pos, Vector3 look)[] EndingMarkers =
@@ -184,14 +203,14 @@ public static class ShowcaseReelBuilder
         B(4.0f, Shot("Cam_LabWide", "Arr_SweepB", "Look_Bench", 58f), card: "Campaign Complete", line: "{passed} of {total} experiments passed"),
         Lineup(6.0f, Shot("End_LineupA", "End_LineupB", "Look_Lineup", 40f),
                "Ethanol · Benzoic Acid · Acetanilide · Acetone · Chloroform · Benzamide · Wine", Products),
-        Lineup(4.0f, Shot("End_Tubes", "", "Look_Tubes", 38f), "Chemical Reactions, Prelim", TestColours),
-        B(3.5f, Shot("Arr_Burner", "", "Look_Burner", 40f), caption: "Methane, the Tutorial",
+        Lineup(4.0f, Shot("End_Tubes", "", "Look_Tubes", 38f, blend: true), "Chemical Reactions, Prelim", TestColours),
+        B(3.5f, Shot("Arr_Burner", "", "Look_Burner", 40f, blend: true), caption: "Methane, the Tutorial",
           action: ShowcaseAction.LightBurner, target: "Kit_BunsenBurner_0_9"),
-        B(3.5f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f), card: "Average grade {average}%", line: "Your best grade in every experiment"),
-        B(2.5f, Shot("Arr_BenchLow", "", "Look_Bench", 50f), card: "Tutorial", line: "{Tutorial}"),
-        B(2.5f, Shot("Cam_Bench", "", "Look_Bench", 50f), card: "Prelim", line: "{Prelim}"),
-        B(2.5f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f), card: "Midterm", line: "{Midterm}"),
-        B(2.5f, Shot("Arr_SweepA", "", "Look_Bench", 58f), card: "Finals", line: "{Final}"),
+        B(3.5f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f, blend: true), card: "Average grade {average}%", line: "Your best grade in every experiment"),
+        B(2.5f, Shot("Arr_BenchLow", "", "Look_Bench", 50f, blend: true), card: "Tutorial", line: "{Tutorial}"),
+        B(2.5f, Shot("Cam_Bench", "", "Look_Bench", 50f, blend: true), card: "Prelim", line: "{Prelim}"),
+        B(2.5f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f, blend: true), card: "Midterm", line: "{Midterm}"),
+        B(2.5f, Shot("Arr_SweepA", "", "Look_Bench", 58f, blend: true), card: "Finals", line: "{Final}"),
         B(4.0f, Shot("Arr_Pharmee", "", "Look_Pharmee", 42f), caption: "Pharmee is proud of you", action: ShowcaseAction.PharmeeCelebrate),
         // The door opens off camera here, so the corridor pull-back can watch it swing shut.
         B(3.5f, Shot("Arr_Jimenez", "", "Look_Jimenez", 42f), caption: "So is Dr. Jimenez", action: ShowcaseAction.OpenDoor),
@@ -199,9 +218,9 @@ public static class ShowcaseReelBuilder
         B(4.5f, Shot("End_Corridor", "End_CorridorBack", "Look_LabFromCorridor", 55f), action: ShowcaseAction.Night),
         B(3.0f, Shot("End_CorridorBack", "", "Look_LabFromCorridor", 55f), action: ShowcaseAction.CloseDoor),
         B(3.5f, Shot("Cam_LabWide", "", "Look_Bench", 58f), card: "PharmaSynth", line: "Gear Up, Synth It Up!"),
-        B(3.5f, Shot("Arr_SweepA", "", "Look_Bench", 58f), card: "Laboratory manuscript", line: "[Manuscript authors]"),
-        B(3.5f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f), card: "Developed by", line: "[Development team]"),
-        B(3.5f, Shot("Cam_Bench", "", "Look_Bench", 50f), card: "Made for", line: "[Institution]"),
+        B(3.5f, Shot("Arr_SweepA", "", "Look_Bench", 58f, blend: true), card: "Laboratory manuscript", line: "[Manuscript authors]"),
+        B(3.5f, Shot("Arr_BenchHigh", "", "Look_Bench", 55f, blend: true), card: "Developed by", line: "[Development team]"),
+        B(3.5f, Shot("Cam_Bench", "", "Look_Bench", 50f, blend: true), card: "Made for", line: "[Institution]"),
         B(4.0f, Shot("Arr_DoorInside", "", "Look_Door", 55f), card: "Thank you for playing"),
     };
 

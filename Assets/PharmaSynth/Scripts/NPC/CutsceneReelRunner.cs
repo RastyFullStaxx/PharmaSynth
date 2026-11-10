@@ -147,12 +147,15 @@ public class CutsceneReelRunner : MonoBehaviour
         while (quiet < tailFrames && guard++ < Fps * maxSeconds)
         {
             yield return new WaitForEndOfFrame();
-            var head = Camera.main != null ? Camera.main.transform : null;
-            if (head != null)
-            {
-                Vector3 f = head.forward; f.y = 0f; if (f.sqrMagnitude < 1e-4f) f = Vector3.forward;
-                _cap.transform.SetPositionAndRotation(head.position, Quaternion.LookRotation(f.normalized) * Quaternion.Euler(6f, 0f, 0f));
-            }
+            // Square in front of the cinema screen at its viewing distance, never on the
+            // head: a head that moves while recording (the simulator's mouse, a worn
+            // headset) would shake the whole video. 6 degrees down keeps the text band
+            // under the picture in frame. With no screen up, the last pose holds.
+            var cinema = FindAnyObjectByType<CinemaView>();
+            var screen = cinema != null && cinema.Active ? cinema.ScreenTransform : null;
+            if (screen != null)
+                _cap.transform.SetPositionAndRotation(screen.position - screen.forward * cinema.ScreenDistance,
+                                                      Quaternion.LookRotation(screen.forward) * Quaternion.Euler(6f, 0f, 0f));
             _cap.Render();
             var prev = RenderTexture.active; RenderTexture.active = _rt;
             _tex.ReadPixels(new Rect(0, 0, W, H), 0, 0, false);

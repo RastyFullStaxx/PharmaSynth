@@ -67,7 +67,7 @@ MonoBehaviour:
     shot:
       camera: End_Tubes
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Tubes
       fov: 38
@@ -90,7 +90,7 @@ MonoBehaviour:
     shot:
       camera: Arr_Burner
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Burner
       fov: 40
@@ -109,7 +109,7 @@ MonoBehaviour:
     shot:
       camera: Arr_BenchHigh
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Bench
       fov: 55
@@ -128,7 +128,7 @@ MonoBehaviour:
     shot:
       camera: Arr_BenchLow
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Bench
       fov: 50
@@ -147,7 +147,7 @@ MonoBehaviour:
     shot:
       camera: Cam_Bench
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Bench
       fov: 50
@@ -166,7 +166,7 @@ MonoBehaviour:
     shot:
       camera: Arr_BenchHigh
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Bench
       fov: 55
@@ -185,7 +185,7 @@ MonoBehaviour:
     shot:
       camera: Arr_SweepA
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Bench
       fov: 58
@@ -318,7 +318,7 @@ MonoBehaviour:
     shot:
       camera: Arr_SweepA
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Bench
       fov: 58
@@ -337,7 +337,7 @@ MonoBehaviour:
     shot:
       camera: Arr_BenchHigh
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Bench
       fov: 55
@@ -356,7 +356,7 @@ MonoBehaviour:
     shot:
       camera: Cam_Bench
       moveTo: 
-      blend: 0
+      blend: 1
       look: 4
       lookMarker: Look_Bench
       fov: 50
