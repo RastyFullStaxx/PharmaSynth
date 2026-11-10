@@ -2741,7 +2741,9 @@ Play-mode half of CutsceneReelRecorder (Editor/): plays each clip and pipes fram
 
 ```csharp
 string ffmpeg
+bool showcase
 const string OutDir
+const string ShowcaseDir
 ```
 
 ### `ExaminerNPC` <sub>class</sub>
@@ -4337,6 +4339,7 @@ Records every cinematic cutscene and timelapse to video, as the player sees it (
 ```csharp
 const string OutDir
 static void Record()
+static void RecordShowcase()
 ```
 
 ### `DemoModeBuilder` <sub>class</sub>

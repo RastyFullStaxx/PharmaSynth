@@ -86,8 +86,12 @@ public static class ShowcaseReelBuilder
 
     /// Drama on the glassware shelf: tubes and beakers cycle colours, the Florence flask
     /// bubbles, the water bath steams, a distilling flask smokes.
+    /// The Florence flask is left out: the pour shot fills it from empty, in its own colour.
+    /// Splashes and colour flashes draw outside the glass, so they sit on the water bath and
+    /// a small tube, where they read as boiling and a reaction, not spilt water.
     const string ShelfEffects = "shift:Kit_TestTube_0|shift:Kit_TestTube_1|shift:Kit_TestTube_2|steam:WaterBath"
-        + "|shift:FlorenceFlask|fizz:FlorenceFlask|shift:Eq_Beaker_100mL|shift:ErlenmeyerFlask_400mL_2|smoke:DistillingFlask";
+        + "|spatter:WaterBath|colorflash:Kit_TestTube_1|shift:ErlenmeyerFlask_400mL_2|fizz:ErlenmeyerFlask_400mL_2"
+        + "|shift:Eq_Beaker_100mL|smoke:DistillingFlask";
     static readonly string[] ShiftColours = { "Chem_PotassiumPermanganate", "Chem_BenedictsReagent", "Chem_FerricChloride10", "Chem_BromineWater" };
 
     static CutsceneData.Beat WithChemicals(CutsceneData.Beat b, string[] chems)
@@ -118,7 +122,7 @@ public static class ShowcaseReelBuilder
           "flamepop:Kit_BunsenBurner_0_9|fireburst:Kit_BunsenBurner_0_9|smoke:Kit_BunsenBurner_0_9"),
         Fx(B(4.5f, Shot("Arr_Pour", "", "Look_Pour", 38f), caption: "Pour every reagent by hand",
           action: ShowcaseAction.Pour, target: "Raw_PotassiumPermanganate0.1%|FlorenceFlask"),
-          "fizz:FlorenceFlask|spatter:FlorenceFlask|colorflash:FlorenceFlask"),
+          "fizz:FlorenceFlask"),
         B(5.0f, Shot("Cam_Timelapse", "", "Look_Bench", 55f), action: ShowcaseAction.Timelapse),
         Fx(B(4.5f, Shot("Arr_Pharmee", "", "Look_Pharmee", 42f), caption: "Pharmee, your lab partner",
           action: ShowcaseAction.PharmeeCelebrate), "confetti:RobotNPC"),

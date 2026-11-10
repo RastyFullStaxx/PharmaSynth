@@ -14,7 +14,12 @@ using Debug = UnityEngine.Debug;
 public class CutsceneReelRunner : MonoBehaviour
 {
     public string ffmpeg;
+    /// "showcase" records the arrival (cube room through to the lab door, one clip across
+    /// the scene load) and the campaign-complete ending instead of the cutscene library.
+    public bool showcase;
     public const string OutDir = "Logs/cutscene-reel";
+    public const string ShowcaseDir = "Logs/showcase-reel";
+    string Dir => showcase ? ShowcaseDir : OutDir;
     const int W = 1920, H = 1080, Fps = 30;
 
     Camera _cap;
@@ -29,6 +34,7 @@ public class CutsceneReelRunner : MonoBehaviour
 
     IEnumerator Start()
     {
+        if (showcase) { yield return Showcase(); yield break; }
         // Play mode boots the MainMenu cube room; go straight to the lab and survive the load.
         if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "SampleScene")
             UnityEngine.SceneManagement.SceneManager.LoadScene("SampleScene");
@@ -40,17 +46,7 @@ public class CutsceneReelRunner : MonoBehaviour
         var lib = AssetDatabase.LoadAssetAtPath<CutsceneLibrary>("Assets/PharmaSynth/ScriptableObjects/CutsceneLibrary.asset");
         if (director == null || cinema == null || lib == null) { Debug.LogError("[Reel] scene is missing the director / cinema / library."); Finish(); yield break; }
 
-        _rt = new RenderTexture(W, H, 24);
-        _tex = new Texture2D(W, H, TextureFormat.RGB24, false);
-        var cg = new GameObject("ReelCapture");
-        _cap = cg.AddComponent<Camera>();
-        _cap.enabled = false;
-        _cap.clearFlags = CameraClearFlags.SolidColor; _cap.backgroundColor = Color.black;
-        _cap.cullingMask = 1 << CinemaView.Layer;
-        _cap.fieldOfView = 44f; _cap.nearClipPlane = 0.05f;
-        _cap.targetTexture = _rt;
-        var data = cg.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
-        data.allowXRRendering = false;
+        MakeCapture();
 
         foreach (var n in FindObjectsByType<NPCNarrationController>())
         {
@@ -92,9 +88,50 @@ public class CutsceneReelRunner : MonoBehaviour
         Finish();
     }
 
-    IEnumerator Clip(int index, string label, System.Action play, System.Func<bool> busy, float tail = 0.6f)
+    /// The capture camera films the Cinema layer (the dark room, the screen, its text) from
+    /// the head, as the player sees it. Parented to the runner so it survives scene loads.
+    void MakeCapture()
     {
-        string file = Path.Combine(OutDir, $"clip{index:00}.mp4");
+        _rt = new RenderTexture(W, H, 24);
+        _tex = new Texture2D(W, H, TextureFormat.RGB24, false);
+        var cg = new GameObject("ReelCapture");
+        cg.transform.SetParent(transform, false);
+        _cap = cg.AddComponent<Camera>();
+        _cap.enabled = false;
+        _cap.clearFlags = CameraClearFlags.SolidColor; _cap.backgroundColor = Color.black;
+        _cap.cullingMask = 1 << CinemaView.Layer;
+        _cap.fieldOfView = 44f; _cap.nearClipPlane = 0.05f;
+        _cap.targetTexture = _rt;
+        var data = cg.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+        data.allowXRRendering = false;
+    }
+
+    /// Arrival: Demo Mode's Laboratory in the cube room (a demo always plays it), recorded
+    /// to the lab door. Ending: the demo HUD's Play Ending, once the arrival has settled.
+    IEnumerator Showcase()
+    {
+        for (int i = 0; i < 600 && FindAnyObjectByType<MainMenuController>() == null; i++) yield return null;
+        yield return new WaitForSeconds(3f);   // the cube room's own fade-in
+        var menu = FindAnyObjectByType<MainMenuController>();
+        if (menu == null) { Debug.LogError("[Reel] Play mode did not start in the cube room."); Finish(); yield break; }
+        MakeCapture();
+        Time.captureFramerate = Fps;
+        yield return Clip(1, "Arrival", menu.OnDemoLaboratory,
+                          () => ArrivalFlow.Busy || (ShowcaseDirector.Find() != null && ShowcaseDirector.Find().Playing),
+                          0.6f, 180f, "PharmaSynth-arrival-silent.mp4");
+        yield return new WaitForSeconds(3f);
+        var show = ShowcaseDirector.Find();
+        var gate = FindAnyObjectByType<PharmeeGatekeeper>();
+        if (show == null || show.Ending == null) { Debug.LogError("[Reel] the lab has no ending reel."); Finish(); yield break; }
+        yield return Clip(2, "Ending", () => show.TryPlayEnding(true, gate != null ? gate.CelebrateCampaign : (System.Action)null),
+                          () => show.Playing, 0.6f, 180f, "PharmaSynth-ending-silent.mp4");
+        Finish();
+    }
+
+    IEnumerator Clip(int index, string label, System.Action play, System.Func<bool> busy, float tail = 0.6f,
+                     float maxSeconds = 60f, string name = null)
+    {
+        string file = Path.Combine(Dir, name ?? $"clip{index:00}.mp4");
         var p = new Process
         {
             StartInfo = new ProcessStartInfo(ffmpeg,
@@ -107,7 +144,7 @@ public class CutsceneReelRunner : MonoBehaviour
         _manifest.AppendLine($"clip\t{index}\t{file}\t{label}");
         play();
         int tailFrames = Mathf.RoundToInt(tail * Fps), quiet = 0, guard = 0;
-        while (quiet < tailFrames && guard++ < Fps * 60)
+        while (quiet < tailFrames && guard++ < Fps * maxSeconds)
         {
             yield return new WaitForEndOfFrame();
             var head = Camera.main != null ? Camera.main.transform : null;
@@ -129,7 +166,7 @@ public class CutsceneReelRunner : MonoBehaviour
         stdin.Close();
         p.WaitForExit(60000);
         _manifest.AppendLine($"frames\t{index}\t{_frame}");
-        File.WriteAllText(Path.Combine(OutDir, "manifest.txt"), _manifest.ToString());
+        File.WriteAllText(Path.Combine(Dir, "manifest.txt"), _manifest.ToString());
         Debug.Log($"[Reel] {label}: {_frame} frames → {file}");
     }
 
@@ -137,8 +174,8 @@ public class CutsceneReelRunner : MonoBehaviour
     {
         Time.captureFramerate = 0;
         foreach (var (n, h) in _hooks) if (n != null) n.LineStarted -= h;
-        File.WriteAllText(Path.Combine(OutDir, "manifest.txt"), _manifest.ToString());
-        File.WriteAllText(Path.Combine(OutDir, "done.txt"), System.DateTime.Now.ToString("s"));
+        File.WriteAllText(Path.Combine(Dir, "manifest.txt"), _manifest.ToString());
+        File.WriteAllText(Path.Combine(Dir, "done.txt"), System.DateTime.Now.ToString("s"));
         EditorApplication.ExitPlaymode();
     }
 }

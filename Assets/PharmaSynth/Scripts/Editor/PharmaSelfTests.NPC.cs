@@ -1544,6 +1544,13 @@ public static partial class PharmaSelfTests
         foreach (var k in new[] { "fizz", "smoke", "steam", "coldair", "spatter", "colorflash", "flamepop", "fireburst", "confetti", "shatter", "shift" })
             if (!kinds.Contains(k)) unused += k + " ";
         A("arrival: the tour uses every effect the lab has" + (unused.Length > 0 ? " (unused " + unused + ")" : ""), unused.Length == 0);
+        // The pour fills the Florence flask from empty in its own colour, and nothing drawn
+        // outside the glass (splash, colour flash) sits on it to read as spilt water.
+        bool pourClean = true;
+        foreach (var b in lab.beats)
+            if (!string.IsNullOrEmpty(b.effects) && (b.effects.Contains("shift:FlorenceFlask")
+                || b.effects.Contains("spatter:FlorenceFlask") || b.effects.Contains("colorflash:FlorenceFlask"))) pourClean = false;
+        A("arrival: the pour flask is not colour-cycled, splashed or flashed", pourClean);
         EndingSuite(director);
     }
 

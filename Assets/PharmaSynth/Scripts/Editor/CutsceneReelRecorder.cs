@@ -28,10 +28,13 @@ public static class CutsceneReelRecorder
         EditorApplication.playModeStateChanged += s =>
         {
             if (s != PlayModeStateChange.EnteredPlayMode || !File.Exists(Request)) return;
-            string ffmpeg = File.ReadAllText(Request).Trim();
+            string req = File.ReadAllText(Request).Trim();
             File.Delete(Request);
+            bool showcase = req.StartsWith(ShowcasePrefix);
             var go = new GameObject("CutsceneReelRunner");
-            go.AddComponent<CutsceneReelRunner>().ffmpeg = ffmpeg;
+            var runner = go.AddComponent<CutsceneReelRunner>();
+            runner.ffmpeg = showcase ? req.Substring(ShowcasePrefix.Length) : req;
+            runner.showcase = showcase;
         };
     }
 
@@ -43,6 +46,22 @@ public static class CutsceneReelRecorder
         Directory.CreateDirectory(OutDir);
         foreach (var f in Directory.GetFiles(OutDir)) File.Delete(f);
         File.WriteAllText(Request, ffmpeg);
+        EditorApplication.EnterPlaymode();
+    }
+
+    const string ShowcasePrefix = "showcase|";
+
+    /// The arrival and the ending, one silent MP4 each under Logs/showcase-reel/; lay the
+    /// music on with Tools/showcase-reel.py. Play mode must start in the cube room, in PC
+    /// Dev Mode (no headset).
+    [MenuItem(CinemaCutsceneTools.Menu + "Record Showcase Reels (arrival + ending, enters Play mode)")]
+    public static void RecordShowcase()
+    {
+        string ffmpeg = FindFfmpeg();
+        if (ffmpeg == null) { Debug.LogError("[Reel] ffmpeg.exe not found on PATH or in WinGet packages."); return; }
+        Directory.CreateDirectory(CutsceneReelRunner.ShowcaseDir);
+        foreach (var f in Directory.GetFiles(CutsceneReelRunner.ShowcaseDir)) File.Delete(f);
+        File.WriteAllText(Request, ShowcasePrefix + ffmpeg);
         EditorApplication.EnterPlaymode();
     }
 

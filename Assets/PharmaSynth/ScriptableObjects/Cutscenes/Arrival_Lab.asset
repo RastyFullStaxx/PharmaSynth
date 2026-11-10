@@ -94,7 +94,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: b4ffe5e1b40c7944fb638a72d0adb098, type: 2}
     - {fileID: 11400000, guid: e80077a411304ea4cbcaa8d77726ba01, type: 2}
     showLabels: 0
-    effects: shift:Kit_TestTube_0|shift:Kit_TestTube_1|shift:Kit_TestTube_2|steam:WaterBath|shift:FlorenceFlask|fizz:FlorenceFlask|shift:Eq_Beaker_100mL|shift:ErlenmeyerFlask_400mL_2|smoke:DistillingFlask
+    effects: shift:Kit_TestTube_0|shift:Kit_TestTube_1|shift:Kit_TestTube_2|steam:WaterBath|spatter:WaterBath|colorflash:Kit_TestTube_1|shift:ErlenmeyerFlask_400mL_2|fizz:ErlenmeyerFlask_400mL_2|shift:Eq_Beaker_100mL|smoke:DistillingFlask
   - subtitle: 
     seconds: 4
     face: 0
@@ -132,7 +132,7 @@ MonoBehaviour:
     actionTarget: Raw_PotassiumPermanganate0.1%|FlorenceFlask
     chemicals: []
     showLabels: 0
-    effects: fizz:FlorenceFlask|spatter:FlorenceFlask|colorflash:FlorenceFlask
+    effects: fizz:FlorenceFlask
   - subtitle: 
     seconds: 5
     face: 0

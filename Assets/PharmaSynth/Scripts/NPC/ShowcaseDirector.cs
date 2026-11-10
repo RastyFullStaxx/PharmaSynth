@@ -258,6 +258,7 @@ public class ShowcaseDirector : MonoBehaviour
         if (opening is ShotMath.Pose o) _cinema.SetPose(o, first.fov);
         _cinema.Enter(Camera.main);
         HidePlayer();
+        HoldJimenez();
         StartMusic();
         yield return Fade(0f);
 
@@ -380,6 +381,36 @@ public class ShowcaseDirector : MonoBehaviour
             rr.enabled = false;
             _undo.Add(() => { if (rr != null) rr.enabled = true; });
         }
+    }
+
+    /// Dr. Jimenez walks his proctor route, so a shot of him can find an empty corner.
+    /// While a reel plays he stands at his post (the Look_Jimenez marker) facing his
+    /// camera; the undo list puts him back and lets him walk again.
+    private void HoldJimenez()
+    {
+        var roamer = FindAnyObjectByType<ProctorRoamer>();
+        var post = _cinema.Marker("Look_Jimenez");
+        if (roamer == null || post == null) return;
+        var t = roamer.transform;
+        var cc = roamer.GetComponent<CharacterController>();
+        Vector3 pos = t.position; Quaternion rot = t.rotation; bool was = roamer.enabled;
+        roamer.enabled = false;
+        var anim = roamer.GetComponentInChildren<Animator>();
+        if (anim != null) foreach (var p in anim.parameters)
+            if (p.name == "Walking" && p.type == AnimatorControllerParameterType.Bool) anim.SetBool("Walking", false);
+        var cam = _cinema.Marker("Arr_Jimenez");
+        Vector3 at = new Vector3(post.position.x, pos.y, post.position.z);
+        Vector3 face = cam != null ? cam.position - at : -t.forward; face.y = 0f;
+        Place(t, cc, at, face.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(face) : rot);
+        _undo.Add(() => { if (t == null) return; Place(t, cc, pos, rot); roamer.enabled = was; });
+    }
+
+    private static void Place(Transform t, CharacterController cc, Vector3 pos, Quaternion rot)
+    {
+        bool on = cc != null && cc.enabled;
+        if (on) cc.enabled = false;   // a live CharacterController overrides a direct move
+        t.SetPositionAndRotation(pos, rot);
+        if (on) cc.enabled = true;
     }
 
     // ── Showcase actions (each one registers its own undo) ─────────────────
